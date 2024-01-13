@@ -99,6 +99,9 @@
   * [ ] `{...} = v` or `[...] = v`
   * [ ] `x [CompoundAssignment] v`
   * [ ] `x, y`
+* Destructuring
+  * [ ] Parse destructuring
+  * [ ] Refine expression into destructuring
 * Type expressions
   * [ ] `?T`
   * [ ] `*`
@@ -120,54 +123,47 @@
   * [ ] `T.<...>`
   * [ ] `T?`
 * Statements
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
+  * [ ] `;`
+  * [ ] Expression statement
+    * [ ] Resolve ambiguity with labeled statement
+    * [ ] Resolve ambiguity with super statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
+  * [ ] `super()`
+    * [ ] Resolve ambiguity with expression statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
+  * [ ] Block
+  * [ ] Labeled statement
+    * [ ] Resolve ambiguity with expression statement
+  * [ ] `if`
+  * [ ] `switch`
+  * [ ] `switch type`
+  * [ ] `do`
+  * [ ] `while`
+  * [ ] `for`
+  * [ ] `for..in`
+  * [ ] `for each`
+  * [ ] `continue [label]`
+  * [ ] `break [label]`
+  * [ ] `with`
+  * [ ] `return [v]`
+  * [ ] `throw e`
+  * [ ] `default xml namespace = ns`
+* Attributes
+  * [ ] Attributes structure
 * Directives
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
+  * [ ] `configuration` directive
+  * [ ] `import`
+  * [ ] `use`
 * Configuration expressions
   * [ ] Configuration expressions
 * Definitions
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
-  * [ ] `x`
+  * [ ] Variable definition
+  * [ ] Function definition
+    * [ ] Getter
+    * [ ] Setter
+    * [ ] Proxy
+    * [ ] Constructor
+  * [ ] `class`
+  * [ ] `enum`
+  * [ ] `interface`
+  * [ ] `type`
+  * [ ] `package`
+  * [ ] Program
