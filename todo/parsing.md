@@ -60,6 +60,8 @@
     * [ ] `-v`
     * [ ] `~v`
     * [ ] `!v`
+  * [ ] `v: T` lookahead != `:` (*TypeAnnotatedExpression*, used internally for arrow function signatures)
+    * One precedence less than postfix expressions and one precedence greater than binary expressions
   * [ ] *BinaryExpression*
     * [ ] `a ** b`
     * [ ] `a * b`
@@ -98,6 +100,8 @@
   * [ ] `x = y`
   * [ ] `{...} = v` or `[...] = v`
   * [ ] `x [CompoundAssignment] v`
+  * [´] `...x` as *Rest* (used internally for arrays and arrow function signatures)
+    * Same precedence as assignment
   * [ ] `x, y`
 * Destructuring
   * [ ] Parse destructuring
