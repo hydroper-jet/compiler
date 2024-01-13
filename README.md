@@ -1,3 +1,7 @@
 # Jet Compiler
 
-The Jet Compiler implemented in the [Racket language](https://racket-lang.org).
+The Jet Compiler implemented in the Rust language.
+
+## License
+
+Apache License 2.0
