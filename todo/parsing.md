@@ -8,11 +8,10 @@
 ## Covered
 
 * Expressions
-  * [ ] `*`
+  * [ ] `*` (qualified identifier)
   * [ ] Initial identifier expression
     * [ ] `id`
     * [ ] `q::x` (qualified identifier)
-    * [ ] `q`
     * [ ] `embed "path/to/file" ...`
       * [ ] `from` postfix (limit identifier name to `outputDirectory`)
       * [ ] `as` postfix
@@ -23,6 +22,7 @@
     * [ ] `(q)::x` (qualified identifier)
   * [ ] `@id`
     * Attribute qualified identifier.
+  * [ ] *UndefinedLiteral*
   * [ ] `true`
   * [ ] `false`
   * [ ] *NumericLiteral* (the value is kept as a raw string for context type flexibility)
@@ -61,7 +61,7 @@
     * [ ] `~v`
     * [ ] `!v`
   * [ ] `v: T` lookahead != `:` (*TypeAnnotatedExpression*, used internally for arrow function signatures)
-    * One precedence less than postfix expressions and one precedence greater than binary expressions
+    * One precedence less than unary expressions and one precedence greater than binary expressions
   * [ ] *BinaryExpression*
     * [ ] `a ** b`
     * [ ] `a * b`
@@ -77,11 +77,10 @@
     * [ ] `a <= b`
     * [ ] `a >= b`
     * [ ] `v as T`
-    * [ ] `v instanceof T`
-    * [ ] `v not instanceof T`
     * [ ] `v is T`
     * [ ] `v is not T`
     * [ ] `k in v`
+    * [ ] `k not in v`
     * [ ] `a == b`
     * [ ] `a != b`
     * [ ] `a === b`
@@ -154,6 +153,7 @@
   * [ ] Attributes structure
 * Directives
   * [ ] `configuration` directive
+    * [ ] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
   * [ ] `import`
   * [ ] `use`
 * Configuration expressions
