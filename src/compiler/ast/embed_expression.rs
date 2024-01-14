@@ -5,7 +5,5 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EmbedExpression {
     pub location: Location,
-    pub source: String,
-    pub from_clause: Option<(String, Location)>,
-    pub as_clause: Option<Rc<Expression>>,
+    pub description: Option<ObjectInitializer>,
 }

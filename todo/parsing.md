@@ -12,9 +12,7 @@
   * [ ] Initial identifier expression
     * [ ] `id`
     * [ ] `q::x` (qualified identifier)
-    * [ ] `embed "path/to/file" ...`
-      * [ ] `from` postfix (limit identifier name to `outputDirectory`)
-      * [ ] `as` postfix
+    * [ ] `embed ObjectInitializer`
   * [ ] Parentheses
     * [ ] `()`
       * Produces an internal empty parentheses expression (*ArrowEmptyParameters*) used for arrow functions.
