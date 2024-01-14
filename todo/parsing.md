@@ -1,6 +1,6 @@
 # Parsing
 
-## New parsing challenges
+## Parsing changes
 
 * Error recovery
   * https://langdev.stackexchange.com/q/3311/606
@@ -17,7 +17,7 @@
       * [ ] `as` postfix
   * [ ] Parentheses
     * [ ] `()`
-      * Produces an internal empty parentheses expression used for arrow functions.
+      * Produces an internal empty parentheses expression (*ArrowEmptyParameters*) used for arrow functions.
     * [ ] `(x)`
     * [ ] `(q)::x` (qualified identifier)
   * [ ] `@id`
@@ -60,7 +60,7 @@
     * [ ] `-v`
     * [ ] `~v`
     * [ ] `!v`
-  * [ ] `v: T` lookahead != `:` (*TypeAnnotatedExpression*, used internally for arrow function signatures)
+  * [ ] `v: T` lookahead != `:` (*ExpressionWithTypeAnnotation*, used internally for arrow function signatures)
     * One precedence less than unary expressions and one precedence greater than binary expressions
   * [ ] *BinaryExpression*
     * [ ] `a ** b`
@@ -99,7 +99,7 @@
   * [ ] `x = y`
   * [ ] `{...} = v` or `[...] = v`
   * [ ] `x [CompoundAssignment] v`
-  * [´] `...x` as *Rest* (used internally for arrays and arrow function signatures)
+  * [ ] `...x` as *Rest* (used internally for arrays and arrow function signatures)
     * Same precedence as assignment
   * [ ] `x, y`
 * Destructuring

@@ -77,6 +77,7 @@ impl BinaryOperator {
 
 impl TryFrom<Operator> for BinaryOperator {
     type Error = ();
+    /// Constructs `BinaryOperator` from abstract operator.
     fn try_from(value: Operator) -> Result<Self, Self::Error> {
         match value {
             Operator::Multiply => Ok(BinaryOperator(value, OperatorPrecedence::Multiplicative, BinaryAssociativity::LeftToRight)),

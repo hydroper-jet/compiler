@@ -1,5 +1,6 @@
 #![feature(decl_macro)]
 
+pub mod ast;
 pub mod compilation_unit;
 pub mod compiler_options;
 pub mod diagnostics;
