@@ -18,6 +18,8 @@ pub enum InitializerFieldOrRest {
 pub struct InitializerField {
     pub location: Location,
     pub name: FieldName,
+    /// Non-null operator used for destructuring.
+    pub non_null: bool,
     pub value: Option<Rc<Expression>>,
 }
 

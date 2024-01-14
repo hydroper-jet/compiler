@@ -103,8 +103,7 @@
     * Same precedence as assignment
   * [ ] `x, y`
 * Destructuring
-  * [ ] Parse destructuring
-  * [ ] Refine expression into destructuring
+  * [ ] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
 * Type expressions
   * [ ] `?T`
   * [ ] `*`

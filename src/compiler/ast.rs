@@ -1,7 +1,8 @@
-mod qualified_identifier;
-pub use qualified_identifier::*;
+// Expressions
 mod expression;
 pub use expression::*;
+mod qualified_identifier;
+pub use qualified_identifier::*;
 mod embed_expression;
 pub use embed_expression::*;
 mod arrow_empty_parameters;
@@ -66,3 +67,29 @@ mod sequence_expression;
 pub use sequence_expression::*;
 mod type_expression;
 pub use type_expression::*;
+
+// Destructuring
+mod destructuring;
+pub use destructuring::*;
+
+// Directives
+mod directive;
+pub use directive::*;
+mod empty_statement;
+pub use empty_statement::*;
+mod expression_statement;
+pub use expression_statement::*;
+mod super_statement;
+pub use super_statement::*;
+mod block;
+pub use block::*;
+mod labeled_statement;
+pub use labeled_statement::*;
+mod if_statement;
+pub use if_statement::*;
+mod switch_statement;
+pub use switch_statement::*;
+mod do_statement;
+pub use do_statement::*;
+mod while_statement;
+pub use while_statement::*;

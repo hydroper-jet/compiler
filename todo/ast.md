@@ -94,20 +94,16 @@
   * [x] `T.<...>`
   * [x] `T?`
 * Statements
-  * [ ] `;`
-  * [ ] Expression statement
-    * [ ] Resolve ambiguity with labeled statement
-    * [ ] Resolve ambiguity with super statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
-  * [ ] `super()`
-    * [ ] Resolve ambiguity with expression statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
-  * [ ] Block
-  * [ ] Labeled statement
-    * [ ] Resolve ambiguity with expression statement
-  * [ ] `if`
-  * [ ] `switch`
-  * [ ] `switch type`
-  * [ ] `do`
-  * [ ] `while`
+  * [x] `;`
+  * [x] Expression statement
+  * [x] `super()`
+  * [x] Block
+  * [x] Labeled statement
+  * [x] `if`
+  * [x] `switch`
+  * [x] `switch type`
+  * [x] `do`
+  * [x] `while`
   * [ ] `for`
   * [ ] `for..in`
   * [ ] `for each`
