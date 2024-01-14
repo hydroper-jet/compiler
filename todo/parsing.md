@@ -144,6 +144,7 @@
   * [ ] `for each`
   * [ ] `continue [label]`
   * [ ] `break [label]`
+  * [ ] `try`
   * [ ] `with`
   * [ ] `return [v]`
   * [ ] `throw e`

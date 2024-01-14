@@ -104,11 +104,12 @@
   * [x] `switch type`
   * [x] `do`
   * [x] `while`
-  * [ ] `for`
-  * [ ] `for..in`
-  * [ ] `for each`
+  * [x] `for`
+  * [x] `for..in`
+  * [x] `for each`
   * [ ] `continue [label]`
   * [ ] `break [label]`
+  * [ ] `try`
   * [ ] `with`
   * [ ] `return [v]`
   * [ ] `throw e`

@@ -15,6 +15,8 @@ pub enum Directive {
     SwitchTypeStatement(SwitchTypeStatement),
     DoStatement(DoStatement),
     WhileStatement(WhileStatement),
+    ForStatement(ForStatement),
+    ForInStatement(ForInStatement),
 }
 
 impl Directive {
@@ -30,6 +32,8 @@ impl Directive {
             Self::SwitchTypeStatement(d) => d.location.clone(),
             Self::DoStatement(d) => d.location.clone(),
             Self::WhileStatement(d) => d.location.clone(),
+            Self::ForStatement(d) => d.location.clone(),
+            Self::ForInStatement(d) => d.location.clone(),
         }
     }
 }
