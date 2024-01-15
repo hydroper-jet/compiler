@@ -1285,7 +1285,7 @@ impl<'input> Tokenizer<'input> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::ns::*;
 
     #[test]
     fn tokenize_n_per_n() {
@@ -1368,7 +1368,7 @@ mod tests {
         let mut tokenizer = Tokenizer::new(&source);
         for n in numbers {
             let Ok((Token::NumericLiteral(n2), location)) = tokenizer.scan_ie_div() else { panic!() };
-            assert_eq!(n, NumericLiteral { value: n2, location }.parse_double().unwrap());
+            assert_eq!(n, NumericLiteral { value: n2, location }.parse_double(false).unwrap());
         }
     }
 
