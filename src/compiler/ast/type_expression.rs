@@ -39,21 +39,5 @@ pub struct TupleTypeExpression {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct FunctionTypeExpression {
     pub location: Location,
-    pub parameters: Vec<FunctionTypeParameter>,
-    pub result_type: Rc<Expression>,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct FunctionTypeParameter {
-    pub location: Location,
-    pub kind: FunctionParameterKind,
-    pub name: (String, Location),
-    pub type_annotation: Option<Rc<Expression>>,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub enum FunctionParameterKind {
-    Required,
-    Optional,
-    Rest,
+    pub signature: FunctionSignature,
 }

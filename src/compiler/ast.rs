@@ -72,9 +72,7 @@ pub use type_expression::*;
 mod destructuring;
 pub use destructuring::*;
 
-// Directives
-mod directive;
-pub use directive::*;
+// Statements
 mod empty_statement;
 pub use empty_statement::*;
 mod expression_statement;
@@ -95,5 +93,51 @@ mod while_statement;
 pub use while_statement::*;
 mod for_statement;
 pub use for_statement::*;
+mod continue_statement;
+pub use continue_statement::*;
+mod break_statement;
+pub use break_statement::*;
+mod with_statement;
+pub use with_statement::*;
+mod return_statement;
+pub use return_statement::*;
+mod throw_statement;
+pub use throw_statement::*;
+mod try_statement;
+pub use try_statement::*;
+mod default_xml_namespace_statement;
+pub use default_xml_namespace_statement::*;
+
+// Directives
+mod directive;
+pub use directive::*;
+mod configuration_directive;
+pub use configuration_directive::*;
+mod import_directive;
+pub use import_directive::*;
+mod use_directive;
+pub use use_directive::*;
+
+// Miscellaneous
+mod attributes;
+pub use attributes::*;
+mod type_parameter;
+pub use type_parameter::*;
+
+// Definitions
 mod variable_definition;
 pub use variable_definition::*;
+mod function_definition;
+pub use function_definition::*;
+mod class_definition;
+pub use class_definition::*;
+mod enum_definition;
+pub use enum_definition::*;
+mod interface_definition;
+pub use interface_definition::*;
+mod type_definition;
+pub use type_definition::*;
+mod package_definition;
+pub use package_definition::*;
+mod program;
+pub use program::*;

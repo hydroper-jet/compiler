@@ -30,7 +30,8 @@ pub struct SwitchTypeStatement {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TypeCase {
+    pub location: Location,
     /// Case binding. If `None`, designates a `default {}` case.
-    pub binding: Option<Vec<TypedDestructuring>>,
+    pub binding: Option<Rc<TypedDestructuring>>,
     pub block: Rc<Block>,
 }

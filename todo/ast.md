@@ -105,32 +105,29 @@
   * [x] `for`
   * [x] `for..in`
   * [x] `for each`
-  * [ ] `continue [label]`
-  * [ ] `break [label]`
-  * [ ] `try`
-  * [ ] `with`
-  * [ ] `return [v]`
-  * [ ] `throw e`
-  * [ ] `default xml namespace = ns`
+  * [x] `continue [label]`
+  * [x] `break [label]`
+  * [x] `try`
+  * [x] `with`
+  * [x] `return [v]`
+  * [x] `throw e`
+  * [x] `default xml namespace = ns`
 * Attributes
-  * [ ] Attributes structure
+  * [x] Attributes structure
 * Directives
-  * [ ] `configuration` directive
-    * [ ] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
-  * [ ] `import`
-  * [ ] `use`
-* Configuration expressions
-  * [ ] Configuration expressions
+  * [x] `configuration` directive
+  * [x] `import`
+  * [x] `use`
 * Definitions
-  * [ ] Variable definition
-  * [ ] Function definition
-    * [ ] Getter
-    * [ ] Setter
-    * [ ] Proxy
-    * [ ] Constructor
-  * [ ] `class`
-  * [ ] `enum`
-  * [ ] `interface`
-  * [ ] `type`
-  * [ ] `package`
-  * [ ] Program
+  * [x] Variable definition
+  * [x] Function definition
+    * [x] Getter
+    * [x] Setter
+    * [x] Proxy
+    * [x] Constructor
+  * [x] `class`
+  * [x] `enum`
+  * [x] `interface`
+  * [x] `type`
+  * [x] `package`
+  * [x] Program

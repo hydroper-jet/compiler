@@ -17,6 +17,20 @@ pub enum Directive {
     WhileStatement(WhileStatement),
     ForStatement(ForStatement),
     ForInStatement(ForInStatement),
+    BreakStatement(BreakStatement),
+    ContinueStatement(ContinueStatement),
+    WithStatement(WithStatement),
+    ReturnStatement(ReturnStatement),
+    ThrowStatement(ThrowStatement),
+    DefaultXmlNamespaceStatement(DefaultXmlNamespaceStatement),
+    TryStatement(TryStatement),
+    ConfigurationDirective(ConfigurationDirective),
+    VariableDefinition(VariableDefinition),
+    FunctionDefinition(FunctionDefinition),
+    ClassDefinition(ClassDefinition),
+    EnumDefinition(EnumDefinition),
+    InterfaceDefinition(InterfaceDefinition),
+    TypeDefinition(TypeDefinition),
 }
 
 impl Directive {
@@ -34,6 +48,20 @@ impl Directive {
             Self::WhileStatement(d) => d.location.clone(),
             Self::ForStatement(d) => d.location.clone(),
             Self::ForInStatement(d) => d.location.clone(),
+            Self::BreakStatement(d) => d.location.clone(),
+            Self::ContinueStatement(d) => d.location.clone(),
+            Self::WithStatement(d) => d.location.clone(),
+            Self::ReturnStatement(d) => d.location.clone(),
+            Self::ThrowStatement(d) => d.location.clone(),
+            Self::DefaultXmlNamespaceStatement(d) => d.location.clone(),
+            Self::TryStatement(d) => d.location.clone(),
+            Self::ConfigurationDirective(d) => d.location.clone(),
+            Self::VariableDefinition(d) => d.location.clone(),
+            Self::FunctionDefinition(d) => d.location.clone(),
+            Self::ClassDefinition(d) => d.location.clone(),
+            Self::EnumDefinition(d) => d.location.clone(),
+            Self::InterfaceDefinition(d) => d.location.clone(),
+            Self::TypeDefinition(d) => d.location.clone(),
         }
     }
 }
