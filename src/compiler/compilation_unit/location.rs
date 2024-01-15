@@ -126,8 +126,8 @@ impl Location {
         }
     }
 
-    /// The source file that this location belongs to.
-    pub fn source(&self) -> Rc<CompilationUnit> {
+    /// The compilation_unit that this location belongs to.
+    pub fn compilation_unit(&self) -> Rc<CompilationUnit> {
         self.compilation_unit.clone()
     }
 

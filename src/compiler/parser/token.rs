@@ -375,7 +375,7 @@ impl Token {
     }
 
     /// Converts this token into a binary operator, excluding
-    /// `not instanceof`, `not in`, and `is not`.
+    /// `not in`, and `is not`.
     pub fn to_binary_operator(&self) -> Option<Operator> {
         match self {
             Self::Times => Some(Operator::Multiply),
