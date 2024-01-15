@@ -1,4 +1,5 @@
 #![feature(decl_macro)]
+#![feature(try_blocks)]
 
 pub mod ast;
 pub mod compilation_unit;
