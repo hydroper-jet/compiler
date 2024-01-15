@@ -6,6 +6,9 @@ pub enum Token {
     Eof,
     Identifier(String),
     StringLiteral(String),
+    /// Numeric literal token.
+    /// The numeric value is in character representation, which may be parsed
+    /// through data type specific methods such as [`NumericLiteral::parse_double()`].
     NumericLiteral(String),
     RegExpLiteral {
         body: String,

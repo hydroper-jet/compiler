@@ -1,10 +1,5 @@
 # Parsing
 
-## Parsing changes
-
-* Error recovery
-  * https://langdev.stackexchange.com/q/3311/606
-
 ## Covered
 
 * Expressions
