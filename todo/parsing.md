@@ -151,6 +151,8 @@
   * [ ] `use`
 * Configuration expressions
   * [ ] Configuration expressions
+    * [ ] Translate `=` into `==`
+    * [ ] Translate right identifier in `=` or `!=` to a *StringLiteral*
 * Definitions
   * [ ] Variable definition
   * [ ] Function definition
