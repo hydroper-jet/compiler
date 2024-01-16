@@ -54,6 +54,7 @@
     * [ ] `~v`
     * [ ] `!v`
   * [ ] `v: T` lookahead != `:` (*ExpressionWithTypeAnnotation*, used internally for arrow function signatures)
+    * [ ] Parse it only under a `with_type_annotation = true` context
     * One precedence less than unary expressions and one precedence greater than binary expressions
   * [ ] *BinaryExpression*
     * [ ] `a ** b`
