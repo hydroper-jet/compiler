@@ -86,6 +86,7 @@
     * [ ] `a || b`
     * [ ] `a ?? b`
   * [ ] `a ? b : c`
+    * [ ] `b` is a `with_type_annotation = false` context
   * [ ] `yield`
   * [ ] `... => body`
     * Refines the left side into an *ArrowSignature* and parses an arrow function with an activation context.

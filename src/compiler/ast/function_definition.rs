@@ -5,6 +5,7 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct FunctionDefinition {
     pub location: Location,
+    pub jetdoc: Option<Rc<JetDoc>>,
     pub attributes: Vec<Attribute>,
     pub name: FunctionName,
     pub type_parameters: Vec<Rc<TypeParameter>>,

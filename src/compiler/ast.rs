@@ -121,6 +121,8 @@ pub use use_directive::*;
 // Miscellaneous
 mod attributes;
 pub use attributes::*;
+mod jetdoc;
+pub use jetdoc::*;
 mod type_parameter;
 pub use type_parameter::*;
 
