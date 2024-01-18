@@ -12,6 +12,9 @@ pub struct JetDoc {
 #[derive(Clone, Serialize, Deserialize)]
 pub enum JetDocTag {
     Default(String),
+    Deprecated {
+        message: Option<String>,
+    },
     Event {
         name: String,
         description: String,
