@@ -19,11 +19,6 @@ pub struct VoidTypeExpression {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct UndefinedTypeExpression {
-    pub location: Location,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
 pub struct ArrayTypeExpression {
     pub location: Location,
     pub expression: Rc<Expression>,

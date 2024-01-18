@@ -38,6 +38,7 @@ impl JetReservedWord {
                 match name {
                     "case" => Some(Token::Case),
                     "else" => Some(Token::Else),
+                    "null" => Some(Token::Null),
                     "this" => Some(Token::This),
                     "true" => Some(Token::True),
                     "void" => Some(Token::Void),
@@ -93,7 +94,6 @@ impl JetReservedWord {
                 match name {
                     "interface" => Some(Token::Interface),
                     "protected" => Some(Token::Protected),
-                    "undefined" => Some(Token::Undefined),
                     _ => None,
                 }
             },

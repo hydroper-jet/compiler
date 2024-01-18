@@ -13,7 +13,7 @@
     * [ ] `(q)::x` (qualified identifier)
   * [ ] `@id`
     * Attribute qualified identifier.
-  * [ ] *UndefinedLiteral*
+  * [ ] *NullLiteral*
   * [ ] `true`
   * [ ] `false`
   * [ ] *NumericLiteral* (the value is kept as a raw string for context type flexibility)
@@ -23,7 +23,6 @@
   * [ ] *XMLInitializer*
   * [ ] *ArrayInitializer*
   * [ ] *ObjectInitializer*
-  * [ ] *FunctionExpression*
   * [ ] *PostfixExpression*
     * [ ] `import.meta`
     * [ ] New expression
@@ -83,6 +82,7 @@
     * [ ] `a ?? b`
   * [ ] `a ? b : c`
   * [ ] `yield`
+  * [ ] *FunctionExpression*
   * [ ] `x = y`
   * [ ] `{...} = v` or `[...] = v`
   * [ ] `x [CompoundAssignment] v`
@@ -94,7 +94,6 @@
   * [ ] `*`
   * [ ] `id`
   * [ ] `void`
-  * [ ] `undefined`
   * [ ] `[...]`
     * [ ] `[T]`
     * [ ] `[T1, T2, ...]`
@@ -103,6 +102,7 @@
   * [ ] `o.x`
   * [ ] `T.<...>`
   * [ ] `T?`
+  * [ ] `T!`
 * Statements
   * [ ] `;`
   * [ ] Expression statement
