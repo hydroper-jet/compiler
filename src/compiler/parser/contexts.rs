@@ -5,13 +5,13 @@ use std::rc::Rc;
 
 /// Context used to control the parsing of an expression.
 #[derive(Clone)]
-pub struct ExpressionContext {
+pub struct ParsingExpressionContext {
     pub min_precedence: OperatorPrecedence,
     pub allow_in: bool,
     pub allow_assignment: bool,
 }
 
-impl Default for ExpressionContext {
+impl Default for ParsingExpressionContext {
     fn default() -> Self {
         Self {
             min_precedence: OperatorPrecedence::List,
@@ -22,22 +22,7 @@ impl Default for ExpressionContext {
 }
 
 #[derive(Clone)]
-struct ArrowFunctionContext {
-    left: Option<Rc<Expression>>,
-    right_context: ExpressionContext,
-}
-
-impl Default for ArrowFunctionContext {
-    fn default() -> Self {
-        Self {
-            left: None,
-            right_context: default(),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub enum DirectiveContext {
+pub enum ParsingDirectiveContext {
     Default,
     TopLevel,
     PackageBlock,
@@ -51,12 +36,12 @@ pub enum DirectiveContext {
     },
     WithControl {
         to_be_labeled: Option<String>,
-        control_context: ControlContext,
-        labels: HashMap<String, ControlContext>,
+        control_context: ParsingControlContext,
+        labels: HashMap<String, ParsingControlContext>,
     },
 }
 
-impl DirectiveContext {
+impl ParsingDirectiveContext {
     fn is_type_block(&self) -> bool {
         match self {
             Self::ClassBlock { .. } |
@@ -73,7 +58,7 @@ impl DirectiveContext {
         }
     }
 
-    fn override_control_context(&self, label_only: bool, mut context: ControlContext) -> Self {
+    fn override_control_context(&self, label_only: bool, mut context: ParsingControlContext) -> Self {
         let mut prev_context = None;
         let mut label = None;
         let mut labels = match self {
@@ -88,7 +73,7 @@ impl DirectiveContext {
             labels.insert(label, context.clone());
         }
         if label_only {
-            context = prev_context.unwrap_or(ControlContext {
+            context = prev_context.unwrap_or(ParsingControlContext {
                 breakable: false,
                 iteration: false,
             });
@@ -105,7 +90,7 @@ impl DirectiveContext {
             },
             _ => Self::WithControl {
                 to_be_labeled: Some(label),
-                control_context: ControlContext {
+                control_context: ParsingControlContext {
                     breakable: false,
                     iteration: false,
                 },
@@ -118,7 +103,7 @@ impl DirectiveContext {
         self.resolve_label(label).is_some()
     }
 
-    fn resolve_label(&self, label: String) -> Option<ControlContext> {
+    fn resolve_label(&self, label: String) -> Option<ParsingControlContext> {
         if let Self::WithControl { labels, .. } = &self { labels.get(&label).map(|c| c.clone()) } else { None }
     }
 
@@ -142,17 +127,7 @@ impl DirectiveContext {
 }
 
 #[derive(Clone)]
-pub struct ControlContext {
+pub struct ParsingControlContext {
     breakable: bool,
     iteration: bool,
-}
-
-#[derive(Clone)]
-struct AnnotatableContext {
-    start: Location,
-    metadata_exp: Vec<Rc<Expression>>,
-    asdoc: Option<Rc<JetDoc>>,
-    first_modifier: Option<Rc<Expression>>,
-    previous_token_is_definition_keyword: bool,
-    context: DirectiveContext,
 }
