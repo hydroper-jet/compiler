@@ -9,7 +9,6 @@ pub struct ExpressionContext {
     pub min_precedence: OperatorPrecedence,
     pub allow_in: bool,
     pub allow_assignment: bool,
-    pub with_type_annotation: bool,
 }
 
 impl Default for ExpressionContext {
@@ -18,7 +17,6 @@ impl Default for ExpressionContext {
             min_precedence: OperatorPrecedence::List,
             allow_in: true,
             allow_assignment: true,
-            with_type_annotation: true,
         }
     }
 }

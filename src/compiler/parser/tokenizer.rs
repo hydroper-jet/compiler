@@ -106,12 +106,6 @@ impl<'input> Tokenizer<'input> {
             '=' => {
                 self.characters.next();
                 let ch = self.characters.peek_or_zero();
-                // FatArrow
-                if ch == '>' {
-                    self.characters.next();
-                    let location = start.combine_with(self.cursor_location());
-                    return Ok((Token::FatArrow, location));
-                }
                 // StrictEquals
                 if ch == '=' && self.characters.peek_at_or_zero(1) == '=' {
                     self.characters.skip_count_in_place(2);

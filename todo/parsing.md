@@ -9,8 +9,6 @@
     * [ ] `q::x` (qualified identifier)
     * [ ] `embed ObjectInitializer`
   * [ ] Parentheses
-    * [ ] `()`
-      * Produces an internal empty parentheses expression (*ArrowEmptyParameters*) used for arrow functions.
     * [ ] `(x)`
     * [ ] `(q)::x` (qualified identifier)
   * [ ] `@id`
@@ -53,9 +51,6 @@
     * [ ] `-v`
     * [ ] `~v`
     * [ ] `!v`
-  * [ ] `v: T` lookahead != `:` (*ExpressionWithTypeAnnotation*, used internally for arrow function signatures)
-    * [ ] Parse it only under a `with_type_annotation = true` context
-    * One precedence less than unary expressions and one precedence greater than binary expressions
   * [ ] *BinaryExpression*
     * [ ] `a ** b`
     * [ ] `a * b`
@@ -87,15 +82,10 @@
     * [ ] `a || b`
     * [ ] `a ?? b`
   * [ ] `a ? b : c`
-    * [ ] `b` is a `with_type_annotation = false` context
   * [ ] `yield`
-  * [ ] `... => body`
-    * Refines the left side into an *ArrowSignature* and parses an arrow function with an activation context.
   * [ ] `x = y`
   * [ ] `{...} = v` or `[...] = v`
   * [ ] `x [CompoundAssignment] v`
-  * [ ] `...x` as *Rest* (used internally for arrays and arrow function signatures)
-    * Same precedence as assignment
   * [ ] `x, y`
 * Destructuring
   * [ ] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
@@ -108,14 +98,8 @@
   * [ ] `[...]`
     * [ ] `[T]`
     * [ ] `[T1, T2, ...]`
-  * [ ] `(...)`
-    * [ ] `(x)`
-    * [ ] `() => T`
-    * [ ] `(a: T) => T`
-    * [ ] `(a: T, ...) => T`
-    * [ ] `(a?: T, ...) => T`
-    * [ ] `(...a: [T]) => T`
-    * [ ] `(...) => T`
+  * [ ] `(x)` parenthesized
+  * [ ] `function(...): T` type expression
   * [ ] `o.x`
   * [ ] `T.<...>`
   * [ ] `T?`

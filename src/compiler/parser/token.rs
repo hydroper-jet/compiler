@@ -77,8 +77,6 @@ pub enum Token {
     LogicalAndAssign,
     LogicalXorAssign,
     LogicalOrAssign,
-    /// `=>`
-    FatArrow,
     /// `**`
     Power,
     /// `**=`
@@ -187,7 +185,6 @@ impl ToString for Token {
             Token::Dot => "'.'",
             Token::Semicolon => "';'",
             Token::Comma => "','",
-            Token::FatArrow => "=>",
             Token::Lt => "'<'",
             Token::Gt => "'>'",
             Token::Le => "'<='",

@@ -5,10 +5,8 @@ use num_traits::FromPrimitive;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum OperatorPrecedence {
-    Postfix = 17,
-    Unary = 16,
-    /// Internal type annotation operator
-    TypeAnnotation = 15,
+    Postfix = 16,
+    Unary = 15,
     Exponentiation = 14,
     Multiplicative = 13,
     Additive = 12,
@@ -22,8 +20,7 @@ pub enum OperatorPrecedence {
     LogicalXor = 4,
     /// Includes logical OR and nullish coalescing (`??`).
     LogicalOrAndOther = 3,
-    /// Includes assignment, conditional, `yield`, and rest (`...`) operators
-    /// and arrow functions.
+    /// Includes assignment operators, conditional operator, function expression and `yield` operator.
     AssignmentAndOther = 2,
     List = 1,
 }
