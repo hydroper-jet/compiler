@@ -6,6 +6,5 @@ use std::rc::Rc;
 pub struct TypedDestructuring {
     pub location: Location,
     pub destructuring: Rc<Expression>,
-    pub non_null: bool,
     pub type_annotation: Option<Rc<Expression>>,
 }

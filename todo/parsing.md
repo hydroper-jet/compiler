@@ -88,7 +88,7 @@
   * [x] `x [CompoundAssignment] v`
   * [x] `x, y`
 * Destructuring
-  * [ ] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
+  * [x] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
 * Type expressions
   * [ ] `?T`
     * Results into `NullableTypeExpression`

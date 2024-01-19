@@ -1562,6 +1562,39 @@ impl<'input> Parser<'input> {
         self.expect(Token::RightParen)?;
         expr
     }
+
+    fn parse_typed_destructuring(&mut self) -> Result<TypedDestructuring, ParsingFailure> {
+        self.mark_location();
+        let mut destructuring: Rc<Expression>;
+        if self.peek(Token::LeftBrace) {
+            destructuring = self.parse_object_initializer()?;
+        } else if self.peek(Token::LeftBracket) {
+            destructuring = self.parse_array_initializer()?;
+        } else {
+            let id = self.expect_identifier(true)?;
+            let id = QualifiedIdentifier {
+                location: id.1.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(id.clone()),
+            };
+            destructuring = Rc::new(Expression::QualifiedIdentifier(id));
+        }
+        if self.consume(Token::Exclamation)? {
+            self.push_location(&destructuring.location());
+            destructuring = Rc::new(Expression::Unary(UnaryExpression {
+                location: self.pop_location(),
+                operator: Operator::NonNull,
+                expression: destructuring.clone(),
+            }));
+        }
+        let type_annotation = if self.consume(Token::Colon)? { Some(self.parse_type_expression()?) } else { None };
+        Ok(TypedDestructuring {
+            location: self.pop_location(),
+            destructuring,
+            type_annotation,
+        })
+    }
 }
 
 #[derive(Clone)]
