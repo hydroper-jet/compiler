@@ -5,11 +5,12 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ArrayLiteral {
     pub location: Location,
-    pub elements: Vec<Option<Element>>,
+    pub elements: Vec<Element>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Element {
+    Elision,
     Expression(Rc<Expression>),
     Rest((Rc<Expression>, Location)),
 }

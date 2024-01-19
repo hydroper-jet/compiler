@@ -6,5 +6,5 @@ use std::rc::Rc;
 pub struct NewExpression {
     pub location: Location,
     pub base: Rc<Expression>,
-    pub arguments: Option<Vec<Expression>>,
+    pub arguments: Option<Vec<Rc<Expression>>>,
 }

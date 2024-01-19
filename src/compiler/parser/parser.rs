@@ -576,7 +576,7 @@ impl<'input> Parser<'input> {
 
     /// Ensures a parameter list consists of zero or more required parameters followed by
     /// zero or more optional parameters optionally followed by a rest parameter.
-    fn validate_parameter_list(&mut self, params: &Vec<Parameter>) -> Result<(), ParsingFailure> {
+    fn validate_parameter_list(&mut self, params: &Vec<Rc<Parameter>>) -> Result<(), ParsingFailure> {
         let mut least_kind = ParameterKind::Required; 
         let mut has_rest = false;
         for param in params {
@@ -812,30 +812,10 @@ impl<'input> Parser<'input> {
         self.duplicate_location();
         self.expect(Token::LeftParen)?;
         let mut params: Vec<Rc<Parameter>> = vec![];
-        while !self.peek(Token::RightParen) {
-            self.mark_location();
-            let rest = self.consume(Token::Ellipsis)?;
-            let binding: Rc<VariableBinding> = self.parse_variable_binding(true)?;
-            let has_initializer = binding.init.is_some();
-            let location = self.pop_location();
-            if rest && has_initializer {
-                self.add_syntax_error(&location.clone(), DiagnosticKind::MalformedRestParameter, vec![]);
-            }
-            let param = Rc::new(Parameter {
-                location,
-                destructuring: binding.destructuring.clone(),
-                default_value: binding.initializer.clone(),
-                kind: if rest {
-                    ParameterKind::Rest
-                } else if has_initializer {
-                    ParameterKind::Optional
-                } else {
-                    ParameterKind::Required
-                },
-            });
-            params.push(param);
-            if !self.consume(Token::Comma)? {
-                break;
+        if !self.peek(Token::RightParen) {
+            params.push(self.parse_parameter()?);
+            while self.consume(Token::Comma)? {
+                params.push(self.parse_parameter()?);
             }
         }
         self.expect(Token::RightParen)?;
@@ -877,6 +857,29 @@ impl<'input> Parser<'input> {
                 result_type: return_annotation,
             },
             body,
+        }))
+    }
+
+    fn parse_parameter(&mut self) -> Result<Rc<Parameter>, ParsingFailure> {
+        self.mark_location();
+        let rest = self.consume(Token::Ellipsis)?;
+        let binding: Rc<VariableBinding> = self.parse_variable_binding(true)?;
+        let has_initializer = binding.init.is_some();
+        let location = self.pop_location();
+        if rest && has_initializer {
+            self.add_syntax_error(&location.clone(), DiagnosticKind::MalformedRestParameter, vec![]);
+        }
+        Ok(Rc::new(Parameter {
+            location,
+            destructuring: binding.destructuring.clone(),
+            default_value: binding.initializer.clone(),
+            kind: if rest {
+                ParameterKind::Rest
+            } else if has_initializer {
+                ParameterKind::Optional
+            } else {
+                ParameterKind::Required
+            },
         }))
     }
 
@@ -952,7 +955,7 @@ impl<'input> Parser<'input> {
             self.next()?;
             let key_expr = self.parse_expression(ParsingExpressionContext {
                 allow_in: true,
-                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                min_precedence: OperatorPrecedence::List,
                 ..default()
             })?;
             self.expect(Token::RightBracket)?;
@@ -962,6 +965,430 @@ impl<'input> Parser<'input> {
             let (id, location) = self.expect_identifier(true)?;
             Ok((FieldName::Identifier(id), location))
         }
+    }
+
+    fn parse_new_expression(&mut self, start: Location) -> Result<Rc<Expression>, ParsingFailure> {
+        self.push_location(&start);
+        let base = self.parse_new_subexpression()?;
+        let arguments = if self.peek(Token::LeftParen) { Some(self.parse_arguments()?) } else { None };
+        Ok(Rc::new(Expression::New(NewExpression {
+            location: self.pop_location(),
+            base, arguments,
+        })))
+    }
+
+    fn parse_new_expression_start(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        if self.peek(Token::New) {
+            let start = self.token_location();
+            self.next()?;
+            self.parse_new_expression(start)
+        } else if self.peek(Token::Super) {
+            self.parse_super_expression_followed_by_property_operator()
+        } else {
+            self.parse_primary_expression()
+        }
+    }
+
+    fn parse_super_expression_followed_by_property_operator(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.mark_location();
+        self.duplicate_location();
+        self.next()?;
+        let arguments = if self.peek(Token::LeftParen) { Some(self.parse_arguments()?) } else { None };
+        let super_expr = Rc::new(Expression::Super(SuperExpression {
+            location: self.pop_location(),
+            object: arguments,
+        }));
+
+        if self.consume(Token::LeftBracket)? {
+            let key = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+            self.expect(Token::RightBracket)?;
+            Ok(Rc::new(Expression::ComputedMember(ComputedMemberExpression {
+                location: self.pop_location(),
+                base: super_expr, key,
+            })))
+        } else {
+            self.expect(Token::Dot)?;
+            let identifier = self.parse_qualified_identifier()?;
+            Ok(Rc::new(Expression::Member(MemberExpression {
+                location: self.pop_location(),
+                base: super_expr, identifier,
+            })))
+        }
+    }
+
+    fn parse_arguments(&mut self) -> Result<Vec<Rc<Expression>>, ParsingFailure> {
+        self.expect(Token::LeftParen)?;
+        let mut arguments = vec![];
+        if !self.peek(Token::RightParen) {
+            arguments.push(self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?);
+            while self.consume(Token::Comma)? {
+                arguments.push(self.parse_expression(ParsingExpressionContext {
+                    allow_in: true,
+                    min_precedence: OperatorPrecedence::AssignmentAndOther,
+                    ..default()
+                })?);
+            }
+        }
+        self.expect(Token::RightParen)?;
+        Ok(arguments)
+    }
+
+    fn parse_new_subexpression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        let mut base = self.parse_new_expression_start()?;
+        loop {
+            if self.consume(Token::LeftBracket)? {
+                self.push_location(&base.location());
+                let key = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+                self.expect(Token::RightBracket)?;
+                base = Rc::new(Expression::ComputedMember(ComputedMemberExpression {
+                    location: self.pop_location(),
+                    base, key,
+                }));
+            } else if self.consume(Token::Dot)? {
+                self.push_location(&base.location());
+                let identifier = self.parse_qualified_identifier()?;
+                base = Rc::new(Expression::Member(MemberExpression {
+                    location: self.pop_location(),
+                    base, identifier,
+                }));
+            } else {
+                break;
+            }
+        }
+        Ok(base)
+    }
+
+    fn parse_primary_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        if let Token::Identifier(id) = self.token.0.clone() {
+            let id_location = self.token_location();
+            self.next()?;
+
+            // EmbedExpression
+            if self.peek(Token::LeftBrace) && id == "embed" && self.previous_token.1.character_count() == "embed".len() {
+                return Ok(self.finish_embed_expression(id_location)?);
+            }
+
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id((id, id_location.clone())),
+            }));
+            if self.peek(Token::ColonColon) {
+                self.push_location(&id_location.clone());
+                self.duplicate_location();
+                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                Ok(Rc::new(Expression::QualifiedIdentifier(id)))
+            } else {
+                Ok(id)
+            }
+        } else if self.peek(Token::Null) {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::NullLiteral(NullLiteral {
+                location: self.pop_location(),
+            })))
+        } else if self.peek(Token::False) {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::BooleanLiteral(BooleanLiteral {
+                location: self.pop_location(),
+                value: false,
+            })))
+        } else if self.peek(Token::True) {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::BooleanLiteral(BooleanLiteral {
+                location: self.pop_location(),
+                value: true,
+            })))
+        } else if let Token::NumericLiteral(n) = self.token.0 {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::NumericLiteral(NumericLiteral {
+                location: self.pop_location(),
+                value: n,
+            })))
+        } else if let Token::StringLiteral(ref s) = self.token.0.clone() {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::StringLiteral(StringLiteral {
+                location: self.pop_location(),
+                value: s.clone(),
+            })))
+        } else if self.peek(Token::This) {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::ThisLiteral(ThisLiteral {
+                location: self.pop_location(),
+            })))
+        } else if let Token::RegExpLiteral { ref body, ref flags } = self.token.0.clone() {
+            self.mark_location();
+            self.next()?;
+            Ok(Rc::new(Expression::RegExpLiteral(RegExpLiteral {
+                location: self.pop_location(),
+                body: body.clone(), flags: flags.clone(),
+            })))
+        // `@`
+        } else if self.peek(Token::Attribute) {
+            self.mark_location();
+            let id = self.parse_qualified_identifier()?;
+            Ok(Rc::new(Expression::QualifiedIdentifier(id)))
+        // Parentheses
+        } else if self.peek(Token::LeftParen) {
+            return Ok(self.parse_paren_list_expr_or_qual_id()?);
+        // `*`
+        } else if self.peek(Token::Times) {
+            let id_location = self.token_location();
+            self.next()?;
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(("*".into(), id_location.clone())),
+            }));
+            if self.peek(Token::ColonColon) {
+                self.push_location(&id_location.clone());
+                self.duplicate_location();
+                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                Ok(Rc::new(Expression::QualifiedIdentifier(id)))
+            } else {
+                Ok(id)
+            }
+        // XMLList, XMLElement, XMLMarkup
+        } else if self.peek(Token::Lt) {
+            if let Some(token) = self.tokenizer.scan_xml_markup(self.token_location())? {
+                self.token = token;
+            }
+            let start = self.token_location();
+            if let Token::XmlMarkup(content) = &self.token.0.clone() {
+                self.mark_location();
+                self.next()?;
+                Ok(Rc::new(Expression::XmlMarkup(XmlMarkupExpression {
+                    location: self.pop_location(),
+                    markup: content.clone(),
+                })))
+            } else {
+                Ok(self.parse_xml_element_or_xml_list(start)?)
+            }
+        // ArrayInitializer
+        } else if self.peek(Token::LeftBracket) {
+            Ok(self.parse_array_initializer()?)
+        } else if self.peek(Token::LeftBrace) {
+            Ok(self.parse_object_initializer()?)
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedExpression, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
+        }
+    }
+
+    fn finish_embed_expression(&mut self, start: Location) -> Result<Rc<Expression>, ParsingFailure> {
+        self.push_location(&start);
+        self.next()?;
+        let Expression::ObjectInitializer(descriptor) = self.parse_object_initializer()?.as_ref();
+        return Ok(Rc::new(Expression::Embed(EmbedExpression {
+            location: self.pop_location(),
+            description: descriptor.clone(),
+        })));
+    }
+
+    fn parse_array_initializer(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.mark_location();
+
+        self.expect(Token::LeftBracket)?;
+
+        let mut elements: Vec<Element> = vec![];
+
+        while !self.peek(Token::RightBracket) {
+            let mut ellipses = false;
+            while self.consume(Token::Comma)? {
+                elements.push(Element::Elision);
+                ellipses = true;
+            }
+            if !ellipses  {
+                if self.peek(Token::Ellipsis) {
+                    self.mark_location();
+                    self.next()?;
+                    elements.push(Element::Rest((self.parse_expression(ParsingExpressionContext {
+                        allow_in: true,
+                        min_precedence: OperatorPrecedence::AssignmentAndOther,
+                        ..default()
+                    })?, self.pop_location())));
+                } else {
+                    elements.push(Element::Expression(self.parse_expression(ParsingExpressionContext {
+                        allow_in: true,
+                        min_precedence: OperatorPrecedence::AssignmentAndOther,
+                        ..default()
+                    })?));
+                }
+            }
+            if !self.consume(Token::Comma)? {
+                break;
+            }
+        }
+        self.expect(Token::RightBracket)?;
+        Ok(Rc::new(Expression::ArrayLiteral(ArrayLiteral {
+            location: self.pop_location(),
+            elements,
+        })))
+    }
+
+    fn parse_xml_element_or_xml_list(&mut self, start: Location) -> Result<Rc<Expression>, ParsingFailure> {
+        self.next_ie_xml_tag()?;
+        if self.consume_and_ie_xml_content(Token::Gt)? {
+            self.push_location(&start);
+            let content = self.parse_xml_content()?;
+            self.expect_and_ie_xml_tag(Token::XmlLtSlash)?;
+            self.expect(Token::Gt)?;
+            return Ok(Rc::new(Expression::XmlList(XmlListExpression {
+                location: self.pop_location(),
+                content,
+            })));
+        }
+
+        self.push_location(&start);
+        let element = Rc::new(self.parse_xml_element(start, true)?);
+        return Ok(Rc::new(Expression::Xml(XmlExpression {
+            location: self.pop_location(),
+            element,
+        })));
+    }
+
+    /// Parses XMLElement starting from its XMLTagContent.
+    fn parse_xml_element(&mut self, start: Location, ends_at_ie_div: bool) -> Result<XmlElement, ParsingFailure> {
+        self.push_location(&start);
+        let name = self.parse_xml_tag_name()?;
+        let mut attributes: Vec<Rc<XmlAttribute>> = vec![];
+        let mut attribute_expression: Option<Rc<Expression>> = None;
+        while self.consume_and_ie_xml_tag(Token::XmlWhitespace)? {
+            if self.consume(Token::LeftBrace)? {
+                let expr = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::AssignmentAndOther, ..default() })?;
+                self.expect_and_ie_xml_tag(Token::RightBrace)?;
+                attribute_expression = Some(expr);
+                self.consume_and_ie_xml_tag(Token::XmlWhitespace)?;
+                break;
+            } else if matches!(self.token.0, Token::XmlName(_)) {
+                self.mark_location();
+                let name = self.parse_xml_name()?;
+                self.consume_and_ie_xml_tag(Token::XmlWhitespace)?;
+                self.expect_and_ie_xml_tag(Token::Assign)?;
+                self.consume_and_ie_xml_tag(Token::XmlWhitespace)?;
+                let value: XmlAttributeValue;
+                if self.consume(Token::LeftBrace)? {
+                    let expr = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::AssignmentAndOther, ..default() })?;
+                    self.expect_and_ie_xml_tag(Token::RightBrace)?;
+                    value = XmlAttributeValue::Expression(expr);
+                } else {
+                    value = XmlAttributeValue::Value(self.parse_xml_attribute_value()?);
+                }
+                attributes.push(Rc::new(XmlAttribute {
+                    location: self.pop_location(),
+                    name, value
+                }));
+            } else {
+                break;
+            }
+        }
+
+        let mut content: Option<Vec<Rc<XmlElementContent>>> = None;
+        let mut closing_name: Option<XmlTagName> = None;
+
+        let is_empty;
+
+        if ends_at_ie_div {
+            is_empty = self.consume(Token::XmlSlashGt)?;
+        } else {
+            is_empty = self.consume_and_ie_xml_content(Token::XmlSlashGt)?;
+        }
+
+        if !is_empty {
+            self.expect_and_ie_xml_content(Token::Gt)?;
+            content = Some(self.parse_xml_content()?);
+            self.expect_and_ie_xml_tag(Token::XmlLtSlash)?;
+            closing_name = Some(self.parse_xml_tag_name()?);
+            self.consume_and_ie_xml_tag(Token::XmlWhitespace)?;
+            if ends_at_ie_div {
+                self.expect(Token::Gt)?;
+            } else {
+                self.expect_and_ie_xml_content(Token::Gt)?;
+            }
+        }
+
+        Ok(XmlElement {
+            location: self.pop_location(),
+            name,
+            attributes,
+            attribute_expression,
+            content,
+            closing_name,
+        })
+    }
+    
+    fn parse_xml_attribute_value(&mut self) -> Result<(String, Location), ParsingFailure> {
+        if let Token::XmlAttributeValue(value) = self.token.0.clone() {
+            let location = self.token_location();
+            self.next_ie_xml_tag()?;
+            return Ok((value, location));
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedXmlAttributeValue, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
+        }
+    }
+
+    fn parse_xml_tag_name(&mut self) -> Result<XmlTagName, ParsingFailure> {
+        if self.consume(Token::LeftBrace)? {
+            let expr = self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?;
+            self.expect_and_ie_xml_tag(Token::RightBrace)?;
+            Ok(XmlTagName::Expression(expr))
+        } else {
+            Ok(XmlTagName::Name(self.parse_xml_name()?))
+        }
+    }
+
+    fn parse_xml_name(&mut self) -> Result<(String, Location), ParsingFailure> {
+        if let Token::XmlName(name) = self.token.0.clone() {
+            let name_location = self.token_location();
+            self.next_ie_xml_tag()?;
+            return Ok((name, name_location));
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedXmlName, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
+        }
+    }
+
+    /// Parses XMLContent until a `</` token.
+    fn parse_xml_content(&mut self) -> Result<Vec<Rc<XmlElementContent>>, ParsingFailure> {
+        let mut content = vec![];
+        while !self.peek(Token::XmlLtSlash) {
+            if self.consume(Token::LeftBrace)? {
+                let expr = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::AssignmentAndOther, ..default() })?;
+                self.expect_and_ie_xml_content(Token::RightBrace)?;
+                content.push(Rc::new(XmlElementContent::Expression(expr)));
+            } else if let Token::XmlMarkup(markup) = self.token.0.clone() {
+                let location = self.token_location();
+                self.next_ie_xml_content()?;
+                content.push(Rc::new(XmlElementContent::XmlMarkup((markup, location))));
+            } else if let Token::XmlText(text) = self.token.0.clone() {
+                let location = self.token_location();
+                self.next_ie_xml_content()?;
+                content.push(Rc::new(XmlElementContent::XmlText((text, location))));
+            } else if self.consume_and_ie_xml_tag(Token::Lt)? {
+                let start = self.token_location();
+                let element = self.parse_xml_element(start, false)?;
+                content.push(Rc::new(XmlElementContent::XmlElement(Rc::new(element))));
+            } else {
+                self.expect_and_ie_xml_content(Token::XmlLtSlash)?;
+            }
+        }
+        Ok(content)
     }
 }
 

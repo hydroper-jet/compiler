@@ -26,7 +26,7 @@ pub struct XmlElement {
     pub name: XmlTagName,
     pub attributes: Vec<Rc<XmlAttribute>>,
     pub attribute_expression: Option<Rc<Expression>>,
-    pub content: Option<Vec<XmlElementContent>>,
+    pub content: Option<Vec<Rc<XmlElementContent>>>,
     pub closing_name: Option<XmlTagName>,
 }
 
@@ -39,19 +39,13 @@ pub enum XmlTagName {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct XmlAttribute {
     pub location: Location,
-    pub name: XmlAttributeName,
+    pub name: (String, Location),
     pub value: XmlAttributeValue,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub enum XmlAttributeName {
-    Name((String, Location)),
-    Expression(Rc<Expression>),
-}
-
-#[derive(Clone, Serialize, Deserialize)]
 pub enum XmlAttributeValue {
-    Name((String, Location)),
+    Value((String, Location)),
     Expression(Rc<Expression>),
 }
 
