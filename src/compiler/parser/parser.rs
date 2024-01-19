@@ -931,6 +931,38 @@ impl<'input> Parser<'input> {
             value,
         }))
     }
+
+    fn parse_field_name(&mut self) -> Result<(FieldName, Location), ParsingFailure> {
+        if let Token::StringLiteral(value) = &self.token.0.clone() {
+            let location = self.token_location();
+            self.next()?;
+            Ok((FieldName::StringLiteral(Rc::new(Expression::StringLiteral(StringLiteral {
+                location: location.clone(),
+                value: value.clone(),
+            }))), location))
+        } else if let Token::NumericLiteral(value) = &self.token.0.clone() {
+            let location = self.token_location();
+            self.next()?;
+            Ok((FieldName::NumericLiteral(Rc::new(Expression::NumericLiteral(NumericLiteral {
+                location: location.clone(),
+                value: value.clone(),
+            }))), location))
+        } else if self.peek(Token::LeftBracket) {
+            self.mark_location();
+            self.next()?;
+            let key_expr = self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?;
+            self.expect(Token::RightBracket)?;
+            let location = self.pop_location();
+            Ok((FieldName::Brackets(key_expr), location))
+        } else {
+            let (id, location) = self.expect_identifier(true)?;
+            Ok((FieldName::Identifier(id), location))
+        }
+    }
 }
 
 #[derive(Clone)]

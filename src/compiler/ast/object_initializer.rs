@@ -32,8 +32,8 @@ impl InitializerField {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum FieldName {
-    Identifier((String, Location)),
-    Brackets(Rc<InitializerField>),
+    Identifier(String),
+    Brackets(Rc<Expression>),
     StringLiteral(Rc<Expression>),
     NumericLiteral(Rc<Expression>),
 }
