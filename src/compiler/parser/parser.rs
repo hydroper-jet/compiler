@@ -282,7 +282,7 @@ impl<'input> Parser<'input> {
             if self.consume(Token::Dot)? {
                 base = self.parse_dot_subexpression(base)?;
             } else if self.consume(Token::OptionalChaining)? {
-                base = self.parse_optional_chaining_subexpression(base)?;
+                base = self.parse_optional_chaining(base)?;
             } else if self.peek(Token::LeftBracket) {
                 self.next()?;
                 self.push_location(&base.location());
@@ -331,7 +331,7 @@ impl<'input> Parser<'input> {
                     expression: base, operator: Operator::NonNull,
                 }));
             // `not in`
-            } else if self.token.0 == Token::Not && context.min_precedence.includes(&OperatorPrecedence::Relational) && !self.previous_token.1.line_break(&self.token.1) {
+            } else if self.token.0 == Token::Not && context.allow_in && context.min_precedence.includes(&OperatorPrecedence::Relational) && !self.previous_token.1.line_break(&self.token.1) {
                 self.push_location(&base.location());
                 self.next()?;
                 self.expect(Token::In)?;
@@ -353,12 +353,11 @@ impl<'input> Parser<'input> {
                     location: self.pop_location(),
                     test: base, consequent, alternative,
                 }));
-            } else if let Some(binary_operator) = self.check_binary_operator() {
-                let right_precedence = binary_operator.right_precedence();
-                let BinaryOperator(operator, required_precedence, associativity) = binary_operator;
+            } else if let Some(binary_operator) = self.check_binary_operator(context.clone()) {
+                let BinaryOperator(operator, required_precedence, _) = binary_operator;
                 if context.min_precedence.includes(&required_precedence) {
                     self.next()?;
-                    base = self.parse_binary_operator(base, operator, right_precedence, context.clone())?;
+                    base = self.parse_binary_operator(base, operator, binary_operator.right_precedence(), context.clone())?;
                 } else {
                     break;
                 }
@@ -431,10 +430,112 @@ impl<'input> Parser<'input> {
             min_precedence: right_precedence,
             ..context
         })?;
-        Ok(Rc::new(Expression::Binary(BinaryExpression{
+        Ok(Rc::new(Expression::Binary(BinaryExpression {
             location: self.pop_location(),
             left: base, operator, right,
         })))
+    }
+
+    fn check_binary_operator(&self, context: ParsingExpressionContext) -> Option<BinaryOperator> {
+        if let Some(operator) = self.token.0.to_binary_operator() {
+            if operator == Operator::In && !context.allow_in {
+                return None;
+            }
+            Some(BinaryOperator::try_from(operator).unwrap())
+        } else {
+            None
+        }
+    }
+
+    fn parse_optional_chaining(&mut self, base: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
+        self.push_location(&base.location());
+        self.duplicate_location();
+        let mut operation = Rc::new(Expression::OptionalChainingPlaceholder(OptionalChainingPlaceholder {
+            location: base.location(),
+        }));
+        if self.peek(Token::LeftParen) {
+            let arguments: Vec<Rc<Expression>> = self.parse_arguments()?;
+            if arguments.len() == 1 && self.peek(Token::ColonColon) {
+                self.duplicate_location();
+                let identifier = self.finish_qualified_identifier(false, self.pop_location(), arguments[0].clone())?;
+                operation = Rc::new(Expression::Member(MemberExpression {
+                    location: self.pop_location(),
+                    base: operation,
+                    identifier,
+                }));
+            } else {
+                operation = Rc::new(Expression::Call(CallExpression {
+                    location: self.pop_location(),
+                    base: operation, arguments
+                }));
+            }
+        } else if self.consume(Token::LeftBracket)? {
+            let key = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+            self.expect(Token::RightBracket)?;
+            operation = Rc::new(Expression::ComputedMember(ComputedMemberExpression {
+                location: self.pop_location(),
+                base: operation, key
+            }));
+        } else {
+            let identifier = self.parse_qualified_identifier()?;
+            operation = Rc::new(Expression::Member(MemberExpression {
+                location: self.pop_location(),
+                base: operation, identifier
+            }));
+        }
+
+        // Parse postfix subexpressions
+        operation = self.parse_optional_chaining_subexpressions(operation)?;
+
+        Ok(Rc::new(Expression::OptionalChaining(OptionalChainingExpression {
+            location: self.pop_location(),
+            base, expression: operation,
+        })))
+    }
+
+    fn parse_optional_chaining_subexpressions(&mut self, mut base: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
+        loop {
+            if self.consume(Token::Dot)? {
+                base = self.parse_dot_subexpression(base)?;
+            } else if self.consume(Token::OptionalChaining)? {
+                base = self.parse_optional_chaining(base)?;
+            } else if self.peek(Token::LeftBracket) {
+                self.next()?;
+                self.push_location(&base.location());
+                let key = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+                self.expect(Token::RightBracket)?;
+                base = Rc::new(Expression::ComputedMember(ComputedMemberExpression {
+                    base, key, location: self.pop_location()
+                }));
+            } else if self.consume(Token::Descendants)? {
+                self.push_location(&base.location());
+                let id = self.parse_qualified_identifier()?;
+                base = Rc::new(Expression::Descendants(DescendantsExpression {
+                    location: self.pop_location(),
+                    base,
+                    identifier: id,
+                }));
+            } else if self.peek(Token::LeftParen) {
+                self.push_location(&base.location());
+                let arguments = self.parse_arguments()?;
+                base = Rc::new(Expression::Call(CallExpression {
+                    location: self.pop_location(),
+                    base,
+                    arguments,
+                }));
+            } else if self.peek(Token::Exclamation) && !self.previous_token.1.line_break(&self.token.1) {
+                self.push_location(&base.location());
+                self.next()?;
+                base = Rc::new(Expression::Unary(UnaryExpression {
+                    location: self.pop_location(),
+                    expression: base, operator: Operator::NonNull,
+                }));
+            } else {
+                break;
+            }
+        }
+
+        Ok(base)
     }
 }
 

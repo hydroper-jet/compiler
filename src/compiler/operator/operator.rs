@@ -75,7 +75,11 @@ impl BinaryOperator {
     }
 
     pub fn right_precedence(&self) -> OperatorPrecedence {
-        self.precedence().add(if self.associativity() == BinaryAssociativity::LeftToRight { 1 } else { 0 }).unwrap()
+        if self.operator() == Operator::NullCoalescing {
+            OperatorPrecedence::BitwiseOr
+        } else {
+            self.precedence().add(if self.associativity() == BinaryAssociativity::LeftToRight { 1 } else { 0 }).unwrap()
+        }
     }
 }
 
