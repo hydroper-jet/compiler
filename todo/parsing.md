@@ -3,90 +3,90 @@
 ## Covered
 
 * Expressions
-  * [ ] `*` (qualified identifier)
-  * [ ] Initial identifier expression
-    * [ ] `id`
-    * [ ] `q::x` (qualified identifier)
-    * [ ] `embed ObjectInitializer`
-  * [ ] Parentheses
-    * [ ] `(x)`
-    * [ ] `(q)::x` (qualified identifier)
-  * [ ] `@id`
+  * [x] `*` (qualified identifier)
+  * [x] Initial identifier expression
+    * [x] `id`
+    * [x] `q::x` (qualified identifier)
+    * [x] `embed ObjectInitializer`
+  * [x] Parentheses
+    * [x] `(x)`
+    * [x] `(q)::x` (qualified identifier)
+  * [x] `@id`
     * Attribute qualified identifier.
-  * [ ] *NullLiteral*
-  * [ ] `true`
-  * [ ] `false`
-  * [ ] *NumericLiteral* (the value is kept as a raw string for context type flexibility)
-  * [ ] *StringLiteral*
-  * [ ] `this`
-  * [ ] *RegularExpressionLiteral* (initiates with either `/` or `/=`)
-  * [ ] *XMLInitializer*
-  * [ ] *ArrayInitializer*
-  * [ ] *ObjectInitializer*
-  * [ ] *PostfixExpression*
-    * [ ] `import.meta`
-    * [ ] New expression
-    * [ ] `o.x`
-    * [ ] `o..x` (descendants)
-    * [ ] `o.(condition)`
-    * [ ] `o.(q)::x` (qualified identifier)
-    * [ ] `o[k]`
-    * [ ] *SuperExpression* followed by *PropertyOperator* (**.** *QualifiedIdentifier* or *Brackets*)
-    * [ ] `o!`
-    * [ ] `o(...)`
-    * [ ] `o.<...>`
-    * [ ] `x++` (no line break in between)
-    * [ ] `x--` (no line break in between)
-    * [ ] `x` followed by optional chaining (`?.`)
+  * [x] *NullLiteral*
+  * [x] `true`
+  * [x] `false`
+  * [x] *NumericLiteral* (the value is kept as a raw string for context type flexibility)
+  * [x] *StringLiteral*
+  * [x] `this`
+  * [x] *RegularExpressionLiteral* (initiates with either `/` or `/=`)
+  * [x] *XMLInitializer*
+  * [x] *ArrayInitializer*
+  * [x] *ObjectInitializer*
+  * [x] *PostfixExpression*
+    * [x] `import.meta`
+    * [x] New expression
+    * [x] `o.x`
+    * [x] `o..x` (descendants)
+    * [x] `o.(condition)`
+    * [x] `o.(q)::x` (qualified identifier)
+    * [x] `o[k]`
+    * [x] *SuperExpression* followed by *PropertyOperator* (**.** *QualifiedIdentifier* or *Brackets*)
+    * [x] `o!`
+    * [x] `o(...)`
+    * [x] `o.<...>`
+    * [x] `x++` (no line break in between)
+    * [x] `x--` (no line break in between)
+    * [x] `x` followed by optional chaining (`?.`)
       * Refine: when `?.(...)` is followed by `::` and the expression in the left parentheses is not a list expression, refine the optional chaining as a property operator.
-  * [ ] *UnaryExpression*
-    * [ ] `delete o.x`
-    * [ ] `void v`
-    * [ ] `await v`
-    * [ ] `typeof v`
-    * [ ] `++x`
-    * [ ] `--x`
-    * [ ] `+v`
-    * [ ] `-v`
-    * [ ] `~v`
-    * [ ] `!v`
-  * [ ] *BinaryExpression*
-    * [ ] `a ** b`
-    * [ ] `a * b`
-    * [ ] `a / b`
-    * [ ] `a % b`
-    * [ ] `a + b`
-    * [ ] `a - b`
-    * [ ] `a << b`
-    * [ ] `a >> b`
-    * [ ] `a >>> b`
-    * [ ] `a < b`
-    * [ ] `a > b`
-    * [ ] `a <= b`
-    * [ ] `a >= b`
-    * [ ] `v as T`
-    * [ ] `v is T`
-    * [ ] `v is not T`
-    * [ ] `k in v`
-    * [ ] `k not in v`
-    * [ ] `a == b`
-    * [ ] `a != b`
-    * [ ] `a === b`
-    * [ ] `a !== b`
-    * [ ] `a & b`
-    * [ ] `a ^ b`
-    * [ ] `a | b`
-    * [ ] `a && b`
-    * [ ] `a ^^ b`
-    * [ ] `a || b`
-    * [ ] `a ?? b`
-  * [ ] `a ? b : c`
-  * [ ] `yield`
-  * [ ] *FunctionExpression*
-  * [ ] `x = y`
-  * [ ] `{...} = v` or `[...] = v`
-  * [ ] `x [CompoundAssignment] v`
-  * [ ] `x, y`
+  * [x] *UnaryExpression*
+    * [x] `delete o.x`
+    * [x] `void v`
+    * [x] `await v`
+    * [x] `typeof v`
+    * [x] `++x`
+    * [x] `--x`
+    * [x] `+v`
+    * [x] `-v`
+    * [x] `~v`
+    * [x] `!v`
+  * [x] *BinaryExpression*
+    * [x] `a ** b`
+    * [x] `a * b`
+    * [x] `a / b`
+    * [x] `a % b`
+    * [x] `a + b`
+    * [x] `a - b`
+    * [x] `a << b`
+    * [x] `a >> b`
+    * [x] `a >>> b`
+    * [x] `a < b`
+    * [x] `a > b`
+    * [x] `a <= b`
+    * [x] `a >= b`
+    * [x] `v as T`
+    * [x] `v is T`
+    * [x] `v is not T`
+    * [x] `k in v`
+    * [x] `k not in v`
+    * [x] `a == b`
+    * [x] `a != b`
+    * [x] `a === b`
+    * [x] `a !== b`
+    * [x] `a & b`
+    * [x] `a ^ b`
+    * [x] `a | b`
+    * [x] `a && b`
+    * [x] `a ^^ b`
+    * [x] `a || b`
+    * [x] `a ?? b`
+  * [x] `a ? b : c`
+  * [x] `yield`
+  * [x] *FunctionExpression*
+  * [x] `x = y`
+  * [x] `{...} = v` or `[...] = v`
+  * [x] `x [CompoundAssignment] v`
+  * [x] `x, y`
 * Destructuring
   * [ ] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
 * Type expressions
@@ -134,6 +134,7 @@
   * [ ] `configuration` directive
     * [ ] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
   * [ ] `import`
+    * [ ] Resolve ambiguity with expression statement beginning with `import.meta` expression
   * [ ] `use`
 * Configuration expressions
   * [ ] Configuration expressions

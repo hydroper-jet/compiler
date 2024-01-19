@@ -772,6 +772,15 @@ impl<'input> Parser<'input> {
             } else {
                 Ok(None)
             }
+        // ImportMeta
+        } else if self.peek(Token::Import) && context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+            self.mark_location();
+            self.next()?;
+            self.expect(Token::Dot)?;
+            self.expect_context_keyword("meta")?;
+            Ok(Some(Rc::new(Expression::ImportMeta(ImportMeta {
+                location: self.pop_location(),
+            }))))
         } else {
             Ok(None)
         }
