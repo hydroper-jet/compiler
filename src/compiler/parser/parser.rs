@@ -1779,6 +1779,27 @@ impl<'input> Parser<'input> {
             },
         }))
     }
+
+    fn parse_variable_binding(&mut self, allow_in: bool) -> Result<VariableBinding, ParsingFailure> {
+        let destructuring = self.parse_typed_destructuring()?;
+        let initializer = if self.consume(Token::Assign)? {
+            Some(self.parse_expression(ParsingExpressionContext {
+                allow_in,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?)
+        } else {
+            None
+        };
+        Ok(VariableBinding {
+            destructuring,
+            initializer,
+        })
+    }
+
+    fn parse_semicolon(&mut self) -> Result<bool, ParsingFailure> {
+        Ok(self.consume(Token::Semicolon)? || self.peek(Token::RightBrace) || self.previous_token.1.line_break(&self.token.1))
+    }
 }
 
 #[derive(Clone)]
