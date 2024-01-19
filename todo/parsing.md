@@ -90,21 +90,21 @@
 * Destructuring
   * [x] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
 * Type expressions
-  * [ ] `?T`
+  * [x] `?T`
     * Results into `NullableTypeExpression`
-  * [ ] `*`
-  * [ ] `id`
-  * [ ] `void`
-  * [ ] `[...]`
-    * [ ] `[T]`
-    * [ ] `[T1, T2, ...]`
-  * [ ] `(x)` parenthesized
-  * [ ] `function(...): T` type expression
-  * [ ] `o.x`
-  * [ ] `T.<...>`
-  * [ ] `T?`
+  * [x] `*`
+  * [x] `id`
+  * [x] `void`
+  * [x] `[...]`
+    * [x] `[T]`
+    * [x] `[T1, T2, ...]`
+  * [x] `(x)` parenthesized
+  * [x] `function(...): T` type expression
+  * [x] `o.x`
+  * [x] `T.<...>`
+  * [x] `T?`
     * Results into `NullableTypeExpression`
-  * [ ] `T!`
+  * [x] `T!`
     * Results into `NonNullableTypeExpression`
 * Statements
   * [ ] `;`

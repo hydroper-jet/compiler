@@ -1595,6 +1595,190 @@ impl<'input> Parser<'input> {
             type_annotation,
         })
     }
+
+    fn parse_type_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        let start = self.token_location();
+        let (mut base, wrap_nullable) = self.parse_type_expression_start()?;
+
+        loop {
+            if self.consume(Token::Dot)? {
+                self.push_location(&base.location());
+                if self.consume(Token::Lt)? {
+                    let mut arguments = vec![self.parse_type_expression()?];
+                    while self.consume(Token::Comma)? {
+                        arguments.push(self.parse_type_expression()?);
+                    }
+                    self.expect_generics_gt()?;
+                    base = Rc::new(Expression::WithTypeArguments(ExpressionWithTypeArguments {
+                        location: self.pop_location(),
+                        base, arguments,
+                    }));
+                } else {
+                    let id = self.expect_identifier(true)?;
+                    base = Rc::new(Expression::Member(MemberExpression {
+                        location: self.pop_location(),
+                        base, identifier: QualifiedIdentifier {
+                            location: id.1.clone(),
+                            attribute: false,
+                            qualifier: None,
+                            id: QualifiedIdentifierIdentifier::Id(id),
+                        },
+                    }));
+                }
+            } else if self.consume(Token::Question)? {
+                self.push_location(&base.location());
+                base = Rc::new(Expression::NullableType(NullableTypeExpression {
+                    location: self.pop_location(),
+                    base,
+                }));
+            } else if self.consume(Token::Exclamation)? {
+                self.push_location(&base.location());
+                base = Rc::new(Expression::NonNullableType(NonNullableTypeExpression {
+                    location: self.pop_location(),
+                    base,
+                }));
+            } else {
+                break;
+            }
+        }
+        
+        if wrap_nullable {
+            self.push_location(&start);
+            base = Rc::new(Expression::NullableType(NullableTypeExpression {
+                location: self.pop_location(),
+                base,
+            }));
+        }
+
+        Ok(base)
+    }
+
+    fn parse_type_expression_start(&mut self) -> Result<(Rc<Expression>, bool), ParsingFailure> {
+        // Allow a `?` prefix to wrap a type into nullable.
+        let wrap_nullable = self.consume(Token::Question)?;
+
+        // Parenthesized
+        if self.peek(Token::LeftParen) {
+            self.mark_location();
+            let expression = self.parse_type_expression()?;
+            Ok((Rc::new(Expression::Paren(ParenExpression {
+                location: self.pop_location(),
+                expression,
+            })), wrap_nullable))
+        }
+        // `function`
+        else if self.peek(Token::Function) {
+            Ok((self.parse_function_type_expression()?, wrap_nullable))
+        // `void`
+        } else if self.peek(Token::Void) {
+            self.mark_location();
+            self.next()?;
+            Ok((Rc::new(Expression::VoidType(VoidTypeExpression {
+                location: self.pop_location(),
+            })), wrap_nullable))
+        // [T]
+        // [T1, T2, ...Tn]
+        } else if self.peek(Token::LeftBracket) {
+            let mut elements = vec![];
+            self.mark_location();
+            self.next()?;
+            elements.push(self.parse_type_expression()?);
+            if self.consume(Token::RightBracket)? {
+                Ok((Rc::new(Expression::ArrayType(ArrayTypeExpression {
+                    location: self.pop_location(),
+                    expression: elements[0].clone(),
+                })), wrap_nullable))
+            } else {
+                self.expect(Token::Comma)?;
+                elements.push(self.parse_type_expression()?);
+                while self.consume(Token::Comma)? {
+                    if self.peek(Token::RightBracket) {
+                        break;
+                    }
+                    elements.push(self.parse_type_expression()?);
+                }
+                self.expect(Token::RightBracket)?;
+                Ok((Rc::new(Expression::TupleType(TupleTypeExpression {
+                    location: self.pop_location(),
+                    expressions: elements,
+                })), wrap_nullable))
+            }
+        } else if self.peek(Token::Times) {
+            let location = self.token_location();
+            self.next()?;
+            return Ok((Rc::new(Expression::AnyType(AnyTypeExpression {
+                location,
+            })), wrap_nullable));
+        // Identifier
+        } else {
+            let id = self.expect_identifier(false)?;
+            Ok((Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id.1.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(id),
+            })), wrap_nullable))
+        }
+    }
+
+    fn parse_function_type_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.mark_location();
+        self.next()?;
+        self.mark_location();
+
+        self.expect(Token::LeftParen)?;
+        let mut parameters = vec![];
+        if !self.peek(Token::RightParen) {
+            parameters.push(self.parse_function_type_parameter()?);
+            while self.consume(Token::Comma)? {
+                parameters.push(self.parse_function_type_parameter()?);
+            }
+        }
+        self.expect(Token::RightParen)?;
+        self.validate_parameter_list(&parameters);
+
+        self.expect(Token::Colon)?;
+        let result_type = self.parse_type_expression()?;
+        let signature_location = self.pop_location();
+        Ok(Rc::new(Expression::FunctionType(FunctionTypeExpression {
+            location: self.pop_location(),
+            signature: FunctionSignature {
+                location: signature_location,
+                parameters,
+                result_type: Some(result_type),
+            },
+        })))
+    }
+
+    fn parse_function_type_parameter(&mut self) -> Result<Rc<Parameter>, ParsingFailure> {
+        self.mark_location();
+        let rest = self.consume(Token::Ellipsis)?;
+        let id = self.expect_identifier(false)?;
+        let optional = !rest && self.consume(Token::Question)?;
+        let destructuring = TypedDestructuring {
+            location: id.1.clone(),
+            destructuring: Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id.1.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(id),
+            })),
+            type_annotation: if self.consume(Token::Colon)? { Some(self.parse_type_expression()?) } else { None },
+        };
+        let location = self.pop_location();
+        Ok(Rc::new(Parameter {
+            location,
+            destructuring,
+            default_value: None,
+            kind: if rest {
+                ParameterKind::Rest
+            } else if optional {
+                ParameterKind::Optional
+            } else {
+                ParameterKind::Required
+            },
+        }))
+    }
 }
 
 #[derive(Clone)]
