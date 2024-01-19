@@ -51,10 +51,17 @@ pub struct Parameter {
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[repr(u32)]
 pub enum ParameterKind {
-    Required,
-    Optional,
-    Rest,
+    Required = 1,
+    Optional = 2,
+    Rest = 3,
+}
+
+impl ParameterKind {
+    pub fn may_be_followed_by(&self, other: Self) -> bool {
+        (*self as u32) <= (other as u32)
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]

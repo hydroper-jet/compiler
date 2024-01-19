@@ -537,6 +537,244 @@ impl<'input> Parser<'input> {
 
         Ok(base)
     }
+
+    fn parse_dot_subexpression(&mut self, base: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
+        self.push_location(&base.location);
+        if self.peek(Token::LeftParen) {
+            let paren_exp = self.parse_paren_list_expression()?;
+            if !matches!(paren_exp, Expression::Sequence(_)) && self.peek(Token::ColonColon) {
+                let id = self.finish_qualified_identifier(false, paren_exp.clone())?;
+                Ok(Rc::new(Expression::Member(MemberExpression {
+                    location: self.pop_location(),
+                    base, identifier: id
+                })))
+            } else {
+                Ok(Rc::new(Expression::Filter(FilterExpression {
+                    location: self.pop_location(),
+                    base, test: paren_exp
+                })))
+            }
+        } else if self.consume(Token::Lt)? {
+            let mut arguments = vec![];
+            arguments.push(self.parse_type_expression()?);
+            while self.consume(Token::Comma)? {
+                arguments.push(self.parse_type_expression()?);
+            }
+            self.expect_generics_gt()?;
+            Ok(Rc::new(Expression::WithTypeArguments(ExpressionWithTypeArguments {
+                location: self.pop_location(),
+                base, arguments
+            })))
+        } else {
+            let id = self.parse_qualified_identifier()?;
+            Ok(Rc::new(Expression::Member(MemberExpression {
+                location: self.pop_location(),
+                base, identifier: id
+            })))
+        }
+    }
+
+    /// Ensures a parameter list consists of zero or more required parameters followed by
+    /// zero or more optional parameters optionally followed by a rest parameter.
+    fn validate_parameter_list(&mut self, params: &Vec<Parameter>) -> Result<(), ParsingFailure> {
+        let mut least_kind = ParameterKind::Required; 
+        let mut has_rest = false;
+        for param in params {
+            if !least_kind.may_be_followed_by(param.kind) {
+                self.add_syntax_error(&param.location.clone(), DiagnosticKind::WrongParameterPosition, vec![]);
+            }
+            least_kind = param.kind;
+            if param.kind == ParameterKind::Rest && has_rest {
+                self.add_syntax_error(&param.location.clone(), DiagnosticKind::DuplicateRestParameter, vec![]);
+            }
+            has_rest = param.kind == ParameterKind::Rest;
+        }
+        Ok(())
+    }
+
+    fn parse_opt_start_expression(&mut self, context: ParsingExpressionContext) -> Result<Option<Rc<Expression>>, ParsingFailure> {
+        if let Token::Identifier(id) = self.token.0.clone() {
+            let id_location = self.token_location();
+            self.next()?;
+
+            // EmbedExpression
+            if self.peek(Token::LeftBrace) && id == "embed" && self.previous_token.1.character_count() == "embed".len() {
+                return Ok(Some(self.finish_embed_expression(id_location)?));
+            }
+
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id((id, id_location.clone())),
+            }));
+            if self.peek(Token::ColonColon) {
+                self.push_location(&id_location.clone());
+                self.duplicate_location();
+                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                Ok(Some(Rc::new(Expression::QualifiedIdentifier(id))))
+            } else {
+                Ok(Some(id))
+            }
+        } else if self.peek(Token::Null) {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::NullLiteral(NullLiteral {
+                location: self.pop_location(),
+            }))))
+        } else if self.peek(Token::False) {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::BooleanLiteral(BooleanLiteral {
+                location: self.pop_location(),
+                value: false,
+            }))))
+        } else if self.peek(Token::True) {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::BooleanLiteral(BooleanLiteral {
+                location: self.pop_location(),
+                value: true,
+            }))))
+        } else if let Token::NumericLiteral(n) = self.token.0 {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::NumericLiteral(NumericLiteral {
+                location: self.pop_location(),
+                value: n,
+            }))))
+        } else if let Token::StringLiteral(ref s) = self.token.0.clone() {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::StringLiteral(StringLiteral {
+                location: self.pop_location(),
+                value: s.clone(),
+            }))))
+        } else if self.peek(Token::This) {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::ThisLiteral(ThisLiteral {
+                location: self.pop_location(),
+            }))))
+        } else if let Token::RegExpLiteral { ref body, ref flags } = self.token.0.clone() {
+            self.mark_location();
+            self.next()?;
+            Ok(Some(Rc::new(Expression::RegExpLiteral(RegExpLiteral {
+                location: self.pop_location(),
+                body: body.clone(), flags: flags.clone(),
+            }))))
+        // `@`
+        } else if self.peek(Token::Attribute) {
+            self.mark_location();
+            let id = self.parse_qualified_identifier()?;
+            Ok(Some(Rc::new(Expression::QualifiedIdentifier(id))))
+        // Parentheses
+        } else if self.peek(Token::LeftParen) {
+            return Ok(Some(self.parse_paren_list_expr_or_qual_id()?));
+        // `*`
+        } else if self.peek(Token::Times) {
+            let id_location = self.token_location();
+            self.next()?;
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(("*".into(), id_location.clone())),
+            }));
+            if self.peek(Token::ColonColon) {
+                self.push_location(&id_location.clone());
+                self.duplicate_location();
+                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                Ok(Some(Rc::new(Expression::QualifiedIdentifier(id))))
+            } else {
+                Ok(Some(id))
+            }
+        // XMLList, XMLElement, XMLMarkup
+        } else if self.peek(Token::Lt) {
+            if let Some(token) = self.tokenizer.scan_xml_markup(self.token_location())? {
+                self.token = token;
+            }
+            let start = self.token_location();
+            if let Token::XmlMarkup(content) = &self.token.0.clone() {
+                self.mark_location();
+                self.next()?;
+                Ok(Some(Rc::new(Expression::XmlMarkup(XmlMarkupExpression {
+                    location: self.pop_location(),
+                    markup: content.clone(),
+                }))))
+            } else {
+                Ok(Some(self.parse_xml_element_or_xml_list(start)?))
+            }
+        // ArrayInitializer
+        } else if self.peek(Token::LeftBracket) {
+            Ok(Some(self.parse_array_initializer()?))
+        // NewExpression
+        } else if self.peek(Token::New) && context.min_precedence.includes(&OperatorPrecedence::Unary) {
+            let start = self.token_location();
+            self.next()?;
+            Ok(Some(self.parse_new_expression(start)?))
+        } else if self.peek(Token::LeftBrace) {
+            Ok(Some(self.parse_object_initializer()?))
+        } else if self.peek(Token::Function) {
+            Ok(Some(self.parse_function_expression()?))
+        // SuperExpression
+        } else if self.peek(Token::Super) && context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+            Ok(Some(self.parse_super_expression_followed_by_property_operator()?))
+        // AwaitExpression
+        } else if self.peek(Token::Await) && context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+            self.mark_location();
+            let operator_token = self.token.clone();
+            self.next()?;
+            let base = self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::Unary,
+                ..default()
+            })?;
+            if let Some(activation) = self.activations.last_mut() {
+                activation.uses_await = true;
+            } else {
+                self.add_syntax_error(&operator_token.1, DiagnosticKind::NotAllowedHere, diagnostic_arguments![Token(operator_token.0)]);
+            }
+            Ok(Some(Rc::new(Expression::Unary(UnaryExpression {
+                location: self.pop_location(),
+                expression: base, operator: Operator::Await,
+            }))))
+        // YieldExpression
+        } else if self.peek(Token::Yield) && context.min_precedence.includes(&OperatorPrecedence::AssignmentAndOther) {
+            self.mark_location();
+            let operator_token = self.token.clone();
+            self.next()?;
+            let base = self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?;
+            if let Some(activation) = self.activations.last_mut() {
+                activation.uses_yield = true;
+            } else {
+                self.add_syntax_error(&operator_token.1, DiagnosticKind::NotAllowedHere, diagnostic_arguments![Token(operator_token.0)]);
+            }
+            Ok(Some(Rc::new(Expression::Unary(UnaryExpression {
+                location: self.pop_location(),
+                expression: base, operator: Operator::Yield,
+            }))))
+        // Miscellaneous prefix unary expressions
+        } else if let Some((operator, subexp_precedence)) = self.check_prefix_operator() {
+            if context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+                self.mark_location();
+                self.next()?;
+                let base = self.parse_expression(ParsingExpressionContext { min_precedence: subexp_precedence, ..default() })?;
+                Ok(Some(Rc::new(Expression::Unary(UnaryExpression {
+                    location: self.pop_location(),
+                    expression: base, operator,
+                }))))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 #[derive(Clone)]

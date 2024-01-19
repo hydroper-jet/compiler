@@ -11,6 +11,9 @@ pub enum DiagnosticKind {
     ExpectedXmlName = 1031,
     ExpectedXmlAttributeValue = 1032,
     IllegalNullishCoalescingLeftOperand = 1033,
+    WrongParameterPosition = 1034,
+    DuplicateRestParameter = 1035,
+    NotAllowedHere = 1036,
 }
 
 impl DiagnosticKind {
