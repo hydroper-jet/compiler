@@ -91,6 +91,7 @@
   * [ ] Parse typed destructuring by reusing *ObjectInitializer* or *ArrayLiteral* and allowing *NonNull* followed by optional type annotation
 * Type expressions
   * [ ] `?T`
+    * Results into `NullableTypeExpression`
   * [ ] `*`
   * [ ] `id`
   * [ ] `void`
@@ -102,7 +103,9 @@
   * [ ] `o.x`
   * [ ] `T.<...>`
   * [ ] `T?`
+    * Results into `NullableTypeExpression`
   * [ ] `T!`
+    * Results into `NonNullableTypeExpression`
 * Statements
   * [ ] `;`
   * [ ] Expression statement

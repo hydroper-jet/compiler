@@ -64,25 +64,18 @@
   * [x] `x [CompoundAssignment] v`
   * [x] `x, y`
 * Type expressions
-  * [x] `?T`
+  * [x] `?T` (`NullableTypeExpression`)
   * [x] `*`
   * [x] `id`
   * [x] `void`
   * [x] `[...]`
     * [x] `[T]`
     * [x] `[T1, T2, ...]`
-  * [x] `(...)`
-    * [x] `(x)`
-    * [x] `() => T`
-    * [x] `(a: T) => T`
-    * [x] `(a: T, ...) => T`
-    * [x] `(a?: T, ...) => T`
-    * [x] `(...a: [T]) => T`
-    * [x] `(...) => T`
+  * [x] `(x)`
   * [x] `o.x`
   * [x] `T.<...>`
-  * [x] `T?`
-  * [x] `T!` (*NonNull* postfix operator)
+  * [x] `T?` (`NullableTypeExpression`)
+  * [x] `T!` (`NonNullableTypeExpression`)
 * Statements
   * [x] `;`
   * [x] Expression statement
