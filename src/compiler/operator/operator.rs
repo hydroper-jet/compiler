@@ -73,6 +73,10 @@ impl BinaryOperator {
     pub fn associativity(&self) -> BinaryAssociativity {
         self.2
     }
+
+    pub fn right_precedence(&self) -> OperatorPrecedence {
+        self.precedence().add(if self.associativity() == BinaryAssociativity::LeftToRight { 1 } else { 0 }).unwrap()
+    }
 }
 
 impl TryFrom<Operator> for BinaryOperator {

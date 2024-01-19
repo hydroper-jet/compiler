@@ -5,11 +5,11 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AssignmentExpression {
     pub location: Location,
-    pub compound: Operator,
+    pub compound: Option<Operator>,
     /// Assignment left-hand side.
     /// 
-    /// If the left-hand side is an `ObjectInitializer` or an `ArrayLiteral`,
-    /// it is a destructuring pattern.
+    /// If the left-hand side is an `ObjectInitializer` or an `ArrayLiteral`
+    /// and there is no compound assignment, it is a destructuring pattern.
     pub left: Rc<Expression>,
     pub right: Rc<Expression>,
 }

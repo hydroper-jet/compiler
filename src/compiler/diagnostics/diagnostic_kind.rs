@@ -10,6 +10,7 @@ pub enum DiagnosticKind {
     ExpectedExpression = 1030,
     ExpectedXmlName = 1031,
     ExpectedXmlAttributeValue = 1032,
+    IllegalNullishCoalescingLeftOperand = 1033,
 }
 
 impl DiagnosticKind {
