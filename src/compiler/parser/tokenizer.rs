@@ -22,8 +22,8 @@ impl<'input> Tokenizer<'input> {
         }
     }
 
-    pub fn compilation_unit(&self) -> Rc<CompilationUnit> {
-        self.compilation_unit.clone()
+    pub fn compilation_unit(&self) -> &Rc<CompilationUnit> {
+        &self.compilation_unit
     }
 
     /// Scans for an *InputElementDiv* token.
