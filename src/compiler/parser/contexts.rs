@@ -1,7 +1,6 @@
 use crate::ns::*;
 use std::cell::Cell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 /// Context used to control the parsing of an expression.
 #[derive(Clone)]
