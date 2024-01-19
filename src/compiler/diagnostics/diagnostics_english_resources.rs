@@ -19,6 +19,7 @@ lazy_static! {
         DiagnosticKind::WrongParameterPosition.id() => "Wrong parameter position".into(),
         DiagnosticKind::DuplicateRestParameter.id() => "Duplicate rest parameter".into(),
         DiagnosticKind::NotAllowedHere.id() => "{1} not allowed here".into(),
+        DiagnosticKind::MalformedRestParameter.id() => "Malformed rest parameter".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

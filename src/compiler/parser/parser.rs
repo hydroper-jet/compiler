@@ -715,13 +715,13 @@ impl<'input> Parser<'input> {
             Ok(Some(self.parse_new_expression(start)?))
         } else if self.peek(Token::LeftBrace) {
             Ok(Some(self.parse_object_initializer()?))
-        } else if self.peek(Token::Function) {
-            Ok(Some(self.parse_function_expression()?))
+        } else if self.peek(Token::Function) && context.min_precedence.includes(&OperatorPrecedence::AssignmentAndOther) {
+            Ok(Some(self.parse_function_expression(context.clone())?))
         // SuperExpression
         } else if self.peek(Token::Super) && context.min_precedence.includes(&OperatorPrecedence::Postfix) {
             Ok(Some(self.parse_super_expression_followed_by_property_operator()?))
         // AwaitExpression
-        } else if self.peek(Token::Await) && context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+        } else if self.peek(Token::Await) && context.min_precedence.includes(&OperatorPrecedence::Unary) {
             self.mark_location();
             let operator_token = self.token.clone();
             self.next()?;
@@ -760,7 +760,7 @@ impl<'input> Parser<'input> {
             }))))
         // Miscellaneous prefix unary expressions
         } else if let Some((operator, subexp_precedence)) = self.check_prefix_operator() {
-            if context.min_precedence.includes(&OperatorPrecedence::Postfix) {
+            if context.min_precedence.includes(&OperatorPrecedence::Unary) {
                 self.mark_location();
                 self.next()?;
                 let base = self.parse_expression(ParsingExpressionContext { min_precedence: subexp_precedence, ..default() })?;
@@ -774,6 +774,162 @@ impl<'input> Parser<'input> {
         } else {
             Ok(None)
         }
+    }
+
+    fn check_prefix_operator(&self) -> Option<(Operator, OperatorPrecedence)> {
+        match self.token.0 {
+            Token::Delete => Some((Operator::Delete, OperatorPrecedence::Postfix)),
+            Token::Void => Some((Operator::Void, OperatorPrecedence::Unary)),
+            Token::Typeof => Some((Operator::Typeof, OperatorPrecedence::Unary)),
+            Token::Increment => Some((Operator::PreIncrement, OperatorPrecedence::Postfix)),
+            Token::Decrement => Some((Operator::PreDecrement, OperatorPrecedence::Postfix)),
+            Token::Plus => Some((Operator::Positive, OperatorPrecedence::Unary)),
+            Token::Minus => Some((Operator::Negative, OperatorPrecedence::Unary)),
+            Token::BitwiseNot => Some((Operator::BitwiseNot, OperatorPrecedence::Unary)),
+            Token::Exclamation => Some((Operator::LogicalNot, OperatorPrecedence::Unary)),
+            _ => None,
+        }
+    }
+
+    fn parse_function_expression(&mut self, context: ParsingExpressionContext) -> Result<Rc<Expression>, ParsingFailure> {
+        self.mark_location();
+        self.next()?;
+        let mut name = None;
+        if let Token::Identifier(id) = self.token.0.clone() {
+            name = Some((id, self.token.1.clone()));
+            self.next()?;
+        }
+        let common = self.parse_function_common(true, ParsingDirectiveContext::Default, context.allow_in)?;
+        Ok(Rc::new(Expression::Function(FunctionExpression {
+            location: self.pop_location(),
+            name,
+            common,
+        })))
+    }
+
+    fn parse_function_common(&mut self, function_expr: bool, block_context: ParsingDirectiveContext, allow_in: bool) -> Result<Rc<FunctionCommon>, ParsingFailure> {
+        self.mark_location();
+        self.duplicate_location();
+        self.expect(Token::LeftParen)?;
+        let mut params: Vec<Rc<Parameter>> = vec![];
+        while !self.peek(Token::RightParen) {
+            self.mark_location();
+            let rest = self.consume(Token::Ellipsis)?;
+            let binding: Rc<VariableBinding> = self.parse_variable_binding(true)?;
+            let has_initializer = binding.init.is_some();
+            let location = self.pop_location();
+            if rest && has_initializer {
+                self.add_syntax_error(&location.clone(), DiagnosticKind::MalformedRestParameter, vec![]);
+            }
+            let param = Rc::new(Parameter {
+                location,
+                destructuring: binding.destructuring.clone(),
+                default_value: binding.initializer.clone(),
+                kind: if rest {
+                    ParameterKind::Rest
+                } else if has_initializer {
+                    ParameterKind::Optional
+                } else {
+                    ParameterKind::Required
+                },
+            });
+            params.push(param);
+            if !self.consume(Token::Comma)? {
+                break;
+            }
+        }
+        self.expect(Token::RightParen)?;
+        self.validate_parameter_list(&params)?;
+
+        let return_annotation = if self.consume(Token::Colon)? { Some(self.parse_type_expression()?) } else { None };
+
+        let signature_location = self.pop_location();
+
+        // Enter activation
+        self.activations.push(ParsingActivation::new());
+
+        // Body
+        let body = if self.peek(Token::LeftBrace) {
+            Some(FunctionBody::Block(self.parse_block(block_context)?))
+        } else {
+            self.parse_opt_expression(ParsingExpressionContext {
+                allow_in,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?.map(|e| FunctionBody::Expression(e))
+        };
+
+        // Body is required by function expressions
+        if body.is_none() && function_expr {
+            self.expect(Token::LeftBrace)?;
+        }
+
+        // Exit activation
+        let activation = self.activations.pop().unwrap();
+
+        Ok(Rc::new(FunctionCommon {
+            location: self.pop_location(),
+            contains_await: activation.uses_await,
+            contains_yield: activation.uses_yield,
+            signature: FunctionSignature {
+                location: signature_location,
+                parameters: params,
+                result_type: return_annotation,
+            },
+            body,
+        }))
+    }
+
+    fn parse_object_initializer(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.mark_location();
+        self.expect(Token::LeftBrace)?;
+        let mut fields: Vec<Rc<InitializerField>> = vec![];
+        while !self.peek(Token::RightBrace) {
+            fields.push(self.parse_field()?);
+            if !self.consume(Token::Comma)? {
+                break;
+            }
+        }
+        self.expect(Token::RightBrace)?;
+
+        Ok(Rc::new(Expression::ObjectInitializer(ObjectInitializer {
+            location: self.pop_location(),
+            fields,
+        })))
+    }
+
+    fn parse_field(&mut self) -> Result<Rc<InitializerField>, ParsingFailure> {
+        if self.peek(Token::Ellipsis) {
+            self.mark_location();
+            self.next()?;
+            let subexp = self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?;
+            return Ok(Rc::new(InitializerField::Rest((subexp, self.pop_location()))));
+        }
+
+        let name = self.parse_field_name()?;
+
+        let non_null = self.consume(Token::Exclamation)?;
+        let mut value = None;
+
+        if self.consume(Token::Colon)? {
+            value = Some(self.parse_expression(ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::AssignmentAndOther,
+                ..default()
+            })?);
+        } else if !matches!(name.0, FieldName::Identifier(_)) {
+            self.expect(Token::Colon)?;
+        }
+
+        Ok(Rc::new(InitializerField::Field {
+            name,
+            non_null,
+            value,
+        }))
     }
 }
 

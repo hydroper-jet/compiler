@@ -46,7 +46,7 @@ pub struct FunctionSignature {
 pub struct Parameter {
     pub location: Location,
     pub kind: ParameterKind,
-    pub destructuring: Rc<TypedDestructuring>,
+    pub destructuring: TypedDestructuring,
     pub default_value: Option<Rc<Expression>>,
 }
 
