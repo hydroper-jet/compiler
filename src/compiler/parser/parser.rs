@@ -539,11 +539,12 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_dot_subexpression(&mut self, base: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
-        self.push_location(&base.location);
+        self.push_location(&base.location());
         if self.peek(Token::LeftParen) {
+            let paren_location = self.token_location();
             let paren_exp = self.parse_paren_list_expression()?;
-            if !matches!(paren_exp, Expression::Sequence(_)) && self.peek(Token::ColonColon) {
-                let id = self.finish_qualified_identifier(false, paren_exp.clone())?;
+            if !matches!(paren_exp.as_ref(), Expression::Sequence(_)) && self.peek(Token::ColonColon) {
+                let id = self.finish_qualified_identifier(false, paren_location, paren_exp.clone())?;
                 Ok(Rc::new(Expression::Member(MemberExpression {
                     location: self.pop_location(),
                     base, identifier: id
@@ -1389,6 +1390,168 @@ impl<'input> Parser<'input> {
             }
         }
         Ok(content)
+    }
+
+    fn finish_paren_list_expr_or_qual_id(&mut self, start: Location, left: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
+        if self.peek(Token::ColonColon) && !matches!(left.as_ref(), Expression::Sequence(_)) {
+            self.push_location(&start);
+            let id = self.finish_qualified_identifier(false, self.pop_location(), left)?;
+            return Ok(Rc::new(Expression::QualifiedIdentifier(id)));
+        }
+        self.push_location(&start);
+        return Ok(Rc::new(Expression::Paren(ParenExpression {
+            location: self.pop_location(),
+            expression: left,
+        })));
+    }
+
+    /// Parses either a ParenListExpression, (), or a QualifiedIdentifier
+    fn parse_paren_list_expr_or_qual_id(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        let start = self.token_location();
+        self.expect(Token::LeftParen)?;
+
+        let expr = self.parse_expression(ParsingExpressionContext {
+            min_precedence: OperatorPrecedence::List,
+            allow_in: true,
+            ..default()
+        })?;
+
+        self.expect(Token::RightParen)?;
+        self.finish_paren_list_expr_or_qual_id(start, expr)
+    }
+
+    fn parse_qualified_identifier(&mut self) -> Result<QualifiedIdentifier, ParsingFailure> {
+        self.mark_location();
+
+        let attribute = self.consume(Token::Attribute)?;
+        if attribute && self.peek(Token::LeftBracket) {
+            let brackets = self.parse_brackets()?;
+            return Ok(QualifiedIdentifier {
+                location: self.pop_location(),
+                attribute,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Brackets(brackets),
+            });
+        }
+
+        let mut id: Option<String> = None;
+
+        // IdentifierName
+        if let Token::Identifier(id_1) = self.token.0.clone() {
+            id = Some(id_1);
+        } else {
+            if let Some(id_1) = self.token.0.reserved_word_name() {
+                id = Some(id_1);
+            } else if self.peek(Token::Times) {
+                id = Some("*".to_owned());
+            }
+        }
+
+        if let Some(id) = id {
+            let id_location = self.token_location();
+            self.next()?;
+            if self.peek(Token::ColonColon) {
+                let id = QualifiedIdentifier {
+                    location: id_location.clone(),
+                    attribute: false,
+                    qualifier: None,
+                    id: QualifiedIdentifierIdentifier::Id((id, id_location.clone())),
+                };
+                let id = Rc::new(Expression::QualifiedIdentifier(id));
+                return self.finish_qualified_identifier(attribute, self.pop_location(), id);
+            } else {
+                let id = QualifiedIdentifier {
+                    location: id_location.clone(),
+                    attribute,
+                    qualifier: None,
+                    id: QualifiedIdentifierIdentifier::Id((id, id_location.clone())),
+                };
+                return Ok(id);
+            }
+        }
+
+        // (q)::x
+        if self.peek(Token::LeftParen) {
+            let qual = self.parse_paren_expression()?;
+            return self.finish_qualified_identifier(attribute, self.pop_location(), qual);
+        }
+
+        self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedIdentifier, diagnostic_arguments![Token(self.token.0.clone())]);
+        Err(ParsingFailure)
+    }
+
+    /// Expects a colon-colon and finishes a qualified identifier.
+    fn finish_qualified_identifier(&mut self, attribute: bool, start_location: Location, qual: Rc<Expression>) -> Result<QualifiedIdentifier, ParsingFailure> {
+        self.push_location(&start_location);
+        self.expect(Token::ColonColon)?;
+
+        // `::` may be followed by one of { IdentifierName, `*`, Brackets }
+
+        // IdentifierName
+        if let Some(id) = self.consume_identifier(true)? {
+            self.next()?;
+            Ok(QualifiedIdentifier {
+                location: self.pop_location(),
+                attribute,
+                qualifier: Some(qual),
+                id: QualifiedIdentifierIdentifier::Id(id),
+            })
+        // `*`
+        } else if self.peek(Token::Times) {
+            let id_location = self.token_location();
+            self.next()?;
+            Ok(QualifiedIdentifier {
+                location: self.pop_location(),
+                attribute,
+                qualifier: Some(qual),
+                id: QualifiedIdentifierIdentifier::Id(("*".into(), id_location)),
+            })
+        // Brackets
+        } else if self.peek(Token::LeftBracket) {
+            let brackets = self.parse_brackets()?;
+            Ok(QualifiedIdentifier {
+                location: self.pop_location(),
+                attribute,
+                qualifier: Some(qual),
+                id: QualifiedIdentifierIdentifier::Brackets(brackets),
+            })
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedIdentifier, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
+        }
+    }
+
+    fn parse_brackets(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.expect(Token::LeftBracket)?;
+        let expr = self.parse_expression(ParsingExpressionContext {
+            min_precedence: OperatorPrecedence::List,
+            allow_in: true,
+            ..default()
+        });
+        self.expect(Token::RightBracket)?;
+        expr
+    }
+
+    fn parse_paren_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.expect(Token::LeftParen)?;
+        let expr = self.parse_expression(ParsingExpressionContext {
+            min_precedence: OperatorPrecedence::AssignmentAndOther,
+            allow_in: true,
+            ..default()
+        });
+        self.expect(Token::RightParen)?;
+        expr
+    }
+
+    fn parse_paren_list_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        self.expect(Token::LeftParen)?;
+        let expr = self.parse_expression(ParsingExpressionContext {
+            min_precedence: OperatorPrecedence::List,
+            allow_in: true,
+            ..default()
+        });
+        self.expect(Token::RightParen)?;
+        expr
     }
 }
 
