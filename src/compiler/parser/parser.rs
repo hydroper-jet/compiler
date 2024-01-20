@@ -1931,7 +1931,7 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_statement_starting_with_identifier(&mut self, context: ParsingDirectiveContext, id: (String, Location)) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        self.push_location(&id.1.clone());
+        self.push_location(&id.1);
         let id_location = id.1.clone();
 
         // LabeledStatement
@@ -2575,6 +2575,152 @@ impl<'input> Parser<'input> {
     fn forbid_line_break_before_token(&mut self) {
         if self.previous_token.1.line_break(&self.token.1) {
             self.add_syntax_error(&self.token.1.clone(), DiagnosticKind::TokenMustNotFollowLineBreak, vec![]);
+        }
+    }
+
+    fn parse_directive(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        // ConfigurationDirective or Statement
+        if let Token::Identifier(id) = &self.token.0 {
+            let id = (id.clone(), self.token_location());
+            self.next()?;
+            if self.peek(Token::LeftBrace) && &id.0 == "configuration" && id.1.character_count() == "configuration".len() {
+                self.parse_configuration_directive(context, id.1)
+            } else {
+                self.parse_statement_starting_with_identifier(context, id)
+            }
+        } else {
+            ()
+        }
+    }
+
+    fn parse_configuration_directive(&mut self, context: ParsingDirectiveContext, start_location: Location) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        self.push_location(&start_location);
+        self.expect(Token::LeftBrace)?;
+        let subdirective = self.parse_configuration_subdirective(context.clone())?;
+        self.expect(Token::RightBrace)?;
+        Ok((Rc::new(Directive::ConfigurationDirective(ConfigurationDirective {
+            location: self.pop_location(),
+            directive: subdirective,
+        })), true))
+    }
+
+    fn parse_configuration_subdirective(&mut self, context: ParsingDirectiveContext) -> Result<Rc<Directive>, ParsingFailure> {
+        if self.peek(Token::If) {
+            self.mark_location();
+            self.next()?;
+            self.expect(Token::LeftParen)?;
+            let test = self.parse_configuration_expression()?;
+            self.expect(Token::RightParen)?;
+            let consequent = Rc::new(Directive::Block(self.parse_block(context.clone())?));
+            let mut alternative: Option<Rc<Directive>> = None;
+            if self.consume(Token::Else)? {
+                alternative = Some(self.parse_configuration_subdirective(context.clone())?);
+            }
+            Ok(Rc::new(Directive::IfStatement(IfStatement {
+                location: self.pop_location(),
+                test,
+                consequent,
+                alternative,
+            })))
+        } else {
+            Ok(Rc::new(Directive::Block(self.parse_block(context.clone())?)))
+        }
+    }
+
+    fn parse_configuration_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        let mut base = self.parse_configuration_primary_expression()?;
+        if self.consume(Token::LogicalAnd)? {
+            self.push_location(&base.location());
+            let right = self.parse_configuration_expression()?;
+            base = Rc::new(Expression::Binary(BinaryExpression {
+                location: self.pop_location(),
+                operator: Operator::LogicalAnd,
+                left: base.clone(),
+                right,
+            }));
+        } else if self.consume(Token::LogicalOr)? {
+            self.push_location(&base.location());
+            let right = self.parse_configuration_expression()?;
+            base = Rc::new(Expression::Binary(BinaryExpression {
+                location: self.pop_location(),
+                operator: Operator::LogicalOr,
+                left: base.clone(),
+                right,
+            }));
+        }
+        Ok(base)
+    }
+
+    fn parse_configuration_primary_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+        if let Token::Identifier(mut id) = &self.token.0 {
+            self.mark_location();
+            self.next()?;
+            if self.consume(Token::ColonColon)? {
+                let (id_1, _) = self.expect_identifier(true)?;
+                id = id + &"::".to_owned() + &id_1;
+            }
+            let id_location = self.pop_location();
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id((id, id_location)),
+            }));
+            let equality: Option<Operator> = if self.consume(Token::Assign)? {
+                Some(Operator::Equals)
+            } else if self.consume(Token::NotEquals)? {
+                Some(Operator::NotEquals)
+            } else {
+                None
+            };
+            if let Some(equality) = equality {
+                self.push_location(&id.location());
+                self.mark_location();
+                let value: String;
+                if let Some((value_1, location)) = self.consume_identifier(false)? {
+                    value = value_1;
+                } else {
+                    let Token::StringLiteral(s) = &self.token.0 else {
+                        self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedStringLiteral, diagnostic_arguments![Token(self.token.0.clone())]);
+                        return Err(ParsingFailure);
+                    };
+                    value = s.clone();
+                    self.next()?;
+                }
+                let right = Rc::new(Expression::StringLiteral(StringLiteral {
+                    location: self.pop_location(),
+                    value,
+                }));
+                Ok(Rc::new(Expression::Binary(BinaryExpression {
+                    location: self.pop_location(),
+                    operator: equality,
+                    left: id.clone(),
+                    right,
+                })))
+            } else {
+                Ok(id)
+            }
+        } else if self.peek(Token::LeftParen) {
+            self.mark_location();
+            self.next()?;
+            let expression = self.parse_configuration_expression()?;
+            self.expect(Token::RightParen)?;
+            Ok(Rc::new(Expression::Paren(ParenExpression {
+                location: self.pop_location(),
+                expression,
+            })))
+        } else if self.peek(Token::Exclamation) {
+            self.mark_location();
+            self.next()?;
+            let expression = self.parse_configuration_primary_expression()?;
+            Ok(Rc::new(Expression::Unary(UnaryExpression {
+                location: self.pop_location(),
+                operator: Operator::LogicalNot,
+                expression,
+            })))
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedExpression, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
         }
     }
 }

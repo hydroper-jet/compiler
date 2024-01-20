@@ -134,15 +134,15 @@
 * Attributes
   * [ ] Attributes structure
 * Directives
-  * [ ] `configuration` directive
-    * [ ] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
+  * [x] `configuration` directive
+    * [x] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
   * [ ] `import`
     * [ ] Resolve ambiguity with expression statement beginning with `import.meta` expression
   * [ ] `use`
 * Configuration expressions
-  * [ ] Configuration expressions
-    * [ ] Translate `=` into `==`
-    * [ ] Translate right identifier in `=` or `!=` to a *StringLiteral*
+  * [x] Configuration expressions
+    * [x] Translate `=` into `==`
+    * [x] Translate right identifier in `=` or `!=` to a *StringLiteral*
 * Definitions
   * [ ] Variable definition
   * [ ] Function definition

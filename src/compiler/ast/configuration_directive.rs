@@ -5,5 +5,5 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConfigurationDirective {
     pub location: Location,
-    pub block: Block,
+    pub directive: Rc<Directive>,
 }

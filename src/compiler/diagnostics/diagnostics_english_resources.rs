@@ -27,6 +27,7 @@ lazy_static! {
         DiagnosticKind::IllegalBreak.id() => "Illegal break statement".into(),
         DiagnosticKind::ExpressionMustNotFollowLineBreak.id() => "Expression must not follow line break".into(),
         DiagnosticKind::TokenMustNotFollowLineBreak.id() => "Token must not follow line break".into(),
+        DiagnosticKind::ExpectedStringLiteral.id() => "Expected string literal before {1}".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

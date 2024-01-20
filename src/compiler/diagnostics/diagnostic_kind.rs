@@ -22,6 +22,7 @@ pub enum DiagnosticKind {
     IllegalBreak = 1042,
     ExpressionMustNotFollowLineBreak = 1043,
     TokenMustNotFollowLineBreak = 1044,
+    ExpectedStringLiteral = 1045,
 }
 
 impl DiagnosticKind {
