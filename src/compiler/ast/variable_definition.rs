@@ -7,6 +7,7 @@ pub struct VariableDefinition {
     pub location: Location,
     pub jetdoc: Option<Rc<JetDoc>>,
     pub attributes: Vec<Attribute>,
+    pub kind: (VariableDefinitionKind, Location),
     pub bindings: Vec<Rc<VariableBinding>>,
 }
 
@@ -14,6 +15,13 @@ pub struct VariableDefinition {
 pub enum VariableDefinitionKind {
     Var,
     Const,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SimpleVariableDefinition {
+    pub location: Location,
+    pub kind: (VariableDefinitionKind, Location),
+    pub bindings: Vec<Rc<VariableBinding>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

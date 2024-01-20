@@ -15,6 +15,13 @@ pub enum DiagnosticKind {
     DuplicateRestParameter = 1035,
     NotAllowedHere = 1036,
     MalformedRestParameter = 1037,
+    IllegalForInInitializer = 1038,
+    MultipleForInBindings = 1039,
+    UndefinedLabel = 1040,
+    IllegalContinue = 1041,
+    IllegalBreak = 1042,
+    ExpressionMustNotFollowLineBreak = 1043,
+    TokenMustNotFollowLineBreak = 1044,
 }
 
 impl DiagnosticKind {

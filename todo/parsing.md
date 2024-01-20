@@ -119,18 +119,18 @@
   * [x] `if`
   * [x] `switch`
   * [x] `switch type`
-  * [ ] `do`
-  * [ ] `while`
-  * [ ] `for`
-  * [ ] `for..in`
-  * [ ] `for each`
-  * [ ] `continue [label]`
-  * [ ] `break [label]`
-  * [ ] `try`
-  * [ ] `with`
-  * [ ] `return [v]`
-  * [ ] `throw e`
-  * [ ] `default xml namespace = ns`
+  * [x] `do`
+  * [x] `while`
+  * [x] `for`
+  * [x] `for..in`
+  * [x] `for each`
+  * [x] `continue [label]`
+  * [x] `break [label]`
+  * [x] `try`
+  * [x] `with`
+  * [x] `return [v]`
+  * [x] `throw e`
+  * [x] `default xml namespace = ns`
 * Attributes
   * [ ] Attributes structure
 * Directives

@@ -20,6 +20,13 @@ lazy_static! {
         DiagnosticKind::DuplicateRestParameter.id() => "Duplicate rest parameter".into(),
         DiagnosticKind::NotAllowedHere.id() => "{1} not allowed here".into(),
         DiagnosticKind::MalformedRestParameter.id() => "Malformed rest parameter".into(),
+        DiagnosticKind::IllegalForInInitializer.id() => "Illegal 'for..in' initializer".into(),
+        DiagnosticKind::MultipleForInBindings.id() => "Multiple 'for..in' bindings are not allowed".into(),
+        DiagnosticKind::UndefinedLabel.id() => "Undefined label '{1}'".into(),
+        DiagnosticKind::IllegalContinue.id() => "Illegal continue statement".into(),
+        DiagnosticKind::IllegalBreak.id() => "Illegal break statement".into(),
+        DiagnosticKind::ExpressionMustNotFollowLineBreak.id() => "Expression must not follow line break".into(),
+        DiagnosticKind::TokenMustNotFollowLineBreak.id() => "Token must not follow line break".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

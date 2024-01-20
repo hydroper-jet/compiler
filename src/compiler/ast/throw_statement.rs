@@ -5,5 +5,5 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ThrowStatement {
     pub location: Location,
-    pub label: Rc<Expression>,
+    pub expression: Rc<Expression>,
 }

@@ -5,7 +5,7 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ForStatement {
     pub location: Location,
-    pub init: Option<Rc<ForInitializer>>,
+    pub init: Option<ForInitializer>,
     pub test: Option<Rc<Expression>>,
     pub update: Option<Rc<Expression>>,
     pub body: Rc<Directive>,
@@ -14,17 +14,14 @@ pub struct ForStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ForInitializer {
     Expression(Rc<Expression>),
-    VariableDefinition {
-        kind: VariableDefinitionKind,
-        bindings: Vec<Rc<VariableBinding>>,
-    },
+    VariableDefinition(SimpleVariableDefinition),
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ForInStatement {
     pub location: Location,
     pub each: bool,
-    pub left: Rc<ForInBinding>,
+    pub left: ForInBinding,
     pub right: Rc<Expression>,
     pub body: Rc<Directive>,
 }
@@ -32,8 +29,5 @@ pub struct ForInStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ForInBinding {
     Expression(Rc<Expression>),
-    VariableDefinition {
-        kind: VariableDefinitionKind,
-        binding: Rc<VariableBinding>,
-    },
+    VariableDefinition(SimpleVariableDefinition),
 }
