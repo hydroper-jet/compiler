@@ -136,9 +136,10 @@
 * Directives
   * [x] `configuration` directive
     * [x] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
-  * [ ] `import`
-    * [ ] Resolve ambiguity with expression statement beginning with `import.meta` expression
+  * [x] `import`
+    * [x] Resolve ambiguity with expression statement beginning with `import.meta` expression
   * [ ] `use`
+    * [ ] Parse it together with other definitions since it is annotatable.
 * Configuration expressions
   * [x] Configuration expressions
     * [x] Translate `=` into `==`
@@ -146,6 +147,7 @@
 * Definitions
   * [ ] Variable definition
   * [ ] Function definition
+    * [ ] Verify body according to `native` attribute
     * [ ] Getter
     * [ ] Setter
     * [ ] Proxy

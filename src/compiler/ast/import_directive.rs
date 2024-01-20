@@ -12,6 +12,15 @@ pub struct ImportDirective {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ImportSpecifier {
-    Wildcard,
+    Wildcard(Location),
     Identifier((String, Location)),
+}
+
+impl ImportSpecifier {
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Wildcard(l) => l.clone(),
+            Self::Identifier((_, l)) => l.clone(),
+        }
+    }
 }

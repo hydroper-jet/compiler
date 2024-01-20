@@ -23,7 +23,7 @@ impl InitializerField {
     pub fn location(&self) -> Location {
         match self {
             Self::Field { ref name, ref value, .. } => {
-                value.map_or(name.1.clone(), |v| name.1.combine_with(v.location()))
+                value.clone().map_or(name.1.clone(), |v| name.1.combine_with(v.location()))
             },
             Self::Rest((_, ref l)) => l.clone(),
         }

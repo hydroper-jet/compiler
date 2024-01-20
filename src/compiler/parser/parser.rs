@@ -457,7 +457,8 @@ impl<'input> Parser<'input> {
             let arguments: Vec<Rc<Expression>> = self.parse_arguments()?;
             if arguments.len() == 1 && self.peek(Token::ColonColon) {
                 self.duplicate_location();
-                let identifier = self.finish_qualified_identifier(false, self.pop_location(), arguments[0].clone())?;
+                let ql = self.pop_location();
+                let identifier = self.finish_qualified_identifier(false, ql, arguments[0].clone())?;
                 operation = Rc::new(Expression::Member(MemberExpression {
                     location: self.pop_location(),
                     base: operation,
@@ -612,7 +613,8 @@ impl<'input> Parser<'input> {
             if self.peek(Token::ColonColon) {
                 self.push_location(&id_location.clone());
                 self.duplicate_location();
-                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                let ql = self.pop_location();
+                let id = self.finish_qualified_identifier(false, ql, id)?;
                 Ok(Some(Rc::new(Expression::QualifiedIdentifier(id))))
             } else {
                 Ok(Some(id))
@@ -637,7 +639,7 @@ impl<'input> Parser<'input> {
                 location: self.pop_location(),
                 value: true,
             }))))
-        } else if let Token::NumericLiteral(n) = self.token.0 {
+        } else if let Token::NumericLiteral(n) = self.token.0.clone() {
             self.mark_location();
             self.next()?;
             Ok(Some(Rc::new(Expression::NumericLiteral(NumericLiteral {
@@ -685,7 +687,8 @@ impl<'input> Parser<'input> {
             if self.peek(Token::ColonColon) {
                 self.push_location(&id_location.clone());
                 self.duplicate_location();
-                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                let ql = self.pop_location();
+                let id = self.finish_qualified_identifier(false, ql, id)?;
                 Ok(Some(Rc::new(Expression::QualifiedIdentifier(id))))
             } else {
                 Ok(Some(id))
@@ -1091,7 +1094,8 @@ impl<'input> Parser<'input> {
             if self.peek(Token::ColonColon) {
                 self.push_location(&id_location.clone());
                 self.duplicate_location();
-                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                let ql = self.pop_location();
+                let id = self.finish_qualified_identifier(false, ql, id)?;
                 Ok(Rc::new(Expression::QualifiedIdentifier(id)))
             } else {
                 Ok(id)
@@ -1116,7 +1120,7 @@ impl<'input> Parser<'input> {
                 location: self.pop_location(),
                 value: true,
             })))
-        } else if let Token::NumericLiteral(n) = self.token.0 {
+        } else if let Token::NumericLiteral(n) = self.token.0.clone() {
             self.mark_location();
             self.next()?;
             Ok(Rc::new(Expression::NumericLiteral(NumericLiteral {
@@ -1164,7 +1168,8 @@ impl<'input> Parser<'input> {
             if self.peek(Token::ColonColon) {
                 self.push_location(&id_location.clone());
                 self.duplicate_location();
-                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                let ql = self.pop_location();
+                let id = self.finish_qualified_identifier(false, ql, id)?;
                 Ok(Rc::new(Expression::QualifiedIdentifier(id)))
             } else {
                 Ok(id)
@@ -1199,7 +1204,10 @@ impl<'input> Parser<'input> {
     fn finish_embed_expression(&mut self, start: Location) -> Result<Rc<Expression>, ParsingFailure> {
         self.push_location(&start);
         self.next()?;
-        let Expression::ObjectInitializer(descriptor) = self.parse_object_initializer()?.as_ref();
+        let descriptor = self.parse_object_initializer()?.clone();
+        let Expression::ObjectInitializer(descriptor) = descriptor.as_ref() else {
+            panic!();
+        };
         return Ok(Rc::new(Expression::Embed(EmbedExpression {
             location: self.pop_location(),
             description: descriptor.clone(),
@@ -1404,7 +1412,8 @@ impl<'input> Parser<'input> {
     fn finish_paren_list_expr_or_qual_id(&mut self, start: Location, left: Rc<Expression>) -> Result<Rc<Expression>, ParsingFailure> {
         if self.peek(Token::ColonColon) && !matches!(left.as_ref(), Expression::Sequence(_)) {
             self.push_location(&start);
-            let id = self.finish_qualified_identifier(false, self.pop_location(), left)?;
+            let ql = self.pop_location();
+            let id = self.finish_qualified_identifier(false, ql, left)?;
             return Ok(Rc::new(Expression::QualifiedIdentifier(id)));
         }
         self.push_location(&start);
@@ -1467,7 +1476,8 @@ impl<'input> Parser<'input> {
                     id: QualifiedIdentifierIdentifier::Id((id, id_location.clone())),
                 };
                 let id = Rc::new(Expression::QualifiedIdentifier(id));
-                return self.finish_qualified_identifier(attribute, self.pop_location(), id);
+                let ql = self.pop_location();
+                return self.finish_qualified_identifier(attribute, ql, id);
             } else {
                 let id = QualifiedIdentifier {
                     location: id_location.clone(),
@@ -1482,7 +1492,8 @@ impl<'input> Parser<'input> {
         // (q)::x
         if self.peek(Token::LeftParen) {
             let qual = self.parse_paren_expression()?;
-            return self.finish_qualified_identifier(attribute, self.pop_location(), qual);
+            let ql = self.pop_location();
+            return self.finish_qualified_identifier(attribute, ql, qual);
         }
 
         self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedIdentifier, diagnostic_arguments![Token(self.token.0.clone())]);
@@ -1807,7 +1818,7 @@ impl<'input> Parser<'input> {
 
     fn parse_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         // ExpressionStatement or LabeledStatement
-        if let Token::Identifier(id) = &self.token.0 {
+        if let Token::Identifier(id) = &self.token.0.clone() {
             let id = (id.clone(), self.token_location());
             self.next()?;
             self.parse_statement_starting_with_identifier(context, id)
@@ -1960,7 +1971,8 @@ impl<'input> Parser<'input> {
             if self.peek(Token::ColonColon) {
                 self.push_location(&id_location.clone());
                 self.duplicate_location();
-                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                let ql = self.pop_location();
+                let id = self.finish_qualified_identifier(false, ql, id)?;
                 exp = Rc::new(Expression::QualifiedIdentifier(id));
             } else {
                 exp = id;
@@ -2321,7 +2333,7 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_for_in_statement_with_left_variable(&mut self, context: ParsingDirectiveContext, left: SimpleVariableDefinition) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        let variable_kind = left.kind.0;
+        let variable_kind = left.kind.0.clone();
         let variable_binding = left.bindings[0].clone();
 
         if let Some(init) = &variable_binding.initializer {
@@ -2416,7 +2428,7 @@ impl<'input> Parser<'input> {
 
         let node = Rc::new(Directive::BreakStatement(BreakStatement {
             location: self.pop_location(),
-            label: label.map(|l| (l.clone(), label_location.clone().unwrap())),
+            label: label.clone().map(|l| (l.clone(), label_location.clone().unwrap())),
         }));
 
         if label.is_some() && !context.is_label_defined(label.clone().unwrap()) {
@@ -2440,7 +2452,7 @@ impl<'input> Parser<'input> {
 
         let node = Rc::new(Directive::ContinueStatement(ContinueStatement {
             location: self.pop_location(),
-            label: label.map(|l| (l.clone(), label_location.clone().unwrap())),
+            label: label.clone().map(|l| (l.clone(), label_location.clone().unwrap())),
         }));
 
         if label.is_some() && !context.is_label_defined(label.clone().unwrap()) {
@@ -2588,8 +2600,74 @@ impl<'input> Parser<'input> {
             } else {
                 self.parse_statement_starting_with_identifier(context, id)
             }
+        } else if self.peek(Token::Import) {
+            self.parse_import_directive_or_expression_statement(context)
         } else {
-            ()
+            self.parse_statement(context)
+        }
+    }
+
+    fn parse_import_directive_or_expression_statement(&mut self, _context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        self.mark_location();
+        self.next()?;
+        if self.consume(Token::Dot)? {
+            self.duplicate_location();
+            self.expect_context_keyword("meta")?;
+            let mut expression = Rc::new(Expression::ImportMeta(ImportMeta {
+                location: self.pop_location(),
+            }));
+            expression = self.parse_subexpressions(expression, ParsingExpressionContext {
+                allow_in: true,
+                min_precedence: OperatorPrecedence::List,
+                ..default()
+            })?;
+            let semicolon = self.parse_semicolon()?;
+            Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
+                location: self.pop_location(),
+                expression,
+            })), semicolon))
+        } else {
+            let mut alias: Option<(String, Location)> = None;
+            let mut package_name: Vec<(String, Location)> = vec![];
+            let mut import_specifier = ImportSpecifier::Wildcard(self.token_location());
+            let id1 = self.expect_identifier(false)?;
+            if self.consume(Token::Assign)? {
+                alias = Some(id1.clone());
+                package_name.push(self.expect_identifier(false)?);
+            } else {
+                package_name.push(id1);
+            }
+    
+            if !self.peek(Token::Dot) {
+                self.expect(Token::Dot)?;
+            }
+    
+            while self.consume(Token::Dot)? {
+                if self.peek(Token::Times) {
+                    import_specifier = ImportSpecifier::Wildcard(self.token_location());
+                    self.next()?;
+                    break;
+                } else {
+                    let id1 = self.expect_identifier(true)?;
+                    if !self.peek(Token::Dot) {
+                        import_specifier = ImportSpecifier::Identifier(id1.clone());
+                        break;
+                    } else {
+                        package_name.push(id1.clone());
+                    }
+                }
+            }
+    
+            let semicolon = self.parse_semicolon()?;
+    
+            let node = Rc::new(Directive::ImportDirective(ImportDirective {
+                location: self.pop_location(),
+                alias,
+                package_name,
+                import_specifier,
+            }));
+    
+            Ok((node, semicolon))
         }
     }
 
@@ -2652,9 +2730,10 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_configuration_primary_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
-        if let Token::Identifier(mut id) = &self.token.0 {
+        if let Token::Identifier(id) = &self.token.0.clone() {
             self.mark_location();
             self.next()?;
+            let mut id = id.clone();
             if self.consume(Token::ColonColon)? {
                 let (id_1, _) = self.expect_identifier(true)?;
                 id = id + &"::".to_owned() + &id_1;
