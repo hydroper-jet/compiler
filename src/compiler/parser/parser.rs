@@ -1806,9 +1806,11 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        // ConfigurationDirective, ExpressionStatement or LabeledStatement
-        if matches!(self.token.0, Token::Identifier(_)) {
-            self.parse_statement_starting_with_identifier(context)
+        // ExpressionStatement or LabeledStatement
+        if let Token::Identifier(id) = &self.token {
+            let id = (id.clone(), self.token_location());
+            self.next()?;
+            self.parse_statement_starting_with_identifier(context, id)
         // SuperStatement or ExpressionStatement with `super`
         } else if self.peek(Token::Super) {
             self.mark_location();
@@ -1926,6 +1928,222 @@ impl<'input> Parser<'input> {
                 expression: exp,
             })), semicolon_inserted))
         }
+    }
+
+    fn parse_statement_starting_with_identifier(&mut self, context: ParsingDirectiveContext, id: (String, Location)) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        self.push_location(&id.1.clone());
+        let id_location = id.1.clone();
+
+        // LabeledStatement
+        if self.consume(Token::Colon)? {
+            let (substatement, semicolon_inserted) = self.parse_substatement(context.put_label(id.0.clone()))?;
+            let labeled = Rc::new(Directive::LabeledStatement(LabeledStatement {
+                location: self.pop_location(),
+                label: id.clone(),
+                substatement,
+            }));
+            return Ok((labeled, semicolon_inserted));
+        }
+
+        let mut exp: Rc<Expression>;
+
+        // EmbedExpression
+        if self.peek(Token::LeftBrace) && id.0 == "embed" && self.previous_token.1.character_count() == "embed".len() {
+            exp = self.finish_embed_expression(id_location)?;
+        } else {
+            let id = Rc::new(Expression::QualifiedIdentifier(QualifiedIdentifier {
+                location: id_location.clone(),
+                attribute: false,
+                qualifier: None,
+                id: QualifiedIdentifierIdentifier::Id(id.clone()),
+            }));
+            if self.peek(Token::ColonColon) {
+                self.push_location(&id_location.clone());
+                self.duplicate_location();
+                let id = self.finish_qualified_identifier(false, self.pop_location(), id)?;
+                exp = Rc::new(Expression::QualifiedIdentifier(id));
+            } else {
+                exp = id;
+            }
+        }
+
+        exp = self.parse_subexpressions(exp, ParsingExpressionContext {
+            allow_in: true, min_precedence: OperatorPrecedence::List, ..default()
+        })?;
+        let semicolon_inserted = self.parse_semicolon()?;
+        Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
+            location: self.pop_location(),
+            expression: exp,
+        })), semicolon_inserted))
+    }
+
+    fn parse_block(&mut self, context: ParsingDirectiveContext) -> Result<Block, ParsingFailure> {
+        self.mark_location();
+        self.expect(Token::LeftBrace)?;
+        let mut directives = vec![];
+        let mut semicolon_inserted = false;
+        while !self.peek(Token::RightBrace) {
+            if !directives.is_empty() && !semicolon_inserted {
+                self.expect(Token::Semicolon)?;
+            }
+            let (directive, semicolon_inserted_1) = self.parse_directive(context.clone())?;
+            directives.push(directive);
+            semicolon_inserted = semicolon_inserted_1;
+        }
+        self.expect(Token::RightBrace)?;
+        Ok(Block { 
+            location: self.pop_location(),
+            directives,
+        })
+    }
+
+    fn parse_if_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let context = context.override_control_context(true, ParsingControlContext {
+            breakable: true,
+            iteration: false,
+        });
+        self.mark_location();
+        self.next()?;
+        self.expect(Token::LeftParen)?;
+        let test = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+        self.expect(Token::RightParen)?;
+        let semicolon_inserted;
+        let (consequent, semicolon_inserted_1) = self.parse_substatement(context.clone())?;
+        let mut alternative = None;
+        if self.peek(Token::Else) {
+            if !semicolon_inserted_1 {
+                self.expect(Token::Semicolon)?;
+            }
+            self.next()?;
+            let (alternative_2, semicolon_inserted_2) = self.parse_substatement(context.clone())?;
+            alternative = Some(alternative_2);
+            semicolon_inserted = semicolon_inserted_2;
+        } else {
+            semicolon_inserted = semicolon_inserted_1;
+        }
+        Ok((Rc::new(Directive::IfStatement(IfStatement {
+            location: self.pop_location(),
+            test, consequent, alternative,
+        })), semicolon_inserted))
+    }
+
+    fn parse_switch_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        self.mark_location();
+        self.next()?;
+        if self.consume_context_keyword("type")? {
+            return self.parse_switch_type_statement(context);
+        }
+        let context = context.override_control_context(false, ParsingControlContext {
+            breakable: true,
+            iteration: false,
+        });
+        self.expect(Token::LeftParen)?;
+        let discriminant = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+        self.expect(Token::RightParen)?;
+        self.expect(Token::LeftBrace)?;
+        let cases = self.parse_case_elements(context)?;
+        self.expect(Token::RightBrace)?;
+        Ok((Rc::new(Directive::SwitchStatement(SwitchStatement {
+            location: self.pop_location(),
+            discriminant, cases,
+        })), true))
+    }
+
+    fn parse_case_elements(&mut self, context: ParsingDirectiveContext) -> Result<Vec<Case>, ParsingFailure> {
+        let mut cases = vec![];
+        let mut semicolon_inserted = false;
+        while !self.peek(Token::RightBrace) {
+            if !cases.is_empty() && !semicolon_inserted {
+                self.expect(Token::Semicolon)?;
+            }
+            if !(self.peek(Token::Case) || self.peek(Token::Default)) {
+                break;
+            }
+            self.mark_location();
+            let mut labels = vec![];
+            loop {
+                if self.peek(Token::Case) {
+                    self.mark_location();
+                    self.next()?;
+                    let exp = self.parse_expression(ParsingExpressionContext {
+                        allow_in: true,
+                        min_precedence: OperatorPrecedence::List,
+                        ..default()
+                    })?;
+                    self.expect(Token::Colon)?;
+                    labels.push(CaseLabel::Case((exp, self.pop_location())));
+                } else if self.peek(Token::Default) {
+                    self.mark_location();
+                    self.next()?;
+                    self.expect(Token::Colon)?;
+                    labels.push(CaseLabel::Default(self.pop_location()));
+                } else {
+                    break;
+                }
+            }
+            let mut directives = vec![];
+            semicolon_inserted = false;
+            while !(self.peek(Token::RightBrace) || self.peek(Token::Case) || self.peek(Token::Default)) {
+                if !directives.is_empty() && !semicolon_inserted {
+                    self.expect(Token::Semicolon)?;
+                }
+                let (directive, semicolon_inserted_1) = self.parse_directive(context.clone())?;
+                directives.push(directive);
+                semicolon_inserted = semicolon_inserted_1;
+            }
+            cases.push(Case {
+                location: self.pop_location(),
+                labels,
+                directives,
+            });
+        }
+        Ok(cases)
+    }
+
+    fn parse_switch_type_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let context = context.override_control_context(true, ParsingControlContext {
+            breakable: true,
+            iteration: false,
+        });
+        self.expect(Token::LeftParen)?;
+        let discriminant = self.parse_expression(ParsingExpressionContext { allow_in: true, min_precedence: OperatorPrecedence::List, ..default() })?;
+        self.expect(Token::RightParen)?;
+        self.expect(Token::LeftBrace)?;
+        let cases = self.parse_type_case_elements(context)?;
+        self.expect(Token::RightBrace)?;
+        Ok((Rc::new(Directive::SwitchTypeStatement(SwitchTypeStatement {
+            location: self.pop_location(),
+            discriminant, cases,
+        })), true))
+    }
+
+    fn parse_type_case_elements(&mut self, context: ParsingDirectiveContext) -> Result<Vec<TypeCase>, ParsingFailure> {
+        let mut cases = vec![];
+        while !self.peek(Token::RightBrace) {
+            if self.peek(Token::Default) {
+                self.mark_location();
+                self.next()?;
+                let block = Rc::new(self.parse_block(context.clone())?);
+                cases.push(TypeCase {
+                    location: self.pop_location(),
+                    parameter: None,
+                    block,
+                });
+            } else {
+                self.mark_location();
+                self.expect(Token::Case)?;
+                self.expect(Token::LeftParen)?;
+                let parameter = Some(self.parse_typed_destructuring()?);
+                self.expect(Token::RightParen)?;
+                let block = Rc::new(self.parse_block(context.clone())?);
+                cases.push(TypeCase {
+                    location: self.pop_location(),
+                    parameter,
+                    block,
+                });
+            }
+        }
+        Ok(cases)
     }
 }
 

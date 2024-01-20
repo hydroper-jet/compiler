@@ -11,14 +11,24 @@ pub struct SwitchStatement {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Case {
+    pub location: Location,
     pub labels: Vec<CaseLabel>,
     pub directives: Vec<Rc<Directive>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum CaseLabel {
-    Case(Rc<Expression>),
-    Default,
+    Case((Rc<Expression>, Location)),
+    Default(Location),
+}
+
+impl CaseLabel {
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Case((_, l)) => l.clone(),
+            Self::Default(l) => l.clone(),
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -31,7 +41,7 @@ pub struct SwitchTypeStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TypeCase {
     pub location: Location,
-    /// Case binding. If `None`, designates a `default {}` case.
-    pub binding: Option<Rc<TypedDestructuring>>,
+    /// Case parameter. If `None`, designates a `default {}` case.
+    pub parameter: Option<TypedDestructuring>,
     pub block: Rc<Block>,
 }

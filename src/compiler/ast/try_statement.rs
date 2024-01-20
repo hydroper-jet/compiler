@@ -13,7 +13,7 @@ pub struct TryStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CatchClause {
     pub location: Location,
-    pub destructuring: Rc<TypedDestructuring>,
+    pub parameter: TypedDestructuring,
     pub block: Rc<Block>,
 }
 

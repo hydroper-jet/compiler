@@ -107,18 +107,18 @@
   * [x] `T!`
     * Results into `NonNullableTypeExpression`
 * Statements
-  * [ ] `;`
-  * [ ] Expression statement
-    * [ ] Resolve ambiguity with labeled statement
-    * [ ] Resolve ambiguity with super statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
-  * [ ] `super()`
-    * [ ] Resolve ambiguity with expression statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
-  * [ ] Block
-  * [ ] Labeled statement
-    * [ ] Resolve ambiguity with expression statement
-  * [ ] `if`
-  * [ ] `switch`
-  * [ ] `switch type`
+  * [x] `;`
+  * [x] Expression statement
+    * [x] Resolve ambiguity with labeled statement
+    * [x] Resolve ambiguity with super statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
+  * [x] `super()`
+    * [x] Resolve ambiguity with expression statement (`super` followed by *PropertyOperator* or `super()` followed by *PropertyOperator*)
+  * [x] Block
+  * [x] Labeled statement
+    * [x] Resolve ambiguity with expression statement
+  * [x] `if`
+  * [x] `switch`
+  * [x] `switch type`
   * [ ] `do`
   * [ ] `while`
   * [ ] `for`
