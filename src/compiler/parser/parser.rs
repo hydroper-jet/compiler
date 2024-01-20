@@ -2846,6 +2846,10 @@ impl<'input> Parser<'input> {
             _ => false,
         }
     }
+
+    fn parse_attribute_identifier_names(&self, context: &mut AnnotatableContext) {
+        //
+    }
 }
 
 #[derive(Clone)]

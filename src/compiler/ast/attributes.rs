@@ -56,4 +56,20 @@ impl Attribute {
     pub fn find_static(list: &Vec<Attribute>) -> Option<Location> { for a in list { match &a { Self::Static(l) => return Some(l.clone()), _ => return None } }; None }
     pub fn find_abstract(list: &Vec<Attribute>) -> Option<Location> { for a in list { match &a { Self::Abstract(l) => return Some(l.clone()), _ => return None } }; None }
     pub fn find_override(list: &Vec<Attribute>) -> Option<Location> { for a in list { match &a { Self::Override(l) => return Some(l.clone()), _ => return None } }; None }
+
+    pub fn has(list: &Vec<Attribute>, attribute: &Attribute) -> bool {
+        match attribute {
+            Self::Public(_) => Self::find_public(list).is_some(),
+            Self::Private(_) => Self::find_private(list).is_some(),
+            Self::Protected(_) => Self::find_protected(list).is_some(),
+            Self::Internal(_) => Self::find_internal(list).is_some(),
+            Self::Proxy(_) => Self::find_proxy(list).is_some(),
+            Self::Final(_) => Self::find_final(list).is_some(),
+            Self::Native(_) => Self::find_native(list).is_some(),
+            Self::Static(_) => Self::find_static(list).is_some(),
+            Self::Abstract(_) => Self::find_abstract(list).is_some(),
+            Self::Override(_) => Self::find_override(list).is_some(),
+            _ => false,
+        }
+    }
 }

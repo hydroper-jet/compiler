@@ -133,6 +133,7 @@
   * [x] `default xml namespace = ns`
 * Attributes
   * [x] `Expression::to_metadata`
+  * [ ] `parse_attribute_identifier_names`
   * [x] `peek_annotatable_directive_identifier_name`
   * [x] `peek_attribute_public_private_protected_internal`
   * [x] `consume_attribute_public_private_protected_internal`
@@ -140,9 +141,12 @@
   * [x] `keyword_attribute_from_previous_token`
     * [x] `public`, `private`, `protected`, `internal`
     * [x] `proxy`,  `final`,  `native`,  `static`,  `abstract`,  `override`
-  * [ ] Parse annotatable directives starting with meta-data
+  * [ ] Parse annotatable directives starting with meta-data followed by a annotatable directive identifier name
+    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
   * [ ] Parse annotatable directives starting with a reserved word
+    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
   * [ ] Parse annotatable directives starting with an identifier followed by a annotatable directive identifier name
+    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
   * [ ] Parse annotatable directives starting without attributes
 * Annotatable directives
   * [ ] `parse_annotatable_directive`
@@ -159,15 +163,26 @@
     * [x] Translate right identifier in `=` or `!=` to a *StringLiteral*
 * Definitions
   * [ ] Variable definition
+    * [ ] Attribute validation
+    * [ ] Within `enum` block, if the definition has no `static` attribute, prohibit destructuring and type annotation on bindings.
   * [ ] Function definition
+    * [ ] Attribute validation
     * [ ] Verify body according to `native` attribute
     * [ ] Getter
     * [ ] Setter
     * [ ] Proxy
     * [ ] Constructor
   * [ ] `class`
+    * [ ] Attribute validation
+    * [ ] Allowed only at package block and top-level
   * [ ] `enum`
+    * [ ] Attribute validation
+    * [ ] Allowed only at package block and top-level
   * [ ] `interface`
+    * [ ] Attribute validation
+    * [ ] Allowed only at package block and top-level
   * [ ] `type`
+    * [ ] Attribute validation
+    * [ ] Allowed only at package block and top-level
   * [ ] `package`
   * [ ] Program
