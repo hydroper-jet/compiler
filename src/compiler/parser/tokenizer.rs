@@ -675,20 +675,13 @@ impl<'input> Tokenizer<'input> {
 
     fn expect_hex_digit(&mut self) -> Result<u32, ParsingFailure> {
         let ch = self.characters.peek_or_zero();
-        if !CharacterValidator::is_hex_digit(ch) {
+        let mv = CharacterValidator::hex_digit_mv(ch);
+        if mv.is_none() {
             self.add_unexpected_error();
             return Err(ParsingFailure);
         }
         self.characters.next();
-        Ok(
-            if ch >= 'A' && ch <= 'F' {
-                (ch as u32) - 0x41 + 10
-            } else if ch >= 'a' && ch <= 'f' {
-                (ch as u32) - 0x61 + 10
-            } else {
-                (ch as u32) - 0x30
-            }
-        )
+        Ok(mv.unwrap())
     }
 
     fn scan_dot_or_numeric_literal(&mut self) -> Result<Option<(Token, Location)>, ParsingFailure> {

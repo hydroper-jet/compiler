@@ -45,6 +45,28 @@ impl CharacterValidator {
         CharacterValidator::is_dec_digit(ch) || (ch >= '\x41' && ch <= '\x46') || (ch >= '\x61' && ch <= '\x66')
     }
 
+    /// Returns the mathematical value of a hexadecimal digit.
+    pub fn hex_digit_mv(ch: char) -> Option<u32> {
+        if ch >= 'A' && ch <= 'F' {
+            Some((ch as u32) - 0x41 + 10)
+        } else if ch >= 'a' && ch <= 'f' {
+            Some((ch as u32) - 0x61 + 10)
+        } else if ch >= '0' && ch <= '9' {
+            Some((ch as u32) - 0x30)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the mathematical value of a binary digit.
+    pub fn bin_digit_mv(ch: char) -> Option<u32> {
+        if ch >= '0' && ch <= '1' {
+            Some((ch as u32) - 0x30)
+        } else {
+            None
+        }
+    }
+
     pub fn is_identifier_start(ch: char) -> bool {
         if ch == '\x5f' || ch == '\x24' {
             return true;

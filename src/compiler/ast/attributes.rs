@@ -72,4 +72,8 @@ impl Attribute {
             _ => false,
         }
     }
+
+    pub fn is_metadata(&self) -> bool {
+        matches!(self, Self::Metadata(_))
+    }
 }

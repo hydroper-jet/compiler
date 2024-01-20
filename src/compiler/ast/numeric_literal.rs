@@ -1,8 +1,10 @@
 use crate::ns::*;
+use num_bigint::BigInt;
 use serde::{Serialize, Deserialize};
 use std::rc::Rc;
 use std::str::FromStr;
 use conv::ValueFrom;
+use num_traits::ToPrimitive;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NumericLiteral {
@@ -49,23 +51,49 @@ impl NumericLiteral {
 
     /// Parses an unsigned long either in
     /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
-    pub fn parse_unsigned_long(&self, negative: bool) -> Result<u64, ParsingFailure> {
+    pub fn parse_unsigned_long(&self) -> Result<u64, ParsingFailure> {
         let s = self.value.replace('_', "");
         if s.starts_with('0') {
             if s[1..].starts_with('x') || s[1..].starts_with('X') {
-                let n = u64::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 16);
+                let n = u64::from_str_radix(&s[2..], 16);
                 return n.map_err(|_| ParsingFailure);
             } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
-                let n = u64::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 2);
+                let n = u64::from_str_radix(&s[2..], 2);
                 return n.map_err(|_| ParsingFailure);
             }
         }
-        u64::from_str(&(if negative { "-" } else { "" }.to_owned() + &s)).map_err(|_| ParsingFailure)
+        u64::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses a big integer either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_big_int(&self, negative: bool) -> Result<BigInt, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let mut digits: Vec<u8> = vec![];
+                for ch in s[2..].chars() {
+                    digits.push(CharacterValidator::hex_digit_mv(ch).unwrap().to_u8().unwrap());
+                }
+                let n = BigInt::from_radix_be(if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus }, &digits, 16);
+                return n.map_or(Err(ParsingFailure), |n| Ok(n));
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let mut digits: Vec<u8> = vec![];
+                for ch in s[2..].chars() {
+                    digits.push(CharacterValidator::bin_digit_mv(ch).unwrap().to_u8().unwrap());
+                }
+                let n = BigInt::from_radix_be(if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus }, &digits, 2);
+                return n.map_or(Err(ParsingFailure), |n| Ok(n));
+            }
+        }
+        BigInt::from_str(&s).map_err(|_| ParsingFailure)
     }
 }
 
 mod tests {
+    #[allow(unused)]
     use crate::ns::*;
+    #[allow(unused)]
     use std::rc::Rc;
 
     #[test]
