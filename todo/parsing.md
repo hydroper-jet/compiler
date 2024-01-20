@@ -132,7 +132,16 @@
   * [x] `throw e`
   * [x] `default xml namespace = ns`
 * Attributes
-  * [ ] Attributes structure
+  * [ ] Meta-data
+  * [x] `peek_annotatable_directive_identifier_name`
+  * [x] `peek_attribute_public_private_protected_internal`
+  * [x] `consume_attribute_public_private_protected_internal`
+    * `public`, `private`, `protected`, `internal`
+  * [x] `keyword_attribute_from_previous_token`
+    * [x] `public`, `private`, `protected`, `internal`
+    * [x] `proxy`,  `final`,  `native`,  `static`,  `abstract`,  `override`
+* Annotatable directives
+  * [ ] `parse_annotatable_directive`
 * Directives
   * [x] `configuration` directive
     * [x] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)

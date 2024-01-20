@@ -2802,6 +2802,50 @@ impl<'input> Parser<'input> {
             Err(ParsingFailure)
         }
     }
+
+    fn consume_attribute_public_private_protected_internal(&mut self) -> Result<Option<Attribute>, ParsingFailure> {
+        if let Some(a) = self.peek_attribute_public_private_protected_internal() {
+            self.next()?;
+            Ok(Some(a))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn peek_attribute_public_private_protected_internal(&self) -> Option<Attribute> {
+        match self.token.0 {
+            Token::Public => Some(Attribute::Public(self.token.1.clone())),
+            Token::Private => Some(Attribute::Private(self.token.1.clone())),
+            Token::Protected => Some(Attribute::Protected(self.token.1.clone())),
+            Token::Internal => Some(Attribute::Internal(self.token.1.clone())),
+            _ => None,
+        }
+    }
+
+    fn keyword_attribute_from_previous_token(&self) -> Option<Attribute> {
+        self.previous_token.0.to_attribute(&self.previous_token.1)
+    }
+
+    fn peek_annotatable_directive_identifier_name(&self) -> bool {
+        if self.token.0.to_attribute(&self.token.1).is_some() {
+            return true;
+        }
+        match self.token.0 {
+            Token::Identifier(ref name) => {
+                if self.token.1.character_count() != name.chars().count() {
+                    return false;
+                }
+                name == "enum" || name == "type"
+            },
+            Token::Var |
+            Token::Const |
+            Token::Function |
+            Token::Class |
+            Token::Interface |
+            Token::Use => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -2821,10 +2865,8 @@ impl ParsingActivation {
 
 #[derive(Clone)]
 struct AnnotatableContext {
-    start: Location,
-    metadata_exp: Vec<Rc<Expression>>,
-    asdoc: Option<Rc<JetDoc>>,
-    first_modifier: Option<Rc<Expression>>,
-    previous_token_is_definition_keyword: bool,
+    start_location: Location,
+    jetdoc: Option<Rc<JetDoc>>,
+    attributes: Vec<Attribute>,
     context: ParsingDirectiveContext,
 }

@@ -407,4 +407,28 @@ impl Token {
             _  => None,
         }
     }
+    
+    pub(crate) fn to_attribute(&self, location: &Location) -> Option<Attribute> {
+        match self {
+            Self::Public => Some(Attribute::Public(location.clone())),
+            Self::Private => Some(Attribute::Private(location.clone())),
+            Self::Protected => Some(Attribute::Protected(location.clone())),
+            Self::Internal => Some(Attribute::Internal(location.clone())),
+            Self::Identifier(ref name) => {
+                if location.character_count() != name.chars().count() {
+                    return None;
+                }
+                match name.as_ref() {
+                    "proxy" => Some(Attribute::Proxy(location.clone())),
+                    "final" => Some(Attribute::Final(location.clone())),
+                    "native" => Some(Attribute::Native(location.clone())),
+                    "static" => Some(Attribute::Static(location.clone())),
+                    "abstract" => Some(Attribute::Abstract(location.clone())),
+                    "override" => Some(Attribute::Override(location.clone())),
+                    _ => None,
+                }
+            },
+            _ => None,
+        }
+    }
 }
