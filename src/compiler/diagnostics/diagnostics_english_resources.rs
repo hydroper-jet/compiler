@@ -28,6 +28,8 @@ lazy_static! {
         DiagnosticKind::ExpressionMustNotFollowLineBreak.id() => "Expression must not follow line break".into(),
         DiagnosticKind::TokenMustNotFollowLineBreak.id() => "Token must not follow line break".into(),
         DiagnosticKind::ExpectedStringLiteral.id() => "Expected string literal before {1}".into(),
+        DiagnosticKind::DuplicateAttribute.id() => "Duplicate attribute".into(),
+        DiagnosticKind::DuplicateVisibility.id() => "Duplicate visibility".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

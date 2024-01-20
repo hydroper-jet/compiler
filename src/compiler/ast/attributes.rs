@@ -73,6 +73,16 @@ impl Attribute {
         }
     }
 
+    pub fn is_duplicate_visibility(list: &Vec<Attribute>, attribute: &Attribute) -> bool {
+        match attribute {
+            Self::Public(_) |
+            Self::Private(_) |
+            Self::Protected(_) |
+            Self::Internal(_) => Self::find_public(list).is_some() || Self::find_private(list).is_some() || Self::find_protected(list).is_some() || Self::find_internal(list).is_some(),
+            _ => false,
+        }
+    }
+
     pub fn is_metadata(&self) -> bool {
         matches!(self, Self::Metadata(_))
     }

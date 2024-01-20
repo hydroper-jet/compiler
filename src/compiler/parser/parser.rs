@@ -2826,6 +2826,10 @@ impl<'input> Parser<'input> {
         self.previous_token.0.to_attribute(&self.previous_token.1)
     }
 
+    fn peek_attribute(&self) -> Option<Attribute> {
+        self.token.0.to_attribute(&self.token.1)
+    }
+
     fn peek_annotatable_directive_identifier_name(&self) -> bool {
         if self.token.0.to_attribute(&self.token.1).is_some() {
             return true;
@@ -2847,8 +2851,33 @@ impl<'input> Parser<'input> {
         }
     }
 
-    fn parse_attribute_identifier_names(&self, context: &mut AnnotatableContext) {
-        //
+    fn parse_attribute_identifier_names(&mut self, context: &mut AnnotatableContext) -> Result<(), ParsingFailure> {
+        loop {
+            if let Some(a) = self.peek_attribute() {
+                let last_attribute_is_identifier = context.attributes.last().map_or(false, |a| !a.is_metadata());
+                if last_attribute_is_identifier {
+                    self.forbid_line_break_before_token();
+                }
+                if Attribute::has(&context.attributes, &a) {
+                    self.add_syntax_error(&a.location(), DiagnosticKind::DuplicateAttribute, diagnostic_arguments![]);
+                }
+                if Attribute::is_duplicate_visibility(&context.attributes, &a) {
+                    self.add_syntax_error(&a.location(), DiagnosticKind::DuplicateVisibility, diagnostic_arguments![]);
+                }
+                context.attributes.push(a);
+                self.next()?;
+            } else {
+                if let Some(id) = self.peek_identifier(false)? {
+                    self.forbid_line_break_before_token();
+                    if ["enum", "type"].contains(&id.0.as_ref()) {
+                        self.next()?;
+                        context.directive_context_keyword = Some(id);
+                    }
+                }
+                break;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -2873,4 +2902,6 @@ struct AnnotatableContext {
     jetdoc: Option<Rc<JetDoc>>,
     attributes: Vec<Attribute>,
     context: ParsingDirectiveContext,
+    /// Previous token as a directive context keyword.
+    directive_context_keyword: Option<(String, Location)>,
 }

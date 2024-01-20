@@ -133,7 +133,7 @@
   * [x] `default xml namespace = ns`
 * Attributes
   * [x] `Expression::to_metadata`
-  * [ ] `parse_attribute_identifier_names`
+  * [x] `parse_attribute_identifier_names`
   * [x] `peek_annotatable_directive_identifier_name`
   * [x] `peek_attribute_public_private_protected_internal`
   * [x] `consume_attribute_public_private_protected_internal`

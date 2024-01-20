@@ -23,6 +23,8 @@ pub enum DiagnosticKind {
     ExpressionMustNotFollowLineBreak = 1043,
     TokenMustNotFollowLineBreak = 1044,
     ExpectedStringLiteral = 1045,
+    DuplicateAttribute = 1046,
+    DuplicateVisibility = 1047,
 }
 
 impl DiagnosticKind {
