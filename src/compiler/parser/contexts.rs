@@ -41,7 +41,7 @@ pub enum ParsingDirectiveContext {
 }
 
 impl ParsingDirectiveContext {
-    fn is_type_block(&self) -> bool {
+    pub fn is_type_block(&self) -> bool {
         match self {
             Self::ClassBlock { .. } |
             Self::InterfaceBlock |
@@ -50,14 +50,14 @@ impl ParsingDirectiveContext {
         }
     }
 
-    fn clone_control(&self) -> Self {
+    pub fn clone_control(&self) -> Self {
         match self {
             Self::WithControl { .. } => self.clone(),
             _ => Self::Default,
         }
     }
 
-    fn override_control_context(&self, label_only: bool, mut context: ParsingControlContext) -> Self {
+    pub fn override_control_context(&self, label_only: bool, mut context: ParsingControlContext) -> Self {
         let mut prev_context = None;
         let mut label = None;
         let mut labels = match self {
@@ -80,7 +80,7 @@ impl ParsingDirectiveContext {
         Self::WithControl { control_context: context, labels, to_be_labeled: None }
     }
 
-    fn put_label(&self, label: String) -> Self {
+    pub fn put_label(&self, label: String) -> Self {
         match self {
             Self::WithControl { control_context, labels, to_be_labeled: _ } => Self::WithControl {
                 to_be_labeled: Some(label),
@@ -98,15 +98,15 @@ impl ParsingDirectiveContext {
         }
     }
 
-    fn is_label_defined(&self, label: String) -> bool {
+    pub fn is_label_defined(&self, label: String) -> bool {
         self.resolve_label(label).is_some()
     }
 
-    fn resolve_label(&self, label: String) -> Option<ParsingControlContext> {
+    pub fn resolve_label(&self, label: String) -> Option<ParsingControlContext> {
         if let Self::WithControl { labels, .. } = &self { labels.get(&label).map(|c| c.clone()) } else { None }
     }
 
-    fn is_break_allowed(&self, label: Option<String>) -> bool {
+    pub fn is_break_allowed(&self, label: Option<String>) -> bool {
         if let Some(label) = label {
             let context = self.resolve_label(label);
             if let Some(context) = context { context.breakable } else { false }
@@ -115,7 +115,7 @@ impl ParsingDirectiveContext {
         }
     }
 
-    fn is_continue_allowed(&self, label: Option<String>) -> bool {
+    pub fn is_continue_allowed(&self, label: Option<String>) -> bool {
         if let Some(label) = label {
             let context = self.resolve_label(label);
             if let Some(context) = context { context.iteration } else { false }
@@ -127,6 +127,6 @@ impl ParsingDirectiveContext {
 
 #[derive(Clone)]
 pub struct ParsingControlContext {
-    breakable: bool,
-    iteration: bool,
+    pub breakable: bool,
+    pub iteration: bool,
 }

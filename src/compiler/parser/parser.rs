@@ -1800,6 +1800,133 @@ impl<'input> Parser<'input> {
     fn parse_semicolon(&mut self) -> Result<bool, ParsingFailure> {
         Ok(self.consume(Token::Semicolon)? || self.peek(Token::RightBrace) || self.previous_token.1.line_break(&self.token.1))
     }
+
+    fn parse_substatement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        self.parse_statement(context)
+    }
+
+    fn parse_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        // ConfigurationDirective, ExpressionStatement or LabeledStatement
+        if matches!(self.token.0, Token::Identifier(_)) {
+            self.parse_statement_starting_with_identifier(context)
+        // SuperStatement or ExpressionStatement with `super`
+        } else if self.peek(Token::Super) {
+            self.mark_location();
+            self.next()?;
+            let arguments = if self.peek(Token::LeftParen) { Some(self.parse_arguments()?) } else { None };
+            let mut semicolon_inserted = false;
+            if arguments.is_some() {
+                semicolon_inserted = self.parse_semicolon()?;
+            }
+            if arguments.is_none() || (!semicolon_inserted && (self.peek(Token::Dot) || self.peek(Token::LeftBracket))) {
+                if !(self.peek(Token::Dot) || self.peek(Token::LeftBracket)) {
+                    self.expect(Token::Dot)?;
+                }
+                self.duplicate_location();
+                // ExpressionStatement (`super`...)
+                let mut expr = Rc::new(Expression::Super(SuperExpression {
+                    location: self.pop_location(),
+                    object: arguments,
+                }));
+                expr = self.parse_subexpressions(expr, ParsingExpressionContext {
+                    allow_in: true,
+                    min_precedence: OperatorPrecedence::List,
+                    ..default()
+                })?;
+                let semicolon_inserted = self.parse_semicolon()?;
+                Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
+                    location: self.pop_location(),
+                    expression: expr,
+                })), semicolon_inserted))
+            } else {
+                // SuperStatement
+                let node = Rc::new(Directive::SuperStatement(SuperStatement {
+                    location: self.pop_location(),
+                    arguments: arguments.unwrap(),
+                }));
+
+                // Check whether super statement is allowed here
+                let allowed_here;
+                if let ParsingDirectiveContext::ConstructorBlock { super_statement_found } = &context {
+                    allowed_here = !super_statement_found.get();
+                    super_statement_found.set(true);
+                } else {
+                    allowed_here = false;
+                }
+
+                if !allowed_here {
+                    self.add_syntax_error(&node.location(), DiagnosticKind::NotAllowedHere, diagnostic_arguments![Token(Token::Super)]);
+                }
+
+                Ok((node, semicolon_inserted))
+            }
+        // EmptyStatement
+        } else if self.peek(Token::Semicolon) {
+            self.mark_location();
+            self.next()?;
+            Ok((Rc::new(Directive::EmptyStatement(EmptyStatement {
+                location: self.pop_location(),
+            })), true))
+        // Block
+        } else if self.peek(Token::LeftBrace) {
+            let context = context.override_control_context(true, ParsingControlContext {
+                breakable: true,
+                iteration: false,
+            });
+            let block = self.parse_block(context)?;
+            Ok((Rc::new(Directive::Block(block)), true))
+        // IfStatement
+        } else if self.peek(Token::If) {
+            self.parse_if_statement(context)
+        // SwitchStatement
+        // `switch type`
+        } else if self.peek(Token::Switch) {
+            self.parse_switch_statement(context)
+        // DoStatement
+        } else if self.peek(Token::Do) {
+            self.parse_do_statement(context)
+        // WhileStatement
+        } else if self.peek(Token::While) {
+            self.parse_while_statement(context)
+        // ForStatement
+        // `for..in`
+        // `for each`
+        } else if self.peek(Token::For) {
+            self.parse_for_statement(context)
+        // WithStatement
+        } else if self.peek(Token::With) {
+            self.parse_with_statement(context)
+        // BreakStatement
+        } else if self.peek(Token::Break) {
+            self.parse_break_statement(context)
+        // ContinueStatement
+        } else if self.peek(Token::Continue) {
+            self.parse_continue_statement(context)
+        // ReturnStatement
+        } else if self.peek(Token::Return) {
+            self.parse_return_statement(context)
+        // ThrowStatement
+        } else if self.peek(Token::Return) {
+            self.parse_throw_statement(context)
+        // TryStatement
+        } else if self.peek(Token::Try) {
+            self.parse_try_statement(context)
+        // `default xml namespace = expression`
+        } else if self.peek(Token::Default) {
+            self.parse_default_xml_namespace_statement()
+        // ExpressionStatement
+        } else {
+            self.mark_location();
+            let exp = self.parse_expression(ParsingExpressionContext {
+                allow_in: true, min_precedence: OperatorPrecedence::List, ..default()
+            })?;
+            let semicolon_inserted = self.parse_semicolon()?;
+            Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
+                location: self.pop_location(),
+                expression: exp,
+            })), semicolon_inserted))
+        }
+    }
 }
 
 #[derive(Clone)]
