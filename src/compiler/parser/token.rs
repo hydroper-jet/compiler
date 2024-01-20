@@ -293,6 +293,14 @@ impl ToString for Token {
 }
 
 impl Token {
+    pub fn is_context_keyword(token: (Token, Location), keyword: &str) -> bool {
+        if let Token::Identifier(name) = &token.0 {
+            name == keyword && token.1.character_count() == name.len()
+        } else {
+            false
+        }
+    }
+
     /// Indicates whether the token is a reserved word.
     pub fn is_reserved_word(&self) -> bool {
         self.reserved_word_name().is_some()
@@ -415,18 +423,7 @@ impl Token {
             Self::Protected => Some(Attribute::Protected(location.clone())),
             Self::Internal => Some(Attribute::Internal(location.clone())),
             Self::Identifier(ref name) => {
-                if location.character_count() != name.chars().count() {
-                    return None;
-                }
-                match name.as_ref() {
-                    "proxy" => Some(Attribute::Proxy(location.clone())),
-                    "final" => Some(Attribute::Final(location.clone())),
-                    "native" => Some(Attribute::Native(location.clone())),
-                    "static" => Some(Attribute::Static(location.clone())),
-                    "abstract" => Some(Attribute::Abstract(location.clone())),
-                    "override" => Some(Attribute::Override(location.clone())),
-                    _ => None,
-                }
+                Attribute::from_identifier_name(name, &location)
             },
             _ => None,
         }

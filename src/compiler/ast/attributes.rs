@@ -1,6 +1,6 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::rc::Rc;
+use std::{rc::Rc, str::FromStr};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Attribute {
@@ -85,5 +85,20 @@ impl Attribute {
 
     pub fn is_metadata(&self) -> bool {
         matches!(self, Self::Metadata(_))
+    }
+
+    pub fn from_identifier_name(name: &str, location: &Location) -> Option<Attribute> {
+        if location.character_count() != name.chars().count() {
+            return None;
+        }
+        match name.as_ref() {
+            "proxy" => Some(Attribute::Proxy(location.clone())),
+            "final" => Some(Attribute::Final(location.clone())),
+            "native" => Some(Attribute::Native(location.clone())),
+            "static" => Some(Attribute::Static(location.clone())),
+            "abstract" => Some(Attribute::Abstract(location.clone())),
+            "override" => Some(Attribute::Override(location.clone())),
+            _ => None,
+        }
     }
 }

@@ -141,13 +141,12 @@
   * [x] `keyword_attribute_from_previous_token`
     * [x] `public`, `private`, `protected`, `internal`
     * [x] `proxy`,  `final`,  `native`,  `static`,  `abstract`,  `override`
-  * [ ] Parse annotatable directives starting with meta-data followed by a annotatable directive identifier name
-    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
-  * [ ] Parse annotatable directives starting with a reserved word
-    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
-  * [ ] Parse annotatable directives starting with an identifier followed by a annotatable directive identifier name
-    * [ ] Call `parse_attribute_identifier_names` to consume remaining atributes
-  * [ ] Parse annotatable directives starting without attributes
+  * [x] Parse annotatable directives starting with meta-data followed by a annotatable directive identifier name
+    * [x] Call `parse_attribute_identifier_names` to consume remaining atributes
+  * [x] Parse annotatable directives starting with a reserved word
+    * [x] Call `parse_attribute_identifier_names` to consume remaining atributes
+  * [x] Parse annotatable directives starting with an identifier followed by a annotatable directive identifier name
+    * [x] Call `parse_attribute_identifier_names` to consume remaining atributes
 * Annotatable directives
   * [ ] `parse_annotatable_directive`
 * Directives

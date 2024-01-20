@@ -2591,17 +2591,75 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_directive(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let jetdoc: Option<Rc<JetDoc>> = self.parse_jetdoc()?;
         // ConfigurationDirective or Statement
         if let Token::Identifier(id) = &self.token.0 {
             let id = (id.clone(), self.token_location());
             self.next()?;
-            if self.peek(Token::LeftBrace) && &id.0 == "configuration" && id.1.character_count() == "configuration".len() {
+            if self.peek_annotatable_directive_identifier_name() && self.lookbehind_is_annotatable_directive_identifier_name() {
+                if ["enum", "type"].contains(&id.0.as_ref()) && id.1.character_count() == id.0.len() {
+                    let mut context = AnnotatableContext {
+                        start_location: id.1.clone(),
+                        jetdoc,
+                        attributes: vec![],
+                        context: context.clone(),
+                        directive_context_keyword: Some(id.clone()),
+                    };
+                    // self.parse_attribute_identifier_names(&mut context)?;
+                } else {
+                    let mut context = AnnotatableContext {
+                        start_location: id.1.clone(),
+                        jetdoc,
+                        attributes: vec![self.keyword_attribute_from_previous_token().unwrap()],
+                        context: context.clone(),
+                        directive_context_keyword: None,
+                    };
+                    self.parse_attribute_identifier_names(&mut context)?;
+                }
+                return self.parse_annotatable_directive(&context)?;
+            } else if self.peek(Token::LeftBrace) && &id.0 == "configuration" && id.1.character_count() == "configuration".len() {
                 self.parse_configuration_directive(context, id.1)
             } else {
                 self.parse_statement_starting_with_identifier(context, id)
             }
         } else if self.peek(Token::Import) {
             self.parse_import_directive_or_expression_statement(context)
+        } else if self.peek(Token::LeftBrace) {
+            self.mark_location();
+            let exp = self.parse_expression(ParsingExpressionContext {
+                allow_in: true, min_precedence: OperatorPrecedence::List, ..default()
+            })?;
+            if self.peek_annotatable_directive_identifier_name() {
+                if let Some(metadata) = exp.to_metadata() {
+                    let mut context = AnnotatableContext {
+                        start_location: self.pop_location(),
+                        jetdoc,
+                        attributes: metadata,
+                        context: context.clone(),
+                        directive_context_keyword: None,
+                    };
+                    self.parse_attribute_identifier_names(&mut context)?;
+                    return self.parse_annotatable_directive(&context)?;
+                }
+            }
+            let semicolon_inserted = self.parse_semicolon()?;
+            Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
+                location: self.pop_location(),
+                expression: exp,
+            })), semicolon_inserted))
+        } else if self.peek(Token::Public) || self.peek(Token::Private) || self.peek(Token::Protected)
+        || self.peek(Token::Internal) || self.peek(Token::Var) || self.peek(Token::Const)
+        || self.peek(Token::Function) || self.peek(Token::Class) || self.peek(Token::Interface)
+        || self.peek(Token::Use) {
+            let mut context = AnnotatableContext {
+                start_location: self.pop_location(),
+                jetdoc,
+                attributes: vec![],
+                context: context.clone(),
+                directive_context_keyword: None,
+            };
+            self.parse_attribute_identifier_names(&mut context)?;
+            return self.parse_annotatable_directive(&context)?;
         } else {
             self.parse_statement(context)
         }
@@ -2836,7 +2894,7 @@ impl<'input> Parser<'input> {
         }
         match self.token.0 {
             Token::Identifier(ref name) => {
-                if self.token.1.character_count() != name.chars().count() {
+                if self.token.1.character_count() != name.len() {
                     return false;
                 }
                 name == "enum" || name == "type"
@@ -2852,6 +2910,9 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_attribute_identifier_names(&mut self, context: &mut AnnotatableContext) -> Result<(), ParsingFailure> {
+        if context.directive_context_keyword.is_some() {
+            return Err(ParsingFailure);
+        }
         loop {
             if let Some(a) = self.peek_attribute() {
                 let last_attribute_is_identifier = context.attributes.last().map_or(false, |a| !a.is_metadata());
@@ -2878,6 +2939,12 @@ impl<'input> Parser<'input> {
             }
         }
         Ok(())
+    }
+
+    fn lookbehind_is_annotatable_directive_identifier_name(&self) -> bool {
+        self.keyword_attribute_from_previous_token().is_some()
+        || Token::is_context_keyword(self.previous_token, "enum")
+        || Token::is_context_keyword(self.previous_token, "type")
     }
 }
 
