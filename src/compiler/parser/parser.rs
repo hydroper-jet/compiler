@@ -2030,7 +2030,9 @@ impl<'input> Parser<'input> {
     fn parse_switch_statement(&mut self, context: ParsingDirectiveContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         self.mark_location();
         self.next()?;
-        if self.consume_context_keyword("type")? {
+        if self.peek_context_keyword("type") {
+            self.forbid_line_break_before_token();
+            self.next()?;
             return self.parse_switch_type_statement(context);
         }
         let context = context.override_control_context(false, ParsingControlContext {
@@ -2507,6 +2509,7 @@ impl<'input> Parser<'input> {
         let mut finally_clause: Option<FinallyClause> = None;
         loop {
             if self.peek(Token::Catch) {
+                self.mark_location();
                 self.next()?;
                 self.expect(Token::LeftParen)?;
                 let parameter = self.parse_typed_destructuring()?;
