@@ -88,4 +88,28 @@ impl Expression {
             Self::FunctionType(e) => e.location.clone(),
         }
     }
+
+    pub(crate) fn to_metadata(&self) -> Option<Vec<Attribute>> {
+        match self {
+            Self::ArrayLiteral(ArrayLiteral { elements, .. }) => {
+                if elements.len() != 1 {
+                    return None;
+                }
+                if let Element::Expression(ref exp) = elements[0] {
+                    Some(vec![Attribute::Metadata(exp.clone())])
+                } else {
+                    None
+                }
+            },
+            Self::ComputedMember(ComputedMemberExpression { base, key, .. }) => {
+                let mut a = base.to_metadata()?;
+                if matches!(key.as_ref(), Self::Sequence(_)) {
+                    return None;
+                }
+                a.push(Attribute::Metadata(key.clone()));
+                Some(a)
+            },
+            _ => None,
+        }
+    }
 }

@@ -132,7 +132,7 @@
   * [x] `throw e`
   * [x] `default xml namespace = ns`
 * Attributes
-  * [ ] Meta-data
+  * [x] `Expression::to_metadata`
   * [x] `peek_annotatable_directive_identifier_name`
   * [x] `peek_attribute_public_private_protected_internal`
   * [x] `consume_attribute_public_private_protected_internal`
@@ -140,6 +140,10 @@
   * [x] `keyword_attribute_from_previous_token`
     * [x] `public`, `private`, `protected`, `internal`
     * [x] `proxy`,  `final`,  `native`,  `static`,  `abstract`,  `override`
+  * [ ] Parse annotatable directives starting with meta-data
+  * [ ] Parse annotatable directives starting with a reserved word
+  * [ ] Parse annotatable directives starting with an identifier followed by a annotatable directive identifier name
+  * [ ] Parse annotatable directives starting without attributes
 * Annotatable directives
   * [ ] `parse_annotatable_directive`
 * Directives
