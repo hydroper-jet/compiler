@@ -5,7 +5,7 @@ use std::rc::Rc;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct JetDoc {
     pub location: Location,
-    pub main_body: (String, Location),
+    pub main_body: Option<(String, Location)>,
     pub tags: Vec<(JetDocTag, Location)>,
 }
 

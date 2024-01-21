@@ -1,4 +1,5 @@
 use crate::ns::*;
+use lazy_regex::*;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -3515,21 +3516,119 @@ impl<'input> Parser<'input> {
         }))
     }
 
-    fn parse_jetdoc(&mut self) -> Result<Option<Rc<JetDoc>>, ParsingFailure> {
+    pub fn parse_jetdoc(&mut self) -> Result<Option<Rc<JetDoc>>, ParsingFailure> {
         let comments = self.compilation_unit().comments.borrow();
         let last_comment = comments.last().map(|last_comment| last_comment.clone());
         drop(comments);
         Ok(last_comment.and_then(|comment| {
             if comment.is_jetdoc(&self.token.1) {
                 self.compilation_unit().comments_mut().pop();
+                let location = comment.location();
                 let content = &comment.content.borrow()[1..];
-                //
-                Some(to_do)
+                let (main_body, tags) = self.parse_jetdoc_content(&location, content);
+                Some(Rc::new(JetDoc {
+                    location,
+                    main_body,
+                    tags,
+                }))
             } else {
                 None
             }
         }))
     }
+
+    fn parse_jetdoc_content(&mut self, location: &Location, content: &str) -> (Option<(String, Location)>, Vec<(JetDocTag, Location)>) {
+        let lines = self.split_jetdoc_lines(location, content);
+
+        let mut main_body: Option<(String, Location)> = None;
+        let mut tags: Vec<(JetDocTag, Location)> = vec![];
+        let mut i = 0;
+        let line_count = lines.len();
+
+        let mut building_content_tag_name: Option<String> = None;
+        let mut building_content: Vec<String> = vec![];
+        let mut inside_code_block = false;
+
+        while i < line_count {
+            let line = &lines[i];
+            let tag = if inside_code_block { None } else {
+                regex_captures!(r"^[\s\t]*\@([^\s\t]+)(.*)", &line.content)
+            };
+            if let Some((_, tag_name, tag_content)) = tag {
+                self.parse_jetdoc_tag_or_main_content(
+                    comment_location.clone(),
+                    &mut building_content_tag_name,
+                    &mut building_content,
+                    &mut main_body,
+                    &mut tags,
+                );
+                if regex_is_match!(r"^[\s\t]*```([^`]|$)", &tag_content) {
+                    inside_code_block = true;
+                }
+                building_content_tag_name = Some(tag_name.into());
+                building_content.push(tag_content.into());
+            } else {
+                if regex_is_match!(r"^[\s\t]*```([^`]|$)", &line.content) {
+                    inside_code_block = !inside_code_block;
+                }
+                building_content.push(line.content.clone());
+            }
+            i += 1;
+        }
+
+        self.parse_jetdoc_tag_or_main_content(
+            comment_location.clone(),
+            &mut building_content_tag_name,
+            &mut building_content,
+            &mut main_body,
+            &mut tags,
+        );
+
+        (main_body, tags)
+    }
+
+    fn split_jetdoc_lines(&mut self, location: &Location, content: &str) -> Vec<ParsingJetDocLine> {
+        let mut builder = String::new();
+        let mut lines = vec![];
+        let mut line_number = location.first_line_number();
+        let mut index = location.first_offset();
+        let mut line_first_offset = index;
+        let mut characters = content.chars();
+        while let Some(ch) = characters.next() {
+            if CharacterValidator::is_line_terminator(ch) {
+                lines.push(ParsingJetDocLine {
+                    content: builder,
+                    location: Location::with_line_and_offsets(self.compilation_unit(), line_number, line_first_offset, index),
+                });
+                // <CR><LF> sequence
+                if ch == '\r' && characters.clone().next().unwrap_or('\x00') == '\n' {
+                    index += '\x00'.len_utf8();
+                    characters.next();
+                }
+                builder = String::new();
+                line_number += 1;
+                index += ch.len_utf8();
+                line_first_offset = index;
+            } else {
+                builder.push(ch);
+                index += ch.len_utf8();
+            }
+        }
+        for line in &mut lines {
+            let prefix = regex_captures!(r"^\s*(\*\s?)?", &line.content);
+            if let Some((prefix, _)) = prefix {
+                line.content = line.content[prefix.len()..].to_owned();
+                line.location = Location::with_line_and_offsets(self.compilation_unit(), line_number, line.location.first_offset() + prefix.len(), line.location.last_offset());
+            }
+        }
+
+        lines
+    }
+}
+
+struct ParsingJetDocLine {
+    content: String,
+    location: Location,
 }
 
 #[derive(Clone)]
