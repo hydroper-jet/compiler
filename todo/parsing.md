@@ -200,4 +200,4 @@
 
 ## Facade
 
-* [ ] Static `ParserFacade`
+* [x] Static `ParserFacade`

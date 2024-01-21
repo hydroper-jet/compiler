@@ -3545,8 +3545,8 @@ impl<'input> Parser<'input> {
         let mut i = 0;
         let line_count = lines.len();
 
-        let mut building_content_tag_name: Option<String> = None;
-        let mut building_content: Vec<String> = vec![];
+        let mut building_content_tag_name: Option<(String, Location)> = None;
+        let mut building_content: Vec<(String, Location)> = vec![];
         let mut inside_code_block = false;
 
         while i < line_count {
@@ -3555,8 +3555,7 @@ impl<'input> Parser<'input> {
                 regex_captures!(r"^[\s\t]*\@([^\s\t]+)(.*)", &line.content)
             };
             if let Some((_, tag_name, tag_content)) = tag {
-                self.parse_jetdoc_tag_or_main_content(
-                    comment_location.clone(),
+                self.parse_jetdoc_tag_or_main_body(
                     &mut building_content_tag_name,
                     &mut building_content,
                     &mut main_body,
@@ -3565,19 +3564,20 @@ impl<'input> Parser<'input> {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &tag_content) {
                     inside_code_block = true;
                 }
-                building_content_tag_name = Some(tag_name.into());
-                building_content.push(tag_content.into());
+                let tag_name_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset(), line.location.first_offset() + tag_name.len());
+                building_content_tag_name = Some((tag_name.into(), tag_name_location));
+                let tag_content_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_name.len(), line.location.last_offset());
+                building_content.push((tag_content.into(), tag_content_location));
             } else {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &line.content) {
                     inside_code_block = !inside_code_block;
                 }
-                building_content.push(line.content.clone());
+                building_content.push((line.content.clone(), line.location.clone()));
             }
             i += 1;
         }
 
-        self.parse_jetdoc_tag_or_main_content(
-            comment_location.clone(),
+        self.parse_jetdoc_tag_or_main_body(
             &mut building_content_tag_name,
             &mut building_content,
             &mut main_body,
@@ -3624,6 +3624,136 @@ impl<'input> Parser<'input> {
 
         lines
     }
+
+    fn parse_jetdoc_tag_or_main_body(
+        &self,
+        building_content_tag_name: &mut Option<(String, Location)>,
+        building_content: &mut Vec<(String, Location)>,
+        main_body: &mut Option<(String, Location)>,
+        tags: &mut Vec<(JetDocTag, Location)>
+    ) {
+        if let Some((tag_name, ref tag_location)) = building_content_tag_name.as_ref() {
+            match tag_name.as_ref() {
+                // @default value
+                "default" => {
+                    let (reference, location) = join_jetdoc_content(building_content);
+                    tags.push((JetDocTag::Default(reference), location));
+                },
+
+                // @eventType typeOrConstant
+                "eventType" => {
+                    let type_or_constant = building_content.join("\n").trim().to_owned();
+                    let source = Source::new(None, type_or_constant, &self.tokenizer.source.compiler_options);
+                    if let Some(exp) = parser_facade::parse_expression(&source) {
+                        tags.push(JetDocTag::EventType(exp));
+                    } else {
+                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    }
+                },
+
+                // @example text
+                "example" => {
+                    let text = building_content.join("\n").trim().into();
+                    tags.push(JetDocTag::Example(text));
+                },
+
+                // @exampleText text
+                "exampleText" => {
+                    let text = building_content.join("\n").trim().into();
+                    tags.push(JetDocTag::ExampleText(text));
+                },
+
+                // @internal text
+                "internal" => {
+                    let text = building_content.join("\n").trim().to_owned();
+
+                    // Content must be non empty
+                    if regex_is_match!(r"^\s*$", &text) {
+                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    }
+
+                    tags.push(JetDocTag::Internal(text));
+                },
+
+                // @param paramName description
+                "param" => {
+                    let content = building_content.join("\n").trim().to_owned();
+                    if let Some((_, name, description)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
+                        tags.push(JetDocTag::Param { name: name.into(), description: description.trim_start().into() });
+                    } else {
+                        tags.push(JetDocTag::Param { name: content, description: "".into() });
+                    }
+                },
+
+                // @private
+                "private" => {
+                    let text = building_content.join("\n");
+
+                    // Content must be empty
+                    if !regex_is_match!(r"^\s*$", &text) {
+                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    }
+
+                    tags.push(JetDocTag::Private);
+                },
+
+                // @return text
+                "return" => {
+                    let text = building_content.join("\n").trim().into();
+                    tags.push(JetDocTag::Return(text));
+                },
+
+                // @see reference [displayText]
+                "see" => {
+                    let content = building_content.join("\n").trim().to_owned();
+                    if let Some((_, reference, display_text)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
+                        tags.push(JetDocTag::See { reference: reference.to_owned(), display_text: Some(display_text.to_owned()) });
+                    } else {
+                        tags.push(JetDocTag::See { reference: content, display_text: None });
+                    }
+                },
+
+                // @throws className description
+                "throws" => {
+                    let class_name_and_description = building_content.join("\n").trim().to_owned();
+                    let class_name_and_description = regex_captures!(r"^([^\s]+)(\s.*)?", &class_name_and_description);
+                    if let Some((_, class_name, description)) = class_name_and_description {
+                        let description = description.trim().to_owned();
+                        let description = if description.is_empty() {
+                            None
+                        } else {
+                            Some(description)
+                        };
+                        let source = Source::new(None, class_name.into(), &self.tokenizer.source.compiler_options);
+                        if let Some(exp) = parser_facade::parse_type_expression(&source) {
+                            tags.push(JetDocTag::Throws { class_reference: exp, description });
+                        } else {
+                            self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                        }
+                    } else {
+                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    }
+                },
+
+                // Unrecognized tag
+                _ => {
+                    self.add_syntax_error(&comment_location.clone(), DiagnosticKind::UnrecognizedJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                },
+            }
+        } else if !building_content.is_empty() {
+            *main_body = Some(join_jetdoc_content(building_content));
+        }
+
+        *building_content_tag_name = None;
+        building_content.clear();
+    }
+}
+
+fn join_jetdoc_content(content: &Vec<(String, Location)>) -> (String, Location) {
+    let s: Vec<String> = content.iter().map(|c| c.0.clone()).collect();
+    let s = s.join("\n").trim().to_owned();
+    let location = content.first().unwrap().1.combine_with(content.last().unwrap().1.clone());
+    (s, location)
 }
 
 struct ParsingJetDocLine {
@@ -3662,6 +3792,62 @@ impl AnnotatableContext {
             k == name
         } else {
             false
+        }
+    }
+}
+
+pub struct ParserFacade;
+
+impl ParserFacade {
+    /// Parses `Program` until end-of-file.
+    pub fn parse_program(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Program>> {
+        let mut parser = Parser::new(compilation_unit);
+        if parser.next().is_ok() {
+            let program = parser.parse_program().ok();
+            if compilation_unit.invalidated() { None } else { program }
+        } else {
+            None
+        }
+    }
+
+    /// Parses `ListExpression^allowIn` and expects end-of-file.
+    pub fn parse_expression(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Expression>> {
+        let mut parser = Parser::new(compilation_unit);
+        if parser.next().is_ok() {
+            let exp = parser.parse_expression(ParsingExpressionContext {
+                ..default()
+            }).ok();
+            if exp.is_some() {
+                let _ = parser.expect_eof();
+            }
+            if compilation_unit.invalidated() { None } else { exp }
+        } else {
+            None
+        }
+    }
+
+    /// Parses `TypeExpression` and expects end-of-file.
+    pub fn parse_type_expression(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Expression>> {
+        let mut parser = Parser::new(compilation_unit);
+        if parser.next().is_ok() {
+            let exp = parser.parse_type_expression().ok();
+            if exp.is_some() {
+                let _ = parser.expect_eof();
+            }
+            if compilation_unit.invalidated() { None } else { exp }
+        } else {
+            None
+        }
+    }
+
+    /// Parses `Directives` until end-of-file.
+    pub fn parse_directives(compilation_unit: &Rc<CompilationUnit>, context: ParsingDirectiveContext) -> Option<Vec<Rc<Directive>>> {
+        let mut parser = Parser::new(compilation_unit);
+        if parser.next().is_ok() {
+            let directives = parser.parse_directives(context).ok();
+            if compilation_unit.invalidated() { None } else { directives }
+        } else {
+            None
         }
     }
 }

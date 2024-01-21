@@ -19,7 +19,6 @@ pub enum JetDocTag {
         name: String,
         description: String,
     },
-    EventConstant(Rc<Expression>),
     EventType(Rc<Expression>),
     Example(String),
     Internal(String),
