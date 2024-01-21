@@ -2669,6 +2669,8 @@ impl<'input> Parser<'input> {
     fn parse_annotatable_directive(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         if self.consume(Token::Use)? {
             self.parse_use_directive(context)
+        } else if self.peek(Token::Var) || self.peek(Token::Const) {
+            self.parse_variable_definition(context)
         } else {
             self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedDirectiveKeyword, diagnostic_arguments![Token(self.token.0.clone())]);
             Err(ParsingFailure)
@@ -2797,6 +2799,7 @@ impl<'input> Parser<'input> {
             if a.is_public() {
                 has_public = true;
             } else {
+                // Unallowed attribute
                 self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
             }
         }
@@ -2806,6 +2809,92 @@ impl<'input> Parser<'input> {
         }
 
         Ok((node, semicolon))
+    }
+
+    fn parse_variable_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        let has_static = Attribute::find_static(&attributes).is_some();
+        self.push_location(&start_location);
+        let kind_location = self.token_location();
+        let kind = if self.consume(Token::Const)? {
+            VariableDefinitionKind::Const
+        } else {
+            self.expect(Token::Var)?;
+            VariableDefinitionKind::Var
+        };
+        let mut bindings = vec![Rc::new(self.parse_variable_binding(true)?)];
+        while self.consume(Token::Comma)? {
+            bindings.push(Rc::new(self.parse_variable_binding(true)?));
+        }
+
+        // Forbid destructuring bindings in enumerations.
+        if !has_static && matches!(context, ParsingDirectiveContext::EnumBlock) {
+            for binding in bindings {
+                let malformed = matches!(binding.destructuring.destructuring.as_ref(), Expression::QualifiedIdentifier(_))
+                    || binding.destructuring.type_annotation.is_some();
+                if malformed {
+                    self.add_syntax_error(&binding.location(), DiagnosticKind::MalformedEnumMember, diagnostic_arguments![]);
+                }
+            }
+        }
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Static(_) => {
+                    if !context.is_type_block() {
+                        // Unallowed attribute
+                        self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                    }
+                },
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        let semicolon = self.parse_semicolon()?;
+        let node = Rc::new(Directive::VariableDefinition(VariableDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            kind: (kind, kind_location),
+            bindings,
+        }));
+
+        Ok((node, semicolon))
+    }
+
+    pub fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
+        let mut unallowed = false;
+        match a {
+            Attribute::Public(_) => {
+                if !(matches!(context, ParsingDirectiveContext::PackageBlock)) {
+                    unallowed = true;
+                }
+            },
+            Attribute::Private(_) |
+            Attribute::Protected(_) => {
+                if !context.is_type_block() {
+                    unallowed = true;
+                }
+            },
+            Attribute::Internal(_) => {},
+            _ => {}
+        }
+        if unallowed {
+            // Unallowed attribute
+            self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+        }
     }
 
     fn parse_configuration_directive(&mut self, context: ParsingDirectiveContext, start_location: Location) -> Result<(Rc<Directive>, bool), ParsingFailure> {

@@ -29,3 +29,9 @@ pub struct VariableBinding {
     pub destructuring: TypedDestructuring,
     pub initializer: Option<Rc<Expression>>,
 }
+
+impl VariableBinding {
+    pub fn location(&self) -> Location {
+        self.initializer.map_or(self.destructuring.location.clone(), |init| self.destructuring.location.combine_with(init.location()))
+    }
+}

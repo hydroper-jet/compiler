@@ -161,9 +161,9 @@
     * [x] Translate `=` into `==`
     * [x] Translate right identifier in `=` or `!=` to a *StringLiteral*
 * Definitions
-  * [ ] Variable definition
-    * [ ] Attribute validation
-    * [ ] Within `enum` block, if the definition has no `static` attribute, prohibit destructuring and type annotation on bindings.
+  * [x] Variable definition
+    * [x] Attribute validation
+    * [x] Within `enum` block, if the definition has no `static` attribute, prohibit destructuring and type annotation on bindings.
   * [ ] Function definition
     * [ ] Attribute validation
     * [ ] Verify body according to `native` attribute

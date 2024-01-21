@@ -33,6 +33,7 @@ lazy_static! {
         DiagnosticKind::ExpectedDirectiveKeyword.id() => "Expected directive keyword".into(),
         DiagnosticKind::UnallowedAttribute.id() => "Unallowed attribute".into(),
         DiagnosticKind::UseDirectiveMustContainPublic.id() => "Use directive must contain the 'public' attribute".into(),
+        DiagnosticKind::MalformedEnumMember.id() => "Malformed enumeration member".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

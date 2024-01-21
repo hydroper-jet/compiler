@@ -28,6 +28,7 @@ pub enum DiagnosticKind {
     ExpectedDirectiveKeyword = 1048,
     UnallowedAttribute = 1049,
     UseDirectiveMustContainPublic = 1050,
+    MalformedEnumMember = 1051,
 }
 
 impl DiagnosticKind {
