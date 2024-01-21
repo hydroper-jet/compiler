@@ -3510,7 +3510,8 @@ impl<'input> Parser<'input> {
             if comment.is_jetdoc(&self.token.1) {
                 self.compilation_unit().comments_mut().pop();
                 let location = comment.location();
-                let location = Location::with_lines_and_offsets(self.compilation_unit(), location.first_line_number, location.last_line_number, location.first_offset + 1, location.last_offset);
+                let comment_prefix_length: usize = 3;
+                let location = Location::with_lines_and_offsets(self.compilation_unit(), location.first_line_number, location.last_line_number, location.first_offset + comment_prefix_length, location.last_offset - 2);
                 let content = &comment.content.borrow()[1..];
                 let (main_body, tags) = self.parse_jetdoc_content(&location, content);
                 Some(Rc::new(JetDoc {
@@ -3601,13 +3602,18 @@ impl<'input> Parser<'input> {
                 index += ch.len_utf8();
             }
         }
+        lines.push(ParsingJetDocLine {
+            content: builder,
+            location: Location::with_line_and_offsets(self.compilation_unit(), line_number, line_first_offset, index),
+        });
         for line in &mut lines {
             let line_content = line.content.to_owned();
             let prefix = regex_captures!(r"^\s*(\*\s?)?", &line_content);
             if let Some((prefix, _)) = prefix {
                 line.content = line.content[prefix.len()..].to_owned();
-                line.location = Location::with_line_and_offsets(self.compilation_unit(), line_number, line.location.first_offset() + prefix.len(), line.location.last_offset());
+                line.location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + prefix.len(), line.location.last_offset());
             }
+            println!("{:?}", line.location);
         }
 
         lines
