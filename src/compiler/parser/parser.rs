@@ -3510,6 +3510,7 @@ impl<'input> Parser<'input> {
             if comment.is_jetdoc(&self.token.1) {
                 self.compilation_unit().comments_mut().pop();
                 let location = comment.location();
+                let location = Location::with_lines_and_offsets(self.compilation_unit(), location.first_line_number, location.last_line_number, location.first_offset + 1, location.last_offset);
                 let content = &comment.content.borrow()[1..];
                 let (main_body, tags) = self.parse_jetdoc_content(&location, content);
                 Some(Rc::new(JetDoc {
@@ -3586,14 +3587,14 @@ impl<'input> Parser<'input> {
                     content: builder,
                     location: Location::with_line_and_offsets(self.compilation_unit(), line_number, line_first_offset, index),
                 });
+                index += ch.len_utf8();
                 // <CR><LF> sequence
                 if ch == '\r' && characters.clone().next().unwrap_or('\x00') == '\n' {
-                    index += '\x00'.len_utf8();
+                    index += '\n'.len_utf8();
                     characters.next();
                 }
                 builder = String::new();
                 line_number += 1;
-                index += ch.len_utf8();
                 line_first_offset = index;
             } else {
                 builder.push(ch);
