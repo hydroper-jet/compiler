@@ -1,0 +1,153 @@
+{
+  "location": {},
+  "packages": [],
+  "directives": [
+    {
+      "TypeDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "left": [
+          "T",
+          {}
+        ],
+        "right": {
+          "WithTypeArguments": {
+            "location": {},
+            "base": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "Iterator",
+                    {}
+                  ]
+                }
+              }
+            },
+            "arguments": [
+              {
+                "WithTypeArguments": {
+                  "location": {},
+                  "base": {
+                    "QualifiedIdentifier": {
+                      "location": {},
+                      "attribute": false,
+                      "qualifier": null,
+                      "id": {
+                        "Id": [
+                          "Promise",
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "arguments": [
+                    {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "W",
+                            {}
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "ClassDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "name": [
+          "C",
+          {}
+        ],
+        "type_parameters": [
+          {
+            "location": {},
+            "name": [
+              "T",
+              {}
+            ]
+          }
+        ],
+        "extends_clause": null,
+        "implements_clause": null,
+        "block": {
+          "location": {},
+          "directives": []
+        }
+      }
+    },
+    {
+      "FunctionDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "name": {
+          "Identifier": [
+            "f",
+            {}
+          ]
+        },
+        "type_parameters": [
+          {
+            "location": {},
+            "name": [
+              "T1",
+              {}
+            ]
+          },
+          {
+            "location": {},
+            "name": [
+              "T2",
+              {}
+            ]
+          }
+        ],
+        "common": {
+          "location": {},
+          "contains_yield": false,
+          "contains_await": false,
+          "signature": {
+            "location": {},
+            "parameters": [],
+            "result_type": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "T",
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "body": {
+            "Block": {
+              "location": {},
+              "directives": []
+            }
+          }
+        }
+      }
+    }
+  ]
+}

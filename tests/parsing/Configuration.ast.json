@@ -1,0 +1,218 @@
+{
+  "location": {},
+  "packages": [
+    {
+      "location": {},
+      "jetdoc": null,
+      "name": [
+        [
+          "com",
+          {}
+        ],
+        [
+          "x",
+          {}
+        ],
+        [
+          "y",
+          {}
+        ]
+      ],
+      "block": {
+        "location": {},
+        "directives": [
+          {
+            "ConfigurationDirective": {
+              "location": {},
+              "directive": {
+                "IfStatement": {
+                  "location": {},
+                  "test": {
+                    "Binary": {
+                      "location": {},
+                      "operator": "Equals",
+                      "left": {
+                        "QualifiedIdentifier": {
+                          "location": {},
+                          "attribute": false,
+                          "qualifier": null,
+                          "id": {
+                            "Id": [
+                              "air::target",
+                              {}
+                            ]
+                          }
+                        }
+                      },
+                      "right": {
+                        "StringLiteral": {
+                          "location": {},
+                          "value": "ios"
+                        }
+                      }
+                    }
+                  },
+                  "consequent": {
+                    "Block": {
+                      "location": {},
+                      "directives": [
+                        {
+                          "FunctionDefinition": {
+                            "location": {},
+                            "jetdoc": null,
+                            "attributes": [
+                              {
+                                "Public": {}
+                              }
+                            ],
+                            "name": {
+                              "Identifier": [
+                                "helloPlatform",
+                                {}
+                              ]
+                            },
+                            "type_parameters": null,
+                            "common": {
+                              "location": {},
+                              "contains_yield": false,
+                              "contains_await": false,
+                              "signature": {
+                                "location": {},
+                                "parameters": [],
+                                "result_type": {
+                                  "VoidType": {
+                                    "location": {}
+                                  }
+                                }
+                              },
+                              "body": {
+                                "Block": {
+                                  "location": {},
+                                  "directives": [
+                                    {
+                                      "ExpressionStatement": {
+                                        "location": {},
+                                        "expression": {
+                                          "Call": {
+                                            "location": {},
+                                            "base": {
+                                              "QualifiedIdentifier": {
+                                                "location": {},
+                                                "attribute": false,
+                                                "qualifier": null,
+                                                "id": {
+                                                  "Id": [
+                                                    "trace",
+                                                    {}
+                                                  ]
+                                                }
+                                              }
+                                            },
+                                            "arguments": [
+                                              {
+                                                "StringLiteral": {
+                                                  "location": {},
+                                                  "value": "Hello, iOS!"
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "alternative": {
+                    "Block": {
+                      "location": {},
+                      "directives": [
+                        {
+                          "FunctionDefinition": {
+                            "location": {},
+                            "jetdoc": null,
+                            "attributes": [
+                              {
+                                "Public": {}
+                              }
+                            ],
+                            "name": {
+                              "Identifier": [
+                                "helloPlatform",
+                                {}
+                              ]
+                            },
+                            "type_parameters": null,
+                            "common": {
+                              "location": {},
+                              "contains_yield": false,
+                              "contains_await": false,
+                              "signature": {
+                                "location": {},
+                                "parameters": [],
+                                "result_type": {
+                                  "VoidType": {
+                                    "location": {}
+                                  }
+                                }
+                              },
+                              "body": {
+                                "Block": {
+                                  "location": {},
+                                  "directives": [
+                                    {
+                                      "ExpressionStatement": {
+                                        "location": {},
+                                        "expression": {
+                                          "Call": {
+                                            "location": {},
+                                            "base": {
+                                              "QualifiedIdentifier": {
+                                                "location": {},
+                                                "attribute": false,
+                                                "qualifier": null,
+                                                "id": {
+                                                  "Id": [
+                                                    "trace",
+                                                    {}
+                                                  ]
+                                                }
+                                              }
+                                            },
+                                            "arguments": [
+                                              {
+                                                "StringLiteral": {
+                                                  "location": {},
+                                                  "value": "Hello, non iOS platform!"
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "directives": []
+}

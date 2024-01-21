@@ -1,0 +1,16 @@
+switch (item.category) {
+    case "fine":
+    case "moderate":
+        trace("Fine")
+    default:
+        trace("Something else")
+}
+
+switch type (v) {
+    case (d: Date) {
+        // d: Date
+    }
+    default {
+        // No matched case
+    }
+}

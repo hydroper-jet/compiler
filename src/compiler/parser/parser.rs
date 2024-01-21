@@ -1203,7 +1203,6 @@ impl<'input> Parser<'input> {
 
     fn finish_embed_expression(&mut self, start: Location) -> Result<Rc<Expression>, ParsingFailure> {
         self.push_location(&start);
-        self.next()?;
         let descriptor = self.parse_object_initializer()?.clone();
         let Expression::ObjectInitializer(descriptor) = descriptor.as_ref() else {
             panic!();
@@ -1918,7 +1917,7 @@ impl<'input> Parser<'input> {
         } else if self.peek(Token::Return) {
             self.parse_return_statement(context)
         // ThrowStatement
-        } else if self.peek(Token::Return) {
+        } else if self.peek(Token::Throw) {
             self.parse_throw_statement(context)
         // TryStatement
         } else if self.peek(Token::Try) {
@@ -3230,11 +3229,7 @@ impl<'input> Parser<'input> {
     fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
         let mut unallowed = false;
         match a {
-            Attribute::Public(_) => {
-                if !(matches!(context, ParsingDirectiveContext::PackageBlock)) {
-                    unallowed = true;
-                }
-            },
+            Attribute::Public(_) => {},
             Attribute::Private(_) |
             Attribute::Protected(_) => {
                 if !context.is_type_block() {

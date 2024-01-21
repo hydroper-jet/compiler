@@ -1,0 +1,130 @@
+{
+  "location": {},
+  "packages": [],
+  "directives": [
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "OptionalChaining": {
+            "location": {},
+            "base": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "o",
+                    {}
+                  ]
+                }
+              }
+            },
+            "expression": {
+              "Member": {
+                "location": {},
+                "base": {
+                  "OptionalChainingPlaceholder": {
+                    "location": {}
+                  }
+                },
+                "identifier": {
+                  "location": {},
+                  "attribute": false,
+                  "qualifier": null,
+                  "id": {
+                    "Id": [
+                      "x",
+                      {}
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "OptionalChaining": {
+            "location": {},
+            "base": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "o",
+                    {}
+                  ]
+                }
+              }
+            },
+            "expression": {
+              "ComputedMember": {
+                "location": {},
+                "base": {
+                  "OptionalChainingPlaceholder": {
+                    "location": {}
+                  }
+                },
+                "key": {
+                  "QualifiedIdentifier": {
+                    "location": {},
+                    "attribute": false,
+                    "qualifier": null,
+                    "id": {
+                      "Id": [
+                        "k",
+                        {}
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "OptionalChaining": {
+            "location": {},
+            "base": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "o",
+                    {}
+                  ]
+                }
+              }
+            },
+            "expression": {
+              "Call": {
+                "location": {},
+                "base": {
+                  "OptionalChainingPlaceholder": {
+                    "location": {}
+                  }
+                },
+                "arguments": []
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

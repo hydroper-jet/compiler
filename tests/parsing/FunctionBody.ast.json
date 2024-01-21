@@ -1,0 +1,164 @@
+{
+  "location": {},
+  "packages": [],
+  "directives": [
+    {
+      "FunctionDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "name": {
+          "Identifier": [
+            "f",
+            {}
+          ]
+        },
+        "type_parameters": null,
+        "common": {
+          "location": {},
+          "contains_yield": false,
+          "contains_await": false,
+          "signature": {
+            "location": {},
+            "parameters": [],
+            "result_type": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "T",
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "body": {
+            "Expression": {
+              "Paren": {
+                "location": {},
+                "expression": {
+                  "QualifiedIdentifier": {
+                    "location": {},
+                    "attribute": false,
+                    "qualifier": null,
+                    "id": {
+                      "Id": [
+                        "v",
+                        {}
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "FunctionDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [
+          {
+            "Native": {}
+          }
+        ],
+        "name": {
+          "Identifier": [
+            "f2",
+            {}
+          ]
+        },
+        "type_parameters": null,
+        "common": {
+          "location": {},
+          "contains_yield": false,
+          "contains_await": false,
+          "signature": {
+            "location": {},
+            "parameters": [],
+            "result_type": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "T",
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "body": null
+        }
+      }
+    },
+    {
+      "FunctionDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "name": {
+          "Identifier": [
+            "f3",
+            {}
+          ]
+        },
+        "type_parameters": null,
+        "common": {
+          "location": {},
+          "contains_yield": false,
+          "contains_await": false,
+          "signature": {
+            "location": {},
+            "parameters": [],
+            "result_type": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "T",
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "body": {
+            "Block": {
+              "location": {},
+              "directives": [
+                {
+                  "ReturnStatement": {
+                    "location": {},
+                    "expression": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "v",
+                            {}
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+type T = Iterator.<Promise.<W>>
+class C.<T> {}
+function f.<T1, T2>(): T {}

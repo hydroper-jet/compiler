@@ -1,0 +1,13 @@
+package com.x.y {
+    configuration {
+        if (air::target=ios) {
+            public function helloPlatform(): void {
+                trace("Hello, iOS!");
+            }
+        } else {
+            public function helloPlatform(): void {
+                trace("Hello, non iOS platform!");
+            }
+        }
+    }
+}

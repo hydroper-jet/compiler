@@ -1,0 +1,207 @@
+{
+  "location": {},
+  "packages": [],
+  "directives": [
+    {
+      "SwitchStatement": {
+        "location": {},
+        "discriminant": {
+          "Member": {
+            "location": {},
+            "base": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "item",
+                    {}
+                  ]
+                }
+              }
+            },
+            "identifier": {
+              "location": {},
+              "attribute": false,
+              "qualifier": null,
+              "id": {
+                "Id": [
+                  "category",
+                  {}
+                ]
+              }
+            }
+          }
+        },
+        "cases": [
+          {
+            "location": {},
+            "labels": [
+              {
+                "Case": [
+                  {
+                    "StringLiteral": {
+                      "location": {},
+                      "value": "fine"
+                    }
+                  },
+                  {}
+                ]
+              },
+              {
+                "Case": [
+                  {
+                    "StringLiteral": {
+                      "location": {},
+                      "value": "moderate"
+                    }
+                  },
+                  {}
+                ]
+              }
+            ],
+            "directives": [
+              {
+                "ExpressionStatement": {
+                  "location": {},
+                  "expression": {
+                    "Call": {
+                      "location": {},
+                      "base": {
+                        "QualifiedIdentifier": {
+                          "location": {},
+                          "attribute": false,
+                          "qualifier": null,
+                          "id": {
+                            "Id": [
+                              "trace",
+                              {}
+                            ]
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "StringLiteral": {
+                            "location": {},
+                            "value": "Fine"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "location": {},
+            "labels": [
+              {
+                "Default": {}
+              }
+            ],
+            "directives": [
+              {
+                "ExpressionStatement": {
+                  "location": {},
+                  "expression": {
+                    "Call": {
+                      "location": {},
+                      "base": {
+                        "QualifiedIdentifier": {
+                          "location": {},
+                          "attribute": false,
+                          "qualifier": null,
+                          "id": {
+                            "Id": [
+                              "trace",
+                              {}
+                            ]
+                          }
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "StringLiteral": {
+                            "location": {},
+                            "value": "Something else"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "SwitchTypeStatement": {
+        "location": {},
+        "discriminant": {
+          "QualifiedIdentifier": {
+            "location": {},
+            "attribute": false,
+            "qualifier": null,
+            "id": {
+              "Id": [
+                "v",
+                {}
+              ]
+            }
+          }
+        },
+        "cases": [
+          {
+            "location": {},
+            "parameter": {
+              "location": {},
+              "destructuring": {
+                "QualifiedIdentifier": {
+                  "location": {},
+                  "attribute": false,
+                  "qualifier": null,
+                  "id": {
+                    "Id": [
+                      "d",
+                      {}
+                    ]
+                  }
+                }
+              },
+              "type_annotation": {
+                "QualifiedIdentifier": {
+                  "location": {},
+                  "attribute": false,
+                  "qualifier": null,
+                  "id": {
+                    "Id": [
+                      "Date",
+                      {}
+                    ]
+                  }
+                }
+              }
+            },
+            "block": {
+              "location": {},
+              "directives": []
+            }
+          },
+          {
+            "location": {},
+            "parameter": null,
+            "block": {
+              "location": {},
+              "directives": []
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

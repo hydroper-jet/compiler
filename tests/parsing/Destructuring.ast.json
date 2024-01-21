@@ -1,0 +1,319 @@
+{
+  "location": {},
+  "packages": [],
+  "directives": [
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "Assignment": {
+            "location": {},
+            "compound": null,
+            "left": {
+              "ArrayLiteral": {
+                "location": {},
+                "elements": [
+                  {
+                    "Expression": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "x",
+                            {}
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "Expression": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "y",
+                            {}
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "right": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "a",
+                    {}
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "Assignment": {
+            "location": {},
+            "compound": null,
+            "left": {
+              "Paren": {
+                "location": {},
+                "expression": {
+                  "ObjectInitializer": {
+                    "location": {},
+                    "fields": [
+                      {
+                        "Field": {
+                          "name": [
+                            {
+                              "Identifier": "x"
+                            },
+                            {}
+                          ],
+                          "non_null": false,
+                          "value": null
+                        }
+                      },
+                      {
+                        "Field": {
+                          "name": [
+                            {
+                              "Identifier": "y"
+                            },
+                            {}
+                          ],
+                          "non_null": false,
+                          "value": null
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "right": {
+              "QualifiedIdentifier": {
+                "location": {},
+                "attribute": false,
+                "qualifier": null,
+                "id": {
+                  "Id": [
+                    "o",
+                    {}
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ExpressionStatement": {
+        "location": {},
+        "expression": {
+          "Paren": {
+            "location": {},
+            "expression": {
+              "Function": {
+                "location": {},
+                "name": null,
+                "common": {
+                  "location": {},
+                  "contains_yield": false,
+                  "contains_await": false,
+                  "signature": {
+                    "location": {},
+                    "parameters": [
+                      {
+                        "location": {},
+                        "kind": "Required",
+                        "destructuring": {
+                          "location": {},
+                          "destructuring": {
+                            "ObjectInitializer": {
+                              "location": {},
+                              "fields": [
+                                {
+                                  "Field": {
+                                    "name": [
+                                      {
+                                        "Identifier": "x"
+                                      },
+                                      {}
+                                    ],
+                                    "non_null": false,
+                                    "value": null
+                                  }
+                                },
+                                {
+                                  "Field": {
+                                    "name": [
+                                      {
+                                        "Identifier": "y"
+                                      },
+                                      {}
+                                    ],
+                                    "non_null": false,
+                                    "value": null
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type_annotation": {
+                            "QualifiedIdentifier": {
+                              "location": {},
+                              "attribute": false,
+                              "qualifier": null,
+                              "id": {
+                                "Id": [
+                                  "T",
+                                  {}
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "default_value": null
+                      }
+                    ],
+                    "result_type": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "T",
+                            {}
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "body": {
+                    "Expression": {
+                      "Paren": {
+                        "location": {},
+                        "expression": {
+                          "QualifiedIdentifier": {
+                            "location": {},
+                            "attribute": false,
+                            "qualifier": null,
+                            "id": {
+                              "Id": [
+                                "v",
+                                {}
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "VariableDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "kind": [
+          "Const",
+          {}
+        ],
+        "bindings": [
+          {
+            "destructuring": {
+              "location": {},
+              "destructuring": {
+                "Unary": {
+                  "location": {},
+                  "operator": "NonNull",
+                  "expression": {
+                    "ArrayLiteral": {
+                      "location": {},
+                      "elements": [
+                        {
+                          "Expression": {
+                            "QualifiedIdentifier": {
+                              "location": {},
+                              "attribute": false,
+                              "qualifier": null,
+                              "id": {
+                                "Id": [
+                                  "x",
+                                  {}
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "Expression": {
+                            "QualifiedIdentifier": {
+                              "location": {},
+                              "attribute": false,
+                              "qualifier": null,
+                              "id": {
+                                "Id": [
+                                  "y",
+                                  {}
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "type_annotation": null
+            },
+            "initializer": {
+              "Call": {
+                "location": {},
+                "base": {
+                  "QualifiedIdentifier": {
+                    "location": {},
+                    "attribute": false,
+                    "qualifier": null,
+                    "id": {
+                      "Id": [
+                        "f2",
+                        {}
+                      ]
+                    }
+                  }
+                },
+                "arguments": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+[x, y] = a;
+({x, y}) = o;
+(function({x, y}: T): T (v));
+
+const [x, y]! = f2();
