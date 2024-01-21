@@ -293,7 +293,7 @@ impl ToString for Token {
 }
 
 impl Token {
-    pub fn is_context_keyword(token: (Token, Location), keyword: &str) -> bool {
+    pub fn is_context_keyword(token: &(Token, Location), keyword: &str) -> bool {
         if let Token::Identifier(name) = &token.0 {
             name == keyword && token.1.character_count() == name.len()
         } else {

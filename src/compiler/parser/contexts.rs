@@ -41,6 +41,14 @@ pub enum ParsingDirectiveContext {
 }
 
 impl ParsingDirectiveContext {
+    pub fn function_name_is_constructor(&self, name: &(String, Location)) -> bool {
+        if let ParsingDirectiveContext::ClassBlock { name: ref name_1 } = self {
+            &name.0 == name_1
+        } else {
+            false
+        }
+    }
+
     pub fn is_type_block(&self) -> bool {
         match self {
             Self::ClassBlock { .. } |

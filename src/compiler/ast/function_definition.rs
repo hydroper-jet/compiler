@@ -12,6 +12,31 @@ pub struct FunctionDefinition {
     pub common: Rc<FunctionCommon>,
 }
 
+impl FunctionDefinition {
+    /// Indicates whether the function definition is not a getter, setter
+    /// or constructor.
+    pub fn is_normal(&self) -> bool {
+        matches!(self.name, FunctionName::Identifier(_))
+    }
+    pub fn is_getter(&self) -> bool {
+        matches!(self.name, FunctionName::Getter(_))
+    }
+    pub fn is_setter(&self) -> bool {
+        matches!(self.name, FunctionName::Setter(_))
+    }
+    pub fn is_constructor(&self) -> bool {
+        matches!(self.name, FunctionName::Constructor(_))
+    }
+    pub fn name_identifier(&self) -> (String, Location) {
+        match self.name {
+            FunctionName::Identifier(name) => name.clone(),
+            FunctionName::Getter(name) => name.clone(),
+            FunctionName::Setter(name) => name.clone(),
+            FunctionName::Constructor(name) => name.clone(),
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub enum FunctionName {
     Identifier((String, Location)),
@@ -20,6 +45,17 @@ pub enum FunctionName {
     /// A `FunctionName` is a `Constructor` variant
     /// when the corresponding function definition is a constructor.
     Constructor((String, Location)),
+}
+
+impl FunctionName {
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Identifier((_, l)) => l.clone(),
+            Self::Getter((_, l)) => l.clone(),
+            Self::Setter((_, l)) => l.clone(),
+            Self::Constructor((_, l)) => l.clone(),
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -33,6 +69,12 @@ pub struct FunctionCommon {
     pub contains_await: bool,
     pub signature: FunctionSignature,
     pub body: Option<FunctionBody>,
+}
+
+impl FunctionCommon {
+    pub(crate) fn has_block_body(&self) -> bool {
+        if let Some(ref body) = self.body { matches!(body, FunctionBody::Block(_)) } else { false }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]

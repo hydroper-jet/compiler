@@ -29,6 +29,11 @@ pub enum DiagnosticKind {
     UnallowedAttribute = 1049,
     UseDirectiveMustContainPublic = 1050,
     MalformedEnumMember = 1051,
+    FunctionMayNotBeGenerator = 1052,
+    FunctionMayNotBeAsynchronous = 1053,
+    FunctionMustNotContainBody = 1054,
+    FunctionMustContainBody = 1055,
+    FunctionMustNotContainAnnotations = 1056,
 }
 
 impl DiagnosticKind {

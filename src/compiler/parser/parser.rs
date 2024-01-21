@@ -2878,9 +2878,122 @@ impl<'input> Parser<'input> {
 
     fn parse_function_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        let has_proxy = Attribute::find_proxy(&attributes).is_some();
+        let has_native = Attribute::find_native(&attributes).is_some();
         self.push_location(&start_location);
-        let name_1 = self.expect_identifier(true)?;
-        ()
+        let mut name = self.expect_identifier(true)?;
+        let mut getter = false;
+        let mut setter = false;
+        if self.peek_identifier(true)?.is_some() {
+            getter = Token::is_context_keyword(&self.previous_token, "get");
+            setter = Token::is_context_keyword(&self.previous_token, "set");
+            if getter || setter {
+                name = self.expect_identifier(true)?;
+            }
+        }
+        let constructor = !getter && !setter && context.function_name_is_constructor(&name);
+        let name = if getter {
+            FunctionName::Getter(name)
+        } else if setter {
+            FunctionName::Setter(name)
+        } else if constructor {
+            FunctionName::Constructor(name)
+        } else {
+            FunctionName::Identifier(name)
+        };
+        let type_parameters = if !(has_proxy || constructor || getter || setter) {
+            self.parse_type_parameters_opt()?
+        } else {
+            None
+        };
+        let block_context = if constructor {
+            ParsingDirectiveContext::ConstructorBlock { super_statement_found: Cell::new(false) }
+        } else {
+            ParsingDirectiveContext::Default
+        };
+        let common = self.parse_function_common(false, block_context, true)?;
+        let semicolon = if common.has_block_body() { true } else { self.parse_semicolon()? };
+
+        let node = Rc::new(Directive::FunctionDefinition(FunctionDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            common,
+        }));
+
+        // Not all kinds of functions may be generators.
+        if common.contains_yield && (constructor || getter || setter) {
+            self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMayNotBeGenerator, diagnostic_arguments![]);
+        }
+
+        // Not all kinds of functions may be asynchronous.
+        if common.contains_await && (constructor || getter || setter) {
+            self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMayNotBeAsynchronous, diagnostic_arguments![]);
+        }
+
+        let interface_method = matches!(context, ParsingDirectiveContext::InterfaceBlock);
+
+        // Body verification.
+        //
+        // Interface methods are skipped in the verification as they
+        // may omit body.
+        if !interface_method {
+            if has_native && common.body.is_some() {
+                self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustNotContainBody, diagnostic_arguments![]);
+            } else if !has_native && common.body.is_none() {
+                self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustContainBody, diagnostic_arguments![]);
+            }
+        }
+
+        // Interface methods must not contain any annotations.
+        if !attributes.is_empty() && interface_method {
+            self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustNotContainAnnotations, diagnostic_arguments![]);
+        }
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Static(_) => {
+                    if !context.is_type_block() {
+                        // Unallowed attribute
+                        self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                    }
+                },
+                Attribute::Final(_) |
+                Attribute::Override(_) |
+                Attribute::Abstract(_) => {
+                    if !context.is_type_block() || constructor || has_proxy {
+                        // Unallowed attribute
+                        self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                    }
+                },
+
+                Attribute::Native(_) => {},
+
+                Attribute::Proxy(_) => {
+                    if !context.is_type_block() || getter || setter || constructor {
+                        // Unallowed attribute
+                        self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                    }
+                },
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        Ok((node, semicolon))
     }
 
     fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
@@ -2906,7 +3019,7 @@ impl<'input> Parser<'input> {
         }
     }
     
-    fn parse_type_parameters(&mut self) -> Result<Option<Vec<Rc<TypeParameter>>>, ParsingFailure> {
+    fn parse_type_parameters_opt(&mut self) -> Result<Option<Vec<Rc<TypeParameter>>>, ParsingFailure> {
         if !self.consume(Token::Dot)? {
             return Ok(None);
         }
@@ -3142,8 +3255,8 @@ impl<'input> Parser<'input> {
 
     fn lookbehind_is_annotatable_directive_identifier_name(&self) -> bool {
         self.keyword_attribute_from_previous_token().is_some()
-        || Token::is_context_keyword(self.previous_token, "enum")
-        || Token::is_context_keyword(self.previous_token, "type")
+        || Token::is_context_keyword(&self.previous_token, "enum")
+        || Token::is_context_keyword(&self.previous_token, "type")
     }
 }
 
