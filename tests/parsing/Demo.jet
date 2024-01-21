@@ -1,0 +1,4 @@
+/**
+ * @internal
+ */
+function f(): void {}
