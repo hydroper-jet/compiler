@@ -39,6 +39,8 @@ lazy_static! {
         DiagnosticKind::FunctionMustNotContainBody.id() => "Function must not contain body".into(),
         DiagnosticKind::FunctionMustContainBody.id() => "Function must contain body".into(),
         DiagnosticKind::FunctionMustNotContainAnnotations.id() => "Function must not contain annotations".into(),
+        DiagnosticKind::NestedClassesNotAllowed.id() => "Nested classes are not allowed".into(),
+        DiagnosticKind::DirectiveNotAllowedInInterface.id() => "Directive not allowed in interface".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

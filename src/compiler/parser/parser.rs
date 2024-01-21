@@ -2673,6 +2673,14 @@ impl<'input> Parser<'input> {
             self.parse_variable_definition(context)
         } else if self.consume(Token::Function)? {
             self.parse_function_definition(context)
+        } else if self.consume(Token::Class)? {
+            self.parse_class_definition(context)
+        } else if context.has_directive_context_keyword("enum") {
+            self.parse_enum_definition(context)
+        } else if self.consume(Token::Interface)? {
+            self.parse_interface_definition(context)
+        } else if context.has_directive_context_keyword("type") {
+            self.parse_type_definition(context)
         } else {
             self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedDirectiveKeyword, diagnostic_arguments![Token(self.token.0.clone())]);
             Err(ParsingFailure)
@@ -2947,9 +2955,11 @@ impl<'input> Parser<'input> {
             }
         }
 
-        // Interface methods must not contain any annotations.
+        // Interface methods must not contain any annotations except for meta-data.
         if !attributes.is_empty() && interface_method {
-            self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustNotContainAnnotations, diagnostic_arguments![]);
+            if !attributes.last().unwrap().is_metadata() {
+                self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustNotContainAnnotations, diagnostic_arguments![]);
+            }
         }
 
         for a in attributes {
@@ -2994,6 +3004,167 @@ impl<'input> Parser<'input> {
         }
 
         Ok((node, semicolon))
+    }
+
+    fn parse_class_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let mut name = self.expect_identifier(true)?;
+        let type_parameters = self.parse_type_parameters_opt()?;
+        let mut extends_clause: Option<Rc<Expression>> = None;
+        if self.consume(Token::Extends)? {
+            extends_clause = Some(self.parse_type_expression()?);
+        }
+        let mut implements_clause: Option<Vec<Rc<Expression>>> = None;
+        if self.consume(Token::Implements)? {
+            implements_clause = Some(self.parse_type_expression_list()?);
+        }
+        let block = Rc::new(self.parse_block(ParsingDirectiveContext::ClassBlock {
+            name: name.0.clone(),
+        })?);
+        let node = Rc::new(Directive::ClassDefinition(ClassDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            extends_clause,
+            implements_clause,
+            block,
+        }));
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Static(_) => {},
+                Attribute::Final(_) => {},
+                Attribute::Abstract(_) => {},
+
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        // Nested classes not allowed
+        if context.is_top_level_or_package() {
+            self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
+        }
+
+        Ok((node, true))
+    }
+
+    fn parse_enum_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let mut name = self.expect_identifier(true)?;
+        let mut as_clause: Option<Rc<Expression>> = None;
+        if self.consume(Token::As)? {
+            as_clause = Some(self.parse_type_expression()?);
+        }
+        let block = Rc::new(self.parse_block(ParsingDirectiveContext::EnumBlock)?);
+        let node = Rc::new(Directive::EnumDefinition(EnumDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            as_clause,
+            block,
+        }));
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        // Nested classes not allowed
+        if context.is_top_level_or_package() {
+            self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
+        }
+
+        Ok((node, true))
+    }
+
+    fn parse_interface_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let mut name = self.expect_identifier(true)?;
+        let type_parameters = self.parse_type_parameters_opt()?;
+        let mut extends_clause: Option<Vec<Rc<Expression>>> = None;
+        if self.consume(Token::Extends)? {
+            extends_clause = Some(self.parse_type_expression_list()?);
+        }
+        let block = Rc::new(self.parse_block(ParsingDirectiveContext::InterfaceBlock)?);
+        let node = Rc::new(Directive::InterfaceDefinition(InterfaceDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            extends_clause,
+            block,
+        }));
+
+        for directive in block.directives.iter() {
+            if !(matches!(directive.as_ref(), Directive::FunctionDefinition(_))) {
+                self.add_syntax_error(&directive.location(), DiagnosticKind::DirectiveNotAllowedInInterface, diagnostic_arguments![]);
+            }
+        }
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        // Nested classes not allowed
+        if context.is_top_level_or_package() {
+            self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
+        }
+
+        Ok((node, true))
+    }
+
+    fn parse_type_expression_list(&mut self) -> Result<Vec<Rc<Expression>>, ParsingFailure> {
+        let mut list = vec![self.parse_type_expression()?];
+        while self.consume(Token::Comma)? {
+            list.push(self.parse_type_expression()?);
+        }
+        Ok(list)
     }
 
     fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
@@ -3283,4 +3454,14 @@ struct AnnotatableContext {
     context: ParsingDirectiveContext,
     /// Previous token as a directive context keyword.
     directive_context_keyword: Option<(String, Location)>,
+}
+
+impl AnnotatableContext {
+    pub fn has_directive_context_keyword(&self, name: &str) -> bool {
+        if let Some((ref k, _)) = self.directive_context_keyword {
+            k == name
+        } else {
+            false
+        }
+    }
 }

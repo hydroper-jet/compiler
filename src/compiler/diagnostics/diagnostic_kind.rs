@@ -34,6 +34,8 @@ pub enum DiagnosticKind {
     FunctionMustNotContainBody = 1054,
     FunctionMustContainBody = 1055,
     FunctionMustNotContainAnnotations = 1056,
+    NestedClassesNotAllowed = 1057,
+    DirectiveNotAllowedInInterface = 1058,
 }
 
 impl DiagnosticKind {

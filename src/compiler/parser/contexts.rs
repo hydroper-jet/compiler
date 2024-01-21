@@ -49,6 +49,10 @@ impl ParsingDirectiveContext {
         }
     }
 
+    pub fn is_top_level_or_package(&self) -> bool {
+        matches!(self, ParsingDirectiveContext::TopLevel) || matches!(self, ParsingDirectiveContext::PackageBlock)
+    }
+
     pub fn is_type_block(&self) -> bool {
         match self {
             Self::ClassBlock { .. } |

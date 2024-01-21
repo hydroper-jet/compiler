@@ -180,18 +180,20 @@
     * [x] Constructor
       * [x] Do not allow generator or asynchronous constructors
       * [x] Do not parse type parameters
-  * [ ] `class`
-    * [ ] Attribute validation
-    * [ ] Allowed only at package block and top-level
-  * [ ] `enum`
-    * [ ] Attribute validation
-    * [ ] Allowed only at package block and top-level
-  * [ ] `interface`
-    * [ ] Attribute validation
-    * [ ] Allowed only at package block and top-level
+  * [x] `class`
+    * [x] Attribute validation
+    * [x] Allowed only at package block and top-level
+  * [x] `enum`
+    * [x] Attribute validation
+    * [x] Allowed only at package block and top-level
+  * [x] `interface`
+    * [x] Attribute validation
+    * [x] Allowed only at package block and top-level
+    * [x] Restrict interface block to contain only function definitions
   * [ ] `type`
     * [ ] Attribute validation
     * [ ] Allowed only at package block and top-level
   * [ ] `package`
+    * [ ] Parse JetDoc only after detecting the `package` keyword (as doing it beforehand could consume a directive's JetDoc otherwise)
   * [ ] Program
 * [ ] JetDoc
