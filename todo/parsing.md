@@ -148,14 +148,14 @@
   * [x] Parse annotatable directives starting with an identifier followed by a annotatable directive identifier name
     * [x] Call `parse_attribute_identifier_names` to consume remaining atributes
 * Annotatable directives
-  * [ ] `parse_annotatable_directive`
+  * [x] `parse_annotatable_directive`
 * Directives
   * [x] `configuration` directive
     * [x] Parse in parallel with expression statement (if identifier is `configuration` and followed by `{`)
   * [x] `import`
     * [x] Resolve ambiguity with expression statement beginning with `import.meta` expression
-  * [ ] `use`
-    * [ ] Parse it together with other definitions since it is annotatable.
+  * [x] `use`
+    * [x] Parse it together with other definitions since it is annotatable.
 * Configuration expressions
   * [x] Configuration expressions
     * [x] Translate `=` into `==`
@@ -185,3 +185,4 @@
     * [ ] Allowed only at package block and top-level
   * [ ] `package`
   * [ ] Program
+* [ ] JetDoc

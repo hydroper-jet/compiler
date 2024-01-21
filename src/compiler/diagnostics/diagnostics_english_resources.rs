@@ -30,6 +30,9 @@ lazy_static! {
         DiagnosticKind::ExpectedStringLiteral.id() => "Expected string literal before {1}".into(),
         DiagnosticKind::DuplicateAttribute.id() => "Duplicate attribute".into(),
         DiagnosticKind::DuplicateVisibility.id() => "Duplicate visibility".into(),
+        DiagnosticKind::ExpectedDirectiveKeyword.id() => "Expected directive keyword".into(),
+        DiagnosticKind::UnallowedAttribute.id() => "Unallowed attribute".into(),
+        DiagnosticKind::UseDirectiveMustContainPublic.id() => "Use directive must contain the 'public' attribute".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

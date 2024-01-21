@@ -25,6 +25,9 @@ pub enum DiagnosticKind {
     ExpectedStringLiteral = 1045,
     DuplicateAttribute = 1046,
     DuplicateVisibility = 1047,
+    ExpectedDirectiveKeyword = 1048,
+    UnallowedAttribute = 1049,
+    UseDirectiveMustContainPublic = 1050,
 }
 
 impl DiagnosticKind {

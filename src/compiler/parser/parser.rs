@@ -2597,8 +2597,9 @@ impl<'input> Parser<'input> {
             let id = (id.clone(), self.token_location());
             self.next()?;
             if self.peek_annotatable_directive_identifier_name() && self.lookbehind_is_annotatable_directive_identifier_name() {
+                let mut context1: AnnotatableContext;
                 if ["enum", "type"].contains(&id.0.as_ref()) && id.1.character_count() == id.0.len() {
-                    let mut context = AnnotatableContext {
+                    context1 = AnnotatableContext {
                         start_location: id.1.clone(),
                         jetdoc,
                         attributes: vec![],
@@ -2607,16 +2608,16 @@ impl<'input> Parser<'input> {
                     };
                     // self.parse_attribute_identifier_names(&mut context)?;
                 } else {
-                    let mut context = AnnotatableContext {
+                    context1 = AnnotatableContext {
                         start_location: id.1.clone(),
                         jetdoc,
                         attributes: vec![self.keyword_attribute_from_previous_token().unwrap()],
                         context: context.clone(),
                         directive_context_keyword: None,
                     };
-                    self.parse_attribute_identifier_names(&mut context)?;
+                    self.parse_attribute_identifier_names(&mut context1)?;
                 }
-                return self.parse_annotatable_directive(&context)?;
+                return self.parse_annotatable_directive(context1);
             } else if self.peek(Token::LeftBrace) && &id.0 == "configuration" && id.1.character_count() == "configuration".len() {
                 self.parse_configuration_directive(context, id.1)
             } else {
@@ -2639,29 +2640,38 @@ impl<'input> Parser<'input> {
                         directive_context_keyword: None,
                     };
                     self.parse_attribute_identifier_names(&mut context)?;
-                    return self.parse_annotatable_directive(&context)?;
+                    return self.parse_annotatable_directive(context);
                 }
             }
-            let semicolon_inserted = self.parse_semicolon()?;
+            let semicolon = self.parse_semicolon()?;
             Ok((Rc::new(Directive::ExpressionStatement(ExpressionStatement {
                 location: self.pop_location(),
                 expression: exp,
-            })), semicolon_inserted))
+            })), semicolon))
         } else if self.peek(Token::Public) || self.peek(Token::Private) || self.peek(Token::Protected)
         || self.peek(Token::Internal) || self.peek(Token::Var) || self.peek(Token::Const)
         || self.peek(Token::Function) || self.peek(Token::Class) || self.peek(Token::Interface)
         || self.peek(Token::Use) {
             let mut context = AnnotatableContext {
-                start_location: self.pop_location(),
+                start_location: self.token_location(),
                 jetdoc,
                 attributes: vec![],
                 context: context.clone(),
                 directive_context_keyword: None,
             };
             self.parse_attribute_identifier_names(&mut context)?;
-            return self.parse_annotatable_directive(&context)?;
+            return self.parse_annotatable_directive(context);
         } else {
             self.parse_statement(context)
+        }
+    }
+
+    fn parse_annotatable_directive(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        if self.consume(Token::Use)? {
+            self.parse_use_directive(context)
+        } else {
+            self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedDirectiveKeyword, diagnostic_arguments![Token(self.token.0.clone())]);
+            Err(ParsingFailure)
         }
     }
 
@@ -2727,6 +2737,75 @@ impl<'input> Parser<'input> {
     
             Ok((node, semicolon))
         }
+    }
+
+    fn parse_use_directive(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let mut alias: Option<(String, Location)> = None;
+        let mut package_name: Vec<(String, Location)> = vec![];
+        let mut import_specifier = ImportSpecifier::Wildcard(self.token_location());
+        let id1 = self.expect_identifier(false)?;
+        if self.consume(Token::Assign)? {
+            alias = Some(id1.clone());
+            package_name.push(self.expect_identifier(false)?);
+        } else {
+            package_name.push(id1);
+        }
+
+        if !self.peek(Token::Dot) {
+            self.expect(Token::Dot)?;
+        }
+
+        while self.consume(Token::Dot)? {
+            if alias.is_none() && self.peek(Token::Times) {
+                import_specifier = ImportSpecifier::Wildcard(self.token_location());
+                self.next()?;
+                break;
+            } else {
+                let id1 = self.expect_identifier(true)?;
+                if !self.peek(Token::Dot) {
+                    import_specifier = ImportSpecifier::Identifier(id1.clone());
+                    break;
+                } else {
+                    package_name.push(id1.clone());
+                }
+            }
+        }
+
+        let semicolon = self.parse_semicolon()?;
+
+        let node = Rc::new(Directive::UseDirective(UseDirective {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            alias,
+            package_name,
+            import_specifier,
+        }));
+
+        if !(matches!(context, ParsingDirectiveContext::PackageBlock { .. })) {
+            self.add_syntax_error(&node.location(), DiagnosticKind::NotAllowedHere, diagnostic_arguments![String("'use'".into()), Token(self.token.0.clone())]);
+        }
+
+        let mut has_public = false;
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            if a.is_public() {
+                has_public = true;
+            } else {
+                self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+            }
+        }
+
+        if !has_public {
+            self.add_syntax_error(&node.location(), DiagnosticKind::UseDirectiveMustContainPublic, diagnostic_arguments![]);
+        }
+
+        Ok((node, semicolon))
     }
 
     fn parse_configuration_directive(&mut self, context: ParsingDirectiveContext, start_location: Location) -> Result<(Rc<Directive>, bool), ParsingFailure> {

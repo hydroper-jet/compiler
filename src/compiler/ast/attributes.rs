@@ -83,9 +83,17 @@ impl Attribute {
         }
     }
 
-    pub fn is_metadata(&self) -> bool {
-        matches!(self, Self::Metadata(_))
-    }
+    pub fn is_metadata(&self) -> bool { matches!(self, Self::Metadata(_)) }
+    pub fn is_public(&self) -> bool { matches!(self, Self::Public(_)) }
+    pub fn is_private(&self) -> bool { matches!(self, Self::Private(_)) }
+    pub fn is_protected(&self) -> bool { matches!(self, Self::Protected(_)) }
+    pub fn is_internal(&self) -> bool { matches!(self, Self::Internal(_)) }
+    pub fn is_proxy(&self) -> bool { matches!(self, Self::Proxy(_)) }
+    pub fn is_final(&self) -> bool { matches!(self, Self::Final(_)) }
+    pub fn is_native(&self) -> bool { matches!(self, Self::Native(_)) }
+    pub fn is_static(&self) -> bool { matches!(self, Self::Static(_)) }
+    pub fn is_abstract(&self) -> bool { matches!(self, Self::Abstract(_)) }
+    pub fn is_override(&self) -> bool { matches!(self, Self::Override(_)) }
 
     pub fn from_identifier_name(name: &str, location: &Location) -> Option<Attribute> {
         if location.character_count() != name.chars().count() {
