@@ -1,0 +1,262 @@
+{
+  "location": {},
+  "packages": [
+    {
+      "location": {},
+      "jetdoc": null,
+      "name": [],
+      "block": {
+        "location": {},
+        "directives": [
+          {
+            "VariableDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [],
+              "kind": [
+                "Var",
+                {}
+              ],
+              "bindings": [
+                {
+                  "destructuring": {
+                    "location": {},
+                    "destructuring": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "n1",
+                            {}
+                          ]
+                        }
+                      }
+                    },
+                    "type_annotation": null
+                  },
+                  "initializer": null
+                }
+              ]
+            }
+          },
+          {
+            "VariableDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [
+                {
+                  "Public": {}
+                }
+              ],
+              "kind": [
+                "Var",
+                {}
+              ],
+              "bindings": [
+                {
+                  "destructuring": {
+                    "location": {},
+                    "destructuring": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "n2",
+                            {}
+                          ]
+                        }
+                      }
+                    },
+                    "type_annotation": null
+                  },
+                  "initializer": null
+                }
+              ]
+            }
+          },
+          {
+            "EnumDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [],
+              "name": [
+                "E1",
+                {}
+              ],
+              "as_clause": null,
+              "block": {
+                "location": {},
+                "directives": []
+              }
+            }
+          },
+          {
+            "ExpressionStatement": {
+              "location": {},
+              "expression": {
+                "ArrayLiteral": {
+                  "location": {},
+                  "elements": [
+                    {
+                      "Expression": {
+                        "QualifiedIdentifier": {
+                          "location": {},
+                          "attribute": false,
+                          "qualifier": null,
+                          "id": {
+                            "Id": [
+                              "Set",
+                              {}
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "EnumDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [
+                {
+                  "Public": {}
+                }
+              ],
+              "name": [
+                "E2",
+                {}
+              ],
+              "as_clause": null,
+              "block": {
+                "location": {},
+                "directives": []
+              }
+            }
+          },
+          {
+            "ClassDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [
+                {
+                  "Abstract": {}
+                }
+              ],
+              "name": [
+                "C1",
+                {}
+              ],
+              "type_parameters": null,
+              "extends_clause": null,
+              "implements_clause": null,
+              "block": {
+                "location": {},
+                "directives": []
+              }
+            }
+          },
+          {
+            "ClassDefinition": {
+              "location": {},
+              "jetdoc": null,
+              "attributes": [],
+              "name": [
+                "C2",
+                {}
+              ],
+              "type_parameters": null,
+              "extends_clause": null,
+              "implements_clause": null,
+              "block": {
+                "location": {},
+                "directives": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "directives": [
+    {
+      "ClassDefinition": {
+        "location": {},
+        "jetdoc": null,
+        "attributes": [],
+        "name": [
+          "CTP",
+          {}
+        ],
+        "type_parameters": null,
+        "extends_clause": {
+          "QualifiedIdentifier": {
+            "location": {},
+            "attribute": false,
+            "qualifier": null,
+            "id": {
+              "Id": [
+                "C1",
+                {}
+              ]
+            }
+          }
+        },
+        "implements_clause": null,
+        "block": {
+          "location": {},
+          "directives": [
+            {
+              "FunctionDefinition": {
+                "location": {},
+                "jetdoc": null,
+                "attributes": [
+                  {
+                    "Override": {}
+                  },
+                  {
+                    "Final": {}
+                  }
+                ],
+                "name": {
+                  "Identifier": [
+                    "f",
+                    {}
+                  ]
+                },
+                "type_parameters": null,
+                "common": {
+                  "location": {},
+                  "contains_yield": false,
+                  "contains_await": false,
+                  "signature": {
+                    "location": {},
+                    "parameters": [],
+                    "result_type": {
+                      "VoidType": {
+                        "location": {}
+                      }
+                    }
+                  },
+                  "body": {
+                    "Block": {
+                      "location": {},
+                      "directives": []
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

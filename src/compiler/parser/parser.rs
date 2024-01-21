@@ -2595,7 +2595,7 @@ impl<'input> Parser<'input> {
         if let Token::Identifier(id) = &self.token.0 {
             let id = (id.clone(), self.token_location());
             self.next()?;
-            if self.peek_annotatable_directive_identifier_name() && self.lookbehind_is_annotatable_directive_identifier_name() {
+            if self.peek_annotatable_directive_identifier_name() || self.lookbehind_is_annotatable_directive_identifier_name() {
                 let mut context1: AnnotatableContext;
                 if ["enum", "type"].contains(&id.0.as_ref()) && id.1.character_count() == id.0.len() {
                     context1 = AnnotatableContext {
@@ -3060,7 +3060,7 @@ impl<'input> Parser<'input> {
         }
 
         // Nested classes not allowed
-        if context.is_top_level_or_package() {
+        if !context.is_top_level_or_package() {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
@@ -3107,7 +3107,7 @@ impl<'input> Parser<'input> {
         }
 
         // Nested classes not allowed
-        if context.is_top_level_or_package() {
+        if !context.is_top_level_or_package() {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
@@ -3160,7 +3160,7 @@ impl<'input> Parser<'input> {
         }
 
         // Nested classes not allowed
-        if context.is_top_level_or_package() {
+        if !context.is_top_level_or_package() {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
@@ -3203,7 +3203,7 @@ impl<'input> Parser<'input> {
         }
 
         // Nested classes not allowed
-        if context.is_top_level_or_package() {
+        if !context.is_top_level_or_package() {
             self.add_syntax_error(&left.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
@@ -3613,7 +3613,6 @@ impl<'input> Parser<'input> {
                 line.content = line.content[prefix.len()..].to_owned();
                 line.location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + prefix.len(), line.location.last_offset());
             }
-            println!("{:?}", line.location);
         }
 
         lines

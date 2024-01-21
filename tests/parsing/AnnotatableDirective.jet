@@ -1,0 +1,15 @@
+package {
+    var n1
+    public var n2
+
+    enum E1 {}
+    [Set]
+    public enum E2 {}
+
+    abstract class C1 {}
+    class C2 {}
+}
+
+class CTP extends C1 {
+    override final function f(): void {}
+}
