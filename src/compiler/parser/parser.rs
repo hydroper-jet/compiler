@@ -2801,23 +2801,15 @@ impl<'input> Parser<'input> {
         }
 
         let semicolon = self.parse_semicolon()?;
-
-        let node = Rc::new(Directive::UseDirective(UseDirective {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            alias,
-            package_name,
-            import_specifier,
-        }));
+        let location = self.pop_location();
 
         if !(matches!(context, ParsingDirectiveContext::PackageBlock { .. })) {
-            self.add_syntax_error(&node.location(), DiagnosticKind::NotAllowedHere, diagnostic_arguments![String("'use'".into()), Token(self.token.0.clone())]);
+            self.add_syntax_error(&location, DiagnosticKind::NotAllowedHere, diagnostic_arguments![String("'use'".into()), Token(self.token.0.clone())]);
         }
 
         let mut has_public = false;
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -2830,8 +2822,17 @@ impl<'input> Parser<'input> {
         }
 
         if !has_public {
-            self.add_syntax_error(&node.location(), DiagnosticKind::UseDirectiveMustContainPublic, diagnostic_arguments![]);
+            self.add_syntax_error(&location, DiagnosticKind::UseDirectiveMustContainPublic, diagnostic_arguments![]);
         }
+
+        let node = Rc::new(Directive::UseDirective(UseDirective {
+            location,
+            jetdoc,
+            attributes,
+            alias,
+            package_name,
+            import_specifier,
+        }));
 
         Ok((node, semicolon))
     }
@@ -2854,7 +2855,7 @@ impl<'input> Parser<'input> {
 
         // Forbid destructuring bindings in enumerations.
         if !has_static && matches!(context, ParsingDirectiveContext::EnumBlock) {
-            for binding in bindings {
+            for binding in &bindings {
                 let malformed = matches!(binding.destructuring.destructuring.as_ref(), Expression::QualifiedIdentifier(_))
                     || binding.destructuring.type_annotation.is_some();
                 if malformed {
@@ -2863,7 +2864,7 @@ impl<'input> Parser<'input> {
             }
         }
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -2937,15 +2938,6 @@ impl<'input> Parser<'input> {
         let common = self.parse_function_common(false, block_context, true)?;
         let semicolon = if common.has_block_body() { true } else { self.parse_semicolon()? };
 
-        let node = Rc::new(Directive::FunctionDefinition(FunctionDefinition {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            name: name.clone(),
-            type_parameters,
-            common,
-        }));
-
         // Not all kinds of functions may be generators.
         if common.contains_yield && (constructor || getter || setter) {
             self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMayNotBeGenerator, diagnostic_arguments![]);
@@ -2977,7 +2969,7 @@ impl<'input> Parser<'input> {
             }
         }
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -3018,6 +3010,15 @@ impl<'input> Parser<'input> {
             }
         }
 
+        let node = Rc::new(Directive::FunctionDefinition(FunctionDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            common,
+        }));
+
         Ok((node, semicolon))
     }
 
@@ -3037,18 +3038,8 @@ impl<'input> Parser<'input> {
         let block = Rc::new(self.parse_block(ParsingDirectiveContext::ClassBlock {
             name: name.0.clone(),
         })?);
-        let node = Rc::new(Directive::ClassDefinition(ClassDefinition {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            name: name.clone(),
-            type_parameters,
-            extends_clause,
-            implements_clause,
-            block,
-        }));
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -3075,6 +3066,17 @@ impl<'input> Parser<'input> {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
+        let node = Rc::new(Directive::ClassDefinition(ClassDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            extends_clause,
+            implements_clause,
+            block,
+        }));
+
         Ok((node, true))
     }
 
@@ -3087,16 +3089,8 @@ impl<'input> Parser<'input> {
             as_clause = Some(self.parse_type_expression()?);
         }
         let block = Rc::new(self.parse_block(ParsingDirectiveContext::EnumBlock)?);
-        let node = Rc::new(Directive::EnumDefinition(EnumDefinition {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            name: name.clone(),
-            as_clause,
-            block,
-        }));
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -3118,6 +3112,15 @@ impl<'input> Parser<'input> {
         if context.is_top_level_or_package() {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
+
+        let node = Rc::new(Directive::EnumDefinition(EnumDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            as_clause,
+            block,
+        }));
 
         Ok((node, true))
     }
@@ -3132,15 +3135,6 @@ impl<'input> Parser<'input> {
             extends_clause = Some(self.parse_type_expression_list()?);
         }
         let block = Rc::new(self.parse_block(ParsingDirectiveContext::InterfaceBlock)?);
-        let node = Rc::new(Directive::InterfaceDefinition(InterfaceDefinition {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            name: name.clone(),
-            type_parameters,
-            extends_clause,
-            block,
-        }));
 
         // Interface block must only contain function definitions
         for directive in block.directives.iter() {
@@ -3149,7 +3143,7 @@ impl<'input> Parser<'input> {
             }
         }
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -3172,6 +3166,16 @@ impl<'input> Parser<'input> {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
+        let node = Rc::new(Directive::InterfaceDefinition(InterfaceDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            name: name.clone(),
+            type_parameters,
+            extends_clause,
+            block,
+        }));
+
         Ok((node, true))
     }
 
@@ -3181,15 +3185,8 @@ impl<'input> Parser<'input> {
         let mut left = self.expect_identifier(true)?;
         self.expect(Token::Assign)?;
         let mut right: Rc<Expression> = self.parse_type_expression()?;
-        let node = Rc::new(Directive::TypeDefinition(TypeDefinition {
-            location: self.pop_location(),
-            jetdoc,
-            attributes,
-            left: left.clone(),
-            right,
-        }));
 
-        for a in attributes {
+        for a in &attributes {
             if a.is_metadata() {
                 continue;
             }
@@ -3212,7 +3209,17 @@ impl<'input> Parser<'input> {
             self.add_syntax_error(&left.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
-        Ok((node, true))
+        let semicolon = self.parse_semicolon()?;
+
+        let node = Rc::new(Directive::TypeDefinition(TypeDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            left: left.clone(),
+            right,
+        }));
+
+        Ok((node, semicolon))
     }
 
     fn parse_type_expression_list(&mut self) -> Result<Vec<Rc<Expression>>, ParsingFailure> {
@@ -3486,7 +3493,7 @@ impl<'input> Parser<'input> {
         || Token::is_context_keyword(&self.previous_token, "type")
     }
 
-    pub fn parse_program(&self) -> Result<Rc<Program>, ParsingFailure> {
+    pub fn parse_program(&mut self) -> Result<Rc<Program>, ParsingFailure> {
         self.mark_location();
         let mut packages = vec![];
         while self.peek(Token::Package) {
@@ -3552,9 +3559,9 @@ impl<'input> Parser<'input> {
         while i < line_count {
             let line = &lines[i];
             let tag = if inside_code_block { None } else {
-                regex_captures!(r"^[\s\t]*\@([^\s\t]+)(.*)", &line.content)
+                regex_captures!(r"^([\s\t]*\@)([^\s\t]+)(.*)", &line.content)
             };
-            if let Some((_, tag_name, tag_content)) = tag {
+            if let Some((_, tag_prefix, tag_name, tag_content)) = tag {
                 self.parse_jetdoc_tag_or_main_body(
                     &mut building_content_tag_name,
                     &mut building_content,
@@ -3564,9 +3571,9 @@ impl<'input> Parser<'input> {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &tag_content) {
                     inside_code_block = true;
                 }
-                let tag_name_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset(), line.location.first_offset() + tag_name.len());
+                let tag_name_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_prefix.len() - 1, line.location.first_offset() + tag_prefix.len() + tag_name.len());
                 building_content_tag_name = Some((tag_name.into(), tag_name_location));
-                let tag_content_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_name.len(), line.location.last_offset());
+                let tag_content_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_prefix.len() + tag_name.len(), line.location.last_offset());
                 building_content.push((tag_content.into(), tag_content_location));
             } else {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &line.content) {
@@ -3615,7 +3622,8 @@ impl<'input> Parser<'input> {
             }
         }
         for line in &mut lines {
-            let prefix = regex_captures!(r"^\s*(\*\s?)?", &line.content);
+            let line_content = line.content.to_owned();
+            let prefix = regex_captures!(r"^\s*(\*\s?)?", &line_content);
             if let Some((prefix, _)) = prefix {
                 line.content = line.content[prefix.len()..].to_owned();
                 line.location = Location::with_line_and_offsets(self.compilation_unit(), line_number, line.location.first_offset() + prefix.len(), line.location.last_offset());
@@ -3637,86 +3645,117 @@ impl<'input> Parser<'input> {
                 // @default value
                 "default" => {
                     let (reference, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
                     tags.push((JetDocTag::Default(reference), location));
+                },
+
+                // @deprecated
+                "deprecated" => {
+                    let (text, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+
+                    let mut message: Option<String> = None;
+
+                    if !regex_is_match!(r"^\s*$", &text) {
+                        message = Some(text.clone());
+                    }
+
+                    tags.push((JetDocTag::Deprecated { message }, location));
+                },
+
+                // @event eventName description
+                "event" => {
+                    let (content, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+                    if let Some((_, name, description)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
+                        tags.push((JetDocTag::Event { name: name.into(), description: description.trim_start().into() }, location));
+                    } else {
+                        tags.push((JetDocTag::Event { name: content, description: "".into() }, location));
+                    }
                 },
 
                 // @eventType typeOrConstant
                 "eventType" => {
-                    let type_or_constant = building_content.join("\n").trim().to_owned();
-                    let source = Source::new(None, type_or_constant, &self.tokenizer.source.compiler_options);
-                    if let Some(exp) = parser_facade::parse_expression(&source) {
-                        tags.push(JetDocTag::EventType(exp));
+                    let (type_or_constant, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+                    let compilation_unit_2 = CompilationUnit::new(None, type_or_constant, &self.tokenizer.compilation_unit().compiler_options);
+                    if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2) {
+                        tags.push((JetDocTag::EventType(exp), location));
                     } else {
-                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                        self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                     }
                 },
 
                 // @example text
                 "example" => {
-                    let text = building_content.join("\n").trim().into();
-                    tags.push(JetDocTag::Example(text));
-                },
-
-                // @exampleText text
-                "exampleText" => {
-                    let text = building_content.join("\n").trim().into();
-                    tags.push(JetDocTag::ExampleText(text));
+                    let (text, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+                    tags.push((JetDocTag::Example(text), location));
                 },
 
                 // @internal text
                 "internal" => {
-                    let text = building_content.join("\n").trim().to_owned();
+                    let (text, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
 
                     // Content must be non empty
                     if regex_is_match!(r"^\s*$", &text) {
-                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                        self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                     }
 
-                    tags.push(JetDocTag::Internal(text));
+                    tags.push((JetDocTag::Internal(text), location));
                 },
 
                 // @param paramName description
                 "param" => {
-                    let content = building_content.join("\n").trim().to_owned();
+                    let (content, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+
                     if let Some((_, name, description)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
-                        tags.push(JetDocTag::Param { name: name.into(), description: description.trim_start().into() });
+                        tags.push((JetDocTag::Param { name: name.into(), description: description.trim_start().into() }, location));
                     } else {
-                        tags.push(JetDocTag::Param { name: content, description: "".into() });
+                        tags.push((JetDocTag::Param { name: content, description: "".into() }, location));
                     }
                 },
 
                 // @private
                 "private" => {
-                    let text = building_content.join("\n");
+                    let (text, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
 
                     // Content must be empty
                     if !regex_is_match!(r"^\s*$", &text) {
-                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                        self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                     }
 
-                    tags.push(JetDocTag::Private);
+                    tags.push((JetDocTag::Private, location));
                 },
 
                 // @return text
                 "return" => {
-                    let text = building_content.join("\n").trim().into();
-                    tags.push(JetDocTag::Return(text));
+                    let (text, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+                    tags.push((JetDocTag::Return(text), location));
                 },
 
                 // @see reference [displayText]
                 "see" => {
-                    let content = building_content.join("\n").trim().to_owned();
+                    let (content, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
                     if let Some((_, reference, display_text)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
-                        tags.push(JetDocTag::See { reference: reference.to_owned(), display_text: Some(display_text.to_owned()) });
+                        tags.push((JetDocTag::See { reference: reference.to_owned(), display_text: Some(display_text.to_owned()) }, location));
                     } else {
-                        tags.push(JetDocTag::See { reference: content, display_text: None });
+                        tags.push((JetDocTag::See { reference: content, display_text: None }, location));
                     }
                 },
 
                 // @throws className description
                 "throws" => {
-                    let class_name_and_description = building_content.join("\n").trim().to_owned();
+                    let (class_name_and_description, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+
                     let class_name_and_description = regex_captures!(r"^([^\s]+)(\s.*)?", &class_name_and_description);
+
                     if let Some((_, class_name, description)) = class_name_and_description {
                         let description = description.trim().to_owned();
                         let description = if description.is_empty() {
@@ -3724,20 +3763,20 @@ impl<'input> Parser<'input> {
                         } else {
                             Some(description)
                         };
-                        let source = Source::new(None, class_name.into(), &self.tokenizer.source.compiler_options);
-                        if let Some(exp) = parser_facade::parse_type_expression(&source) {
-                            tags.push(JetDocTag::Throws { class_reference: exp, description });
+                        let compilation_unit_2 = CompilationUnit::new(None, class_name.into(), &self.tokenizer.compilation_unit().compiler_options);
+                        if let Some(exp) = ParserFacade::parse_type_expression(&compilation_unit_2) {
+                            tags.push((JetDocTag::Throws { class_reference: exp, description }, location));
                         } else {
-                            self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                            self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                         }
                     } else {
-                        self.add_syntax_error(&comment_location.clone(), DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                        self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                     }
                 },
 
                 // Unrecognized tag
                 _ => {
-                    self.add_syntax_error(&comment_location.clone(), DiagnosticKind::UnrecognizedJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    self.add_syntax_error(&tag_location, DiagnosticKind::UnrecognizedJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
                 },
             }
         } else if !building_content.is_empty() {

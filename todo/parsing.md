@@ -196,7 +196,7 @@
   * [x] `package`
     * [x] Parse JetDoc only after detecting the `package` keyword (as doing it beforehand could consume a directive's JetDoc otherwise)
   * [x] Program
-* [ ] JetDoc
+* [x] JetDoc
 
 ## Facade
 

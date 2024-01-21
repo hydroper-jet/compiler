@@ -32,6 +32,6 @@ pub struct VariableBinding {
 
 impl VariableBinding {
     pub fn location(&self) -> Location {
-        self.initializer.map_or(self.destructuring.location.clone(), |init| self.destructuring.location.combine_with(init.location()))
+        self.initializer.as_ref().map_or(self.destructuring.location.clone(), |init| self.destructuring.location.combine_with(init.location()))
     }
 }

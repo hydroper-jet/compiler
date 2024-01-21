@@ -36,6 +36,8 @@ pub enum DiagnosticKind {
     FunctionMustNotContainAnnotations = 1056,
     NestedClassesNotAllowed = 1057,
     DirectiveNotAllowedInInterface = 1058,
+    FailedParsingJetDocTag = 1059,
+    UnrecognizedJetDocTag = 1060,
 }
 
 impl DiagnosticKind {

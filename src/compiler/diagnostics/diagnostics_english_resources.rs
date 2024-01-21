@@ -41,6 +41,8 @@ lazy_static! {
         DiagnosticKind::FunctionMustNotContainAnnotations.id() => "Function must not contain annotations".into(),
         DiagnosticKind::NestedClassesNotAllowed.id() => "Nested classes are not allowed".into(),
         DiagnosticKind::DirectiveNotAllowedInInterface.id() => "Directive not allowed in interface".into(),
+        DiagnosticKind::FailedParsingJetDocTag.id() => "Failed parsing contents of JetDoc tag: '@{1}'".into(),
+        DiagnosticKind::UnrecognizedJetDocTag.id() => "Unrecognized JetDoc tag: '@{1}'".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

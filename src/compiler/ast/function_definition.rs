@@ -28,7 +28,7 @@ impl FunctionDefinition {
         matches!(self.name, FunctionName::Constructor(_))
     }
     pub fn name_identifier(&self) -> (String, Location) {
-        match self.name {
+        match &self.name {
             FunctionName::Identifier(name) => name.clone(),
             FunctionName::Getter(name) => name.clone(),
             FunctionName::Setter(name) => name.clone(),
