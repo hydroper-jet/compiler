@@ -1,7 +1,7 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
+//use lazy_regex::{Lazy, Regex, lazy_regex};
 use unicode_general_category::{get_general_category, GeneralCategory};
 
-pub(crate) static CR_OR_CRLF_REGEX: Lazy<Regex> = lazy_regex!(r"\r\n?");
+// pub(crate) static CR_OR_CRLF_REGEX: Lazy<Regex> = lazy_regex!(r"\r\n?");
 
 /// The `CharacterValidator` structure defines static methods for character
 /// validation.

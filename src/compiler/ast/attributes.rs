@@ -1,6 +1,6 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::{rc::Rc, str::FromStr};
+use std::rc::Rc;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Attribute {

@@ -1,7 +1,6 @@
 use crate::ns::*;
 use lazy_regex::*;
 use std::cell::Cell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Parser<'input> {
@@ -143,7 +142,7 @@ impl<'input> Parser<'input> {
         }
     }
 
-    fn consume_context_keyword(&mut self, name: &str) -> Result<bool, ParsingFailure> {
+    fn _consume_context_keyword(&mut self, name: &str) -> Result<bool, ParsingFailure> {
         if let Token::Identifier(id) = self.token.0.clone() {
             if id == name && self.token.1.character_count() == name.len() {
                 self.next()?;
@@ -1747,7 +1746,7 @@ impl<'input> Parser<'input> {
             }
         }
         self.expect(Token::RightParen)?;
-        self.validate_parameter_list(&parameters);
+        self.validate_parameter_list(&parameters)?;
 
         self.expect(Token::Colon)?;
         let result_type = self.parse_type_expression()?;
@@ -2334,7 +2333,6 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_for_in_statement_with_left_variable(&mut self, context: ParsingDirectiveContext, left: SimpleVariableDefinition) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        let variable_kind = left.kind.0.clone();
         let variable_binding = left.bindings[0].clone();
 
         if let Some(init) = &variable_binding.initializer {
@@ -3025,7 +3023,7 @@ impl<'input> Parser<'input> {
     fn parse_class_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
         self.push_location(&start_location);
-        let mut name = self.expect_identifier(true)?;
+        let name = self.expect_identifier(true)?;
         let type_parameters = self.parse_type_parameters_opt()?;
         let mut extends_clause: Option<Rc<Expression>> = None;
         if self.consume(Token::Extends)? {
@@ -3083,7 +3081,7 @@ impl<'input> Parser<'input> {
     fn parse_enum_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
         self.push_location(&start_location);
-        let mut name = self.expect_identifier(true)?;
+        let name = self.expect_identifier(true)?;
         let mut as_clause: Option<Rc<Expression>> = None;
         if self.consume(Token::As)? {
             as_clause = Some(self.parse_type_expression()?);
@@ -3128,7 +3126,7 @@ impl<'input> Parser<'input> {
     fn parse_interface_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
         self.push_location(&start_location);
-        let mut name = self.expect_identifier(true)?;
+        let name = self.expect_identifier(true)?;
         let type_parameters = self.parse_type_parameters_opt()?;
         let mut extends_clause: Option<Vec<Rc<Expression>>> = None;
         if self.consume(Token::Extends)? {
@@ -3182,9 +3180,9 @@ impl<'input> Parser<'input> {
     fn parse_type_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
         self.push_location(&start_location);
-        let mut left = self.expect_identifier(true)?;
+        let left = self.expect_identifier(true)?;
         self.expect(Token::Assign)?;
-        let mut right: Rc<Expression> = self.parse_type_expression()?;
+        let right: Rc<Expression> = self.parse_type_expression()?;
 
         for a in &attributes {
             if a.is_metadata() {
@@ -3360,7 +3358,7 @@ impl<'input> Parser<'input> {
                 self.push_location(&id.location());
                 self.mark_location();
                 let value: String;
-                if let Some((value_1, location)) = self.consume_identifier(false)? {
+                if let Some((value_1, _)) = self.consume_identifier(false)? {
                     value = value_1;
                 } else {
                     let Token::StringLiteral(s) = &self.token.0 else {
@@ -3404,25 +3402,6 @@ impl<'input> Parser<'input> {
         } else {
             self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedExpression, diagnostic_arguments![Token(self.token.0.clone())]);
             Err(ParsingFailure)
-        }
-    }
-
-    fn consume_attribute_public_private_protected_internal(&mut self) -> Result<Option<Attribute>, ParsingFailure> {
-        if let Some(a) = self.peek_attribute_public_private_protected_internal() {
-            self.next()?;
-            Ok(Some(a))
-        } else {
-            Ok(None)
-        }
-    }
-
-    fn peek_attribute_public_private_protected_internal(&self) -> Option<Attribute> {
-        match self.token.0 {
-            Token::Public => Some(Attribute::Public(self.token.1.clone())),
-            Token::Private => Some(Attribute::Private(self.token.1.clone())),
-            Token::Protected => Some(Attribute::Protected(self.token.1.clone())),
-            Token::Internal => Some(Attribute::Internal(self.token.1.clone())),
-            _ => None,
         }
     }
 

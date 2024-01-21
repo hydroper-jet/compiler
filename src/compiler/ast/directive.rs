@@ -1,6 +1,5 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::rc::Rc;
 
 /// Directive attached with a source location.
 #[derive(Clone, Serialize, Deserialize)]
