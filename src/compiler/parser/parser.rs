@@ -2666,6 +2666,20 @@ impl<'input> Parser<'input> {
         }
     }
 
+    fn parse_directives(&mut self, context: ParsingDirectiveContext) -> Result<Vec<Rc<Directive>>, ParsingFailure> {
+        let mut directives = vec![];
+        let mut semicolon = false;
+        while !self.peek(Token::Eof) {
+            if !directives.is_empty() && !semicolon {
+                self.expect(Token::Semicolon)?;
+            }
+            let (directive, semicolon_1) = self.parse_directive(context.clone())?;
+            directives.push(directive);
+            semicolon = semicolon_1;
+        }
+        Ok(directives)
+    }
+
     fn parse_annotatable_directive(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
         if self.consume(Token::Use)? {
             self.parse_use_directive(context)
@@ -3127,6 +3141,7 @@ impl<'input> Parser<'input> {
             block,
         }));
 
+        // Interface block must only contain function definitions
         for directive in block.directives.iter() {
             if !(matches!(directive.as_ref(), Directive::FunctionDefinition(_))) {
                 self.add_syntax_error(&directive.location(), DiagnosticKind::DirectiveNotAllowedInInterface, diagnostic_arguments![]);
@@ -3154,6 +3169,46 @@ impl<'input> Parser<'input> {
         // Nested classes not allowed
         if context.is_top_level_or_package() {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
+        }
+
+        Ok((node, true))
+    }
+
+    fn parse_type_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let mut left = self.expect_identifier(true)?;
+        self.expect(Token::Assign)?;
+        let mut right: Rc<Expression> = self.parse_type_expression()?;
+        let node = Rc::new(Directive::TypeDefinition(TypeDefinition {
+            location: self.pop_location(),
+            jetdoc,
+            attributes,
+            left: left.clone(),
+            right,
+        }));
+
+        for a in attributes {
+            if a.is_metadata() {
+                continue;
+            }
+            match a {
+                Attribute::Public(_) |
+                Attribute::Private(_) |
+                Attribute::Protected(_) |
+                Attribute::Internal(_) => {
+                    self.verify_visibility(&a, &context);
+                },
+                _ => {
+                    // Unallowed attribute
+                    self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                },
+            }
+        }
+
+        // Nested classes not allowed
+        if context.is_top_level_or_package() {
+            self.add_syntax_error(&left.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
         Ok((node, true))
@@ -3428,6 +3483,52 @@ impl<'input> Parser<'input> {
         self.keyword_attribute_from_previous_token().is_some()
         || Token::is_context_keyword(&self.previous_token, "enum")
         || Token::is_context_keyword(&self.previous_token, "type")
+    }
+
+    pub fn parse_program(&self) -> Result<Rc<Program>, ParsingFailure> {
+        self.mark_location();
+        let mut packages = vec![];
+        while self.peek(Token::Package) {
+            self.mark_location();
+            let jetdoc = self.parse_jetdoc()?;
+            self.next()?;
+            let mut name = vec![];
+            if let Some(name1) = self.consume_identifier(false)? {
+                name.push(name1.clone());
+                while self.consume(Token::Dot)? {
+                    name.push(self.expect_identifier(true)?);
+                }
+            }
+            let block = Rc::new(self.parse_block(ParsingDirectiveContext::PackageBlock)?);
+            packages.push(Rc::new(PackageDefinition {
+                location: self.pop_location(),
+                jetdoc,
+                name,
+                block,
+            }));
+        }
+        let directives = self.parse_directives(ParsingDirectiveContext::TopLevel)?;
+        Ok(Rc::new(Program {
+            location: self.pop_location(),
+            packages,
+            directives,
+        }))
+    }
+
+    fn parse_jetdoc(&mut self) -> Result<Option<Rc<JetDoc>>, ParsingFailure> {
+        let comments = self.compilation_unit().comments.borrow();
+        let last_comment = comments.last().map(|last_comment| last_comment.clone());
+        drop(comments);
+        Ok(last_comment.and_then(|comment| {
+            if comment.is_jetdoc(&self.token.1) {
+                self.compilation_unit().comments_mut().pop();
+                let content = &comment.content.borrow()[1..];
+                //
+                Some(to_do)
+            } else {
+                None
+            }
+        }))
     }
 }
 

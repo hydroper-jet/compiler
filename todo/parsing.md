@@ -190,10 +190,14 @@
     * [x] Attribute validation
     * [x] Allowed only at package block and top-level
     * [x] Restrict interface block to contain only function definitions
-  * [ ] `type`
-    * [ ] Attribute validation
-    * [ ] Allowed only at package block and top-level
-  * [ ] `package`
-    * [ ] Parse JetDoc only after detecting the `package` keyword (as doing it beforehand could consume a directive's JetDoc otherwise)
-  * [ ] Program
+  * [x] `type`
+    * [x] Attribute validation
+    * [x] Allowed only at package block and top-level
+  * [x] `package`
+    * [x] Parse JetDoc only after detecting the `package` keyword (as doing it beforehand could consume a directive's JetDoc otherwise)
+  * [x] Program
 * [ ] JetDoc
+
+## Facade
+
+* [ ] Static `ParserFacade`

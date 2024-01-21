@@ -8,5 +8,5 @@ pub struct TypeDefinition {
     pub jetdoc: Option<Rc<JetDoc>>,
     pub attributes: Vec<Attribute>,
     pub left: (String, Location),
-    pub right: Option<Rc<Expression>>,
+    pub right: Rc<Expression>,
 }
