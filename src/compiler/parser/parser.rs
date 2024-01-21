@@ -2624,7 +2624,7 @@ impl<'input> Parser<'input> {
             }
         } else if self.peek(Token::Import) {
             self.parse_import_directive_or_expression_statement(context)
-        } else if self.peek(Token::LeftBrace) {
+        } else if self.peek(Token::LeftBracket) {
             self.mark_location();
             let exp = self.parse_expression(ParsingExpressionContext {
                 allow_in: true, min_precedence: OperatorPrecedence::List, ..default()

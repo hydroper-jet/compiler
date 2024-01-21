@@ -95,37 +95,25 @@
             }
           },
           {
-            "ExpressionStatement": {
-              "location": {},
-              "expression": {
-                "ArrayLiteral": {
-                  "location": {},
-                  "elements": [
-                    {
-                      "Expression": {
-                        "QualifiedIdentifier": {
-                          "location": {},
-                          "attribute": false,
-                          "qualifier": null,
-                          "id": {
-                            "Id": [
-                              "Set",
-                              {}
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          {
             "EnumDefinition": {
               "location": {},
               "jetdoc": null,
               "attributes": [
+                {
+                  "Metadata": {
+                    "QualifiedIdentifier": {
+                      "location": {},
+                      "attribute": false,
+                      "qualifier": null,
+                      "id": {
+                        "Id": [
+                          "Set",
+                          {}
+                        ]
+                      }
+                    }
+                  }
+                },
                 {
                   "Public": {}
                 }
