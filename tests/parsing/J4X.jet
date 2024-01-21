@@ -1,0 +1,30 @@
+<!-- Comment --> ;
+<? ?> ;
+<![CDATA[ Characters ]]> ;
+<t>
+    <t/>
+    <t {c}/>
+    <t k="v"/>
+    <t k={v}/>
+    Lorem ipsum
+    <t>Lorem ipsum</t>
+    {c}
+</t>
+    .(filterCondition)
+    .q::x
+    ..d;
+
+<></>;
+
+default xml namespace = ns;
+
+*
+q::x
+; (q)::x
+o.*
+o.b
+o.b::x
+o.(q)::x
+o.q::x
+o.q::[k]
+o.@x

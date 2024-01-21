@@ -1509,7 +1509,6 @@ impl<'input> Parser<'input> {
 
         // IdentifierName
         if let Some(id) = self.consume_identifier(true)? {
-            self.next()?;
             Ok(QualifiedIdentifier {
                 location: self.pop_location(),
                 attribute,
