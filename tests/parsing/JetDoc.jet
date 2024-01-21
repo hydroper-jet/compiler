@@ -3,17 +3,17 @@
  */
 package deskomplika.nucleo {
     /**
-    * Main body
-    * @example Example text
-    */
+     * Main body
+     * @example Example text
+     */
     public var x;
 
     /**
-    * @example
-    * ```
-    * f();
-    * ```
-    * @throws ReferenceError Occasionally.
-    */
+     * @example
+     * ```
+     * f();
+     * ```
+     * @throws ReferenceError Occasionally.
+     */
     public function f(): T {}
 }
