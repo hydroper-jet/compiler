@@ -1,0 +1,164 @@
+{
+  "location": {},
+  "packages": [
+    {
+      "location": {},
+      "jetdoc": {
+        "location": {},
+        "main_body": [
+          "Núcleo.",
+          {}
+        ],
+        "tags": []
+      },
+      "name": [
+        [
+          "deskomplika",
+          {}
+        ],
+        [
+          "nucleo",
+          {}
+        ]
+      ],
+      "block": {
+        "location": {},
+        "directives": [
+          {
+            "VariableDefinition": {
+              "location": {},
+              "jetdoc": {
+                "location": {},
+                "main_body": [
+                  "Main body",
+                  {}
+                ],
+                "tags": [
+                  [
+                    {
+                      "Example": "Example text"
+                    },
+                    {}
+                  ]
+                ]
+              },
+              "attributes": [
+                {
+                  "Public": {}
+                }
+              ],
+              "kind": [
+                "Var",
+                {}
+              ],
+              "bindings": [
+                {
+                  "destructuring": {
+                    "location": {},
+                    "destructuring": {
+                      "QualifiedIdentifier": {
+                        "location": {},
+                        "attribute": false,
+                        "qualifier": null,
+                        "id": {
+                          "Id": [
+                            "x",
+                            {}
+                          ]
+                        }
+                      }
+                    },
+                    "type_annotation": null
+                  },
+                  "initializer": null
+                }
+              ]
+            }
+          },
+          {
+            "FunctionDefinition": {
+              "location": {},
+              "jetdoc": {
+                "location": {},
+                "main_body": [
+                  "",
+                  {}
+                ],
+                "tags": [
+                  [
+                    {
+                      "Example": "```\nf();\n```"
+                    },
+                    {}
+                  ],
+                  [
+                    {
+                      "Throws": {
+                        "class_reference": {
+                          "QualifiedIdentifier": {
+                            "location": {},
+                            "attribute": false,
+                            "qualifier": null,
+                            "id": {
+                              "Id": [
+                                "ReferenceError",
+                                {}
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Occasionally."
+                      }
+                    },
+                    {}
+                  ]
+                ]
+              },
+              "attributes": [
+                {
+                  "Public": {}
+                }
+              ],
+              "name": {
+                "Identifier": [
+                  "f",
+                  {}
+                ]
+              },
+              "type_parameters": null,
+              "common": {
+                "location": {},
+                "contains_yield": false,
+                "contains_await": false,
+                "signature": {
+                  "location": {},
+                  "parameters": [],
+                  "result_type": {
+                    "QualifiedIdentifier": {
+                      "location": {},
+                      "attribute": false,
+                      "qualifier": null,
+                      "id": {
+                        "Id": [
+                          "T",
+                          {}
+                        ]
+                      }
+                    }
+                  }
+                },
+                "body": {
+                  "Block": {
+                    "location": {},
+                    "directives": []
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "directives": []
+}
