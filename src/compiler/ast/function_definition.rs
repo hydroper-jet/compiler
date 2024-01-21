@@ -8,7 +8,7 @@ pub struct FunctionDefinition {
     pub jetdoc: Option<Rc<JetDoc>>,
     pub attributes: Vec<Attribute>,
     pub name: FunctionName,
-    pub type_parameters: Vec<Rc<TypeParameter>>,
+    pub type_parameters: Option<Vec<Rc<TypeParameter>>>,
     pub common: Rc<FunctionCommon>,
 }
 

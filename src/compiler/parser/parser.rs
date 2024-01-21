@@ -217,7 +217,7 @@ impl<'input> Parser<'input> {
     /// Expects a greater-than symbol. If the facing token is not greater-than,
     /// but starts with a greater-than symbol, the first character is shifted off
     /// from the facing token.
-    fn expect_generics_gt(&mut self) -> Result<(), ParsingFailure> {
+    fn expect_type_parameters_gt(&mut self) -> Result<(), ParsingFailure> {
         match self.token.0 {
             Token::Gt => {
                 self.next()?;
@@ -562,7 +562,7 @@ impl<'input> Parser<'input> {
             while self.consume(Token::Comma)? {
                 arguments.push(self.parse_type_expression()?);
             }
-            self.expect_generics_gt()?;
+            self.expect_type_parameters_gt()?;
             Ok(Rc::new(Expression::WithTypeArguments(ExpressionWithTypeArguments {
                 location: self.pop_location(),
                 base, arguments
@@ -1607,7 +1607,7 @@ impl<'input> Parser<'input> {
         })
     }
 
-    fn parse_type_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
+    pub fn parse_type_expression(&mut self) -> Result<Rc<Expression>, ParsingFailure> {
         let start = self.token_location();
         let (mut base, wrap_nullable) = self.parse_type_expression_start()?;
 
@@ -1619,7 +1619,7 @@ impl<'input> Parser<'input> {
                     while self.consume(Token::Comma)? {
                         arguments.push(self.parse_type_expression()?);
                     }
-                    self.expect_generics_gt()?;
+                    self.expect_type_parameters_gt()?;
                     base = Rc::new(Expression::WithTypeArguments(ExpressionWithTypeArguments {
                         location: self.pop_location(),
                         base, arguments,
@@ -2671,6 +2671,8 @@ impl<'input> Parser<'input> {
             self.parse_use_directive(context)
         } else if self.peek(Token::Var) || self.peek(Token::Const) {
             self.parse_variable_definition(context)
+        } else if self.consume(Token::Function)? {
+            self.parse_function_definition(context)
         } else {
             self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedDirectiveKeyword, diagnostic_arguments![Token(self.token.0.clone())]);
             Err(ParsingFailure)
@@ -2874,7 +2876,14 @@ impl<'input> Parser<'input> {
         Ok((node, semicolon))
     }
 
-    pub fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
+    fn parse_function_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
+        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        self.push_location(&start_location);
+        let name_1 = self.expect_identifier(true)?;
+        ()
+    }
+
+    fn verify_visibility(&self, a: &Attribute, context: &ParsingDirectiveContext) {
         let mut unallowed = false;
         match a {
             Attribute::Public(_) => {
@@ -2895,6 +2904,28 @@ impl<'input> Parser<'input> {
             // Unallowed attribute
             self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
         }
+    }
+    
+    fn parse_type_parameters(&mut self) -> Result<Option<Vec<Rc<TypeParameter>>>, ParsingFailure> {
+        if !self.consume(Token::Dot)? {
+            return Ok(None);
+        }
+        self.expect(Token::Lt)?;
+        let mut list = vec![self.parse_type_parameter()?];
+        while self.consume(Token::Comma)? {
+            list.push(self.parse_type_parameter()?);
+        }
+        self.expect_type_parameters_gt()?;
+        Ok(Some(list))
+    }
+    
+    fn parse_type_parameter(&mut self) -> Result<Rc<TypeParameter>, ParsingFailure> {
+        self.mark_location();
+        let name = self.expect_identifier(false)?;
+        Ok(Rc::new(TypeParameter {
+            location: self.pop_location(),
+            name,
+        }))
     }
 
     fn parse_configuration_directive(&mut self, context: ParsingDirectiveContext, start_location: Location) -> Result<(Rc<Directive>, bool), ParsingFailure> {

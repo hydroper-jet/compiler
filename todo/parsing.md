@@ -168,9 +168,18 @@
     * [ ] Attribute validation
     * [ ] Verify body according to `native` attribute
     * [ ] Getter
+      * [ ] Do not allow generator or asynchronous getters
+      * [ ] Do not parse type parameters
     * [ ] Setter
+      * [ ] Do not allow generator or asynchronous setters
+      * [ ] Do not parse type parameters
     * [ ] Proxy
+      * [ ] Do not allow getters, setters or constructors to use `proxy`
+      * [ ] `proxy` may only be used at type block
+      * [ ] Do not parse type parameters
     * [ ] Constructor
+      * [ ] Do not allow generator or asynchronous constructors
+      * [ ] Do not parse type parameters
   * [ ] `class`
     * [ ] Attribute validation
     * [ ] Allowed only at package block and top-level
