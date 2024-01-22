@@ -34,6 +34,35 @@ impl Attribute {
         }
     }
 
+    pub fn visibility(list: &Vec<Attribute>, at_interface_block: bool) -> Visibility {
+        if at_interface_block {
+            return Visibility::Public;
+        }
+        for a in list {
+            match a {
+                Self::Public(_) => return Visibility::Public,
+                Self::Private(_) => return Visibility::Private,
+                Self::Protected(_) => return Visibility::Protected,
+                Self::Internal(_) => return Visibility::Internal,
+                _ => {}
+            }
+        }
+        Visibility::Internal
+    }
+
+    pub fn has_visibility(list: &Vec<Attribute>) -> bool {
+        for a in list {
+            match a {
+                Self::Public(_) |
+                Self::Private(_) |
+                Self::Protected(_) |
+                Self::Internal(_) => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+
     pub fn find_metadata(list: &Vec<Attribute>) -> Vec<Rc<Expression>> {
         let mut r = vec![];
         for a in list {

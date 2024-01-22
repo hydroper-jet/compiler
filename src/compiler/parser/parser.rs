@@ -2997,7 +2997,12 @@ impl<'input> Parser<'input> {
                 Attribute::Private(_) |
                 Attribute::Protected(_) |
                 Attribute::Internal(_) => {
-                    self.verify_visibility(&a, &context);
+                    if has_proxy {
+                        // Unallowed visibility in proxy function
+                        self.add_syntax_error(&a.location(), DiagnosticKind::UnallowedAttribute, diagnostic_arguments![]);
+                    } else {
+                        self.verify_visibility(&a, &context);
+                    }
                 },
                 _ => {
                     // Unallowed attribute

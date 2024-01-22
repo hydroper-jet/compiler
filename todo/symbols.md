@@ -2,7 +2,7 @@
 
 ## Covered
 
-* [ ] `Visibility`
+* [x] `Visibility`
 * [ ] `PlainMetadata`
 * [ ] `SymbolHost`
   * [ ] Arena
