@@ -8,6 +8,7 @@
 * [ ] `SymbolHost`
   * [ ] Arena
 * [ ] `Symbol`
+* [ ] `Unresolved`
 * Types
   * [ ] `AnyType`
   * [ ] `VoidType`
