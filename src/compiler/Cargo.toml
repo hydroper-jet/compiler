@@ -16,6 +16,7 @@ path = "lib.rs"
 
 [dependencies]
 bitflags = { version = "2.4.1", features = ["serde"] }
+bytes = "1"
 file_paths = "1.0.0"
 conv = "0.3.3"
 late_format = "1.0.0"
