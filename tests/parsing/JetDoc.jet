@@ -14,6 +14,9 @@ package deskomplika.nucleo {
      * f();
      * ```
      * @throws ReferenceError Occasionally.
+     * @see C#x
+     * @see #y Useful
+     * @return Always `T`
      */
     public function f(): T {}
 }

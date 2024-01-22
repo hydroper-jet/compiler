@@ -111,6 +111,48 @@
                       }
                     },
                     {}
+                  ],
+                  [
+                    {
+                      "See": {
+                        "reference": {
+                          "base": {
+                            "QualifiedIdentifier": {
+                              "location": {},
+                              "attribute": false,
+                              "qualifier": null,
+                              "id": {
+                                "Id": [
+                                  "C",
+                                  {}
+                                ]
+                              }
+                            }
+                          },
+                          "instance_property": "x"
+                        },
+                        "display_text": ""
+                      }
+                    },
+                    {}
+                  ],
+                  [
+                    {
+                      "See": {
+                        "reference": {
+                          "base": null,
+                          "instance_property": "y"
+                        },
+                        "display_text": "Useful"
+                      }
+                    },
+                    {}
+                  ],
+                  [
+                    {
+                      "Return": "Always `T`"
+                    },
+                    {}
                   ]
                 ]
               },

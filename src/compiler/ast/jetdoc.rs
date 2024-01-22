@@ -29,11 +29,21 @@ pub enum JetDocTag {
     Private,
     Return(String),
     See {
-        reference: String,
+        reference: Rc<JetDocReference>,
         display_text: Option<String>,
     },
     Throws {
         class_reference: Rc<Expression>,
         description: Option<String>,
     },
+}
+
+/// A JetDoc reference consisting of an optional base and
+/// an optional instance property fragment (`#x`).
+#[derive(Clone, Serialize, Deserialize)]
+pub struct JetDocReference {
+    /// Base expression.
+    pub base: Option<Rc<Expression>>,
+    /// Instance property fragment following the hash character.
+    pub instance_property: Option<String>,
 }

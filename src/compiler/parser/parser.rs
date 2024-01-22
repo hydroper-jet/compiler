@@ -3721,10 +3721,17 @@ impl<'input> Parser<'input> {
                 "see" => {
                     let (content, location) = join_jetdoc_content(building_content);
                     let location = tag_location.combine_with(location);
-                    if let Some((_, reference, display_text)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
-                        tags.push((JetDocTag::See { reference: reference.to_owned(), display_text: Some(display_text.to_owned()) }, location));
+                    let reference: String;
+                    let display_text: Option<String>;
+                    if let Some((_, reference_1, display_text_1)) = regex_captures!(r"(?x) ([^\s]+) (.*)", &content) {
+                        reference = reference_1.to_owned();
+                        display_text = Some(display_text_1.trim().to_owned());
                     } else {
-                        tags.push((JetDocTag::See { reference: content, display_text: None }, location));
+                        reference = content;
+                        display_text = None;
+                    }
+                    if let Some(reference) = self.parse_jetdoc_reference(&reference, &tag_location, &tag_name) {
+                        tags.push((JetDocTag::See { reference, display_text }, location));
                     }
                 },
 
@@ -3764,6 +3771,33 @@ impl<'input> Parser<'input> {
 
         *building_content_tag_name = None;
         building_content.clear();
+    }
+
+    fn parse_jetdoc_reference(&self, reference: &str, tag_location: &Location, tag_name: &str) -> Option<Rc<JetDocReference>> {
+        let split: Vec<&str> = reference.split("#").collect();
+        if split.len() > 2 {
+            self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.to_owned())]);
+            return None;
+        }
+        let mut base: Option<Rc<Expression>> = None;
+        let instance_property: Option<String> = split.get(1).and_then(|&f| if f.is_empty() { None } else { Some(f.to_owned()) });
+        let base_text: String = split[0].to_owned();
+
+        if !base_text.is_empty() {
+            let compilation_unit_2 = CompilationUnit::new(None, base_text, &self.tokenizer.compilation_unit().compiler_options);
+            if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2) {
+                base = Some(exp);
+            } else {
+                self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.to_owned())]);
+                return None;
+            }
+        }
+
+        if base.is_none() && instance_property.is_none() {
+            self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.to_owned())]);
+            return None;
+        }
+        Some(Rc::new(JetDocReference { base, instance_property, }))
     }
 }
 
