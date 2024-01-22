@@ -7,6 +7,7 @@ pub mod compiler_options;
 pub mod diagnostics;
 pub mod operator;
 pub mod parser;
+pub mod symbols;
 pub mod util;
 
 pub mod ns;
