@@ -26,11 +26,13 @@
   * [ ] `NullableType`
   * [ ] `TypeParameter`
 * [ ] `Package`
+  * [ ] JetDoc
 * [ ] `PackageSet`
 * [ ] `VariableProperty`
   * [ ] JetDoc
 * [ ] `VirtualProperty`
   * [ ] JetDoc
+    * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
 * [ ] `Scope`
