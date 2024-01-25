@@ -7,7 +7,7 @@
   * [ ] Stored in other symbols behind a shared reference.
 * [ ] `SymbolHost`
 * [ ] `Symbol`
-* [ ] `Unresolved`
+* [x] `Unresolved`
 * Types
   * [ ] `AnyType`
   * [ ] `VoidType`

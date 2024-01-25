@@ -1,6 +1,6 @@
 use std::cell::Cell;
 use std::ops::Deref;
-use std::rc::Weak;
+use std::rc::{Rc, Weak};
 
 #[derive(Clone)]
 pub struct Symbol(pub(crate) Weak<SymbolKind>);
@@ -16,6 +16,22 @@ impl PartialEq for Symbol {
 impl Symbol {
     pub fn is_unresolved(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Unresolved(_))
+    }
+
+    pub fn unresolved_count(&self) -> u32 {
+        let symbol = self.0.upgrade().unwrap();
+        let SymbolKind::Unresolved(ref symbol) = symbol.as_ref() else {
+            panic!();
+        };
+        symbol.get()
+    }
+
+    pub fn increment_unresolved_count(&self) {
+        let symbol = self.0.upgrade().unwrap();
+        let SymbolKind::Unresolved(ref symbol) = symbol.as_ref() else {
+            panic!();
+        };
+        symbol.set(symbol.get() + 1);
     }
 }
 
