@@ -24,15 +24,21 @@
   * [ ] `TupleType`
   * [ ] `NullableType`
   * [ ] `TypeParameter`
+  * [ ] `TypeAfterTypeSubstitution` (`T.<...>`)
 * [ ] `Package`
   * [ ] JetDoc
 * [ ] `PackageSet`
 * [ ] `VariableProperty`
   * [ ] JetDoc
+* [ ] `VariablePropertyAfterTypeSubstitution`
 * [ ] `VirtualProperty`
   * [ ] JetDoc
     * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
+* [ ] `VirtualPropertyAfterTypeSubstitution`
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
+* [ ] `FunctionAfterTypeSubstitution`
+* [ ] `FunctionAfterTypeSubstitution`
+* [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
 * [ ] `Scope`
 * [ ] `Value`
