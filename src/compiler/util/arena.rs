@@ -11,7 +11,7 @@ impl<T> Arena<T> {
         }
     }
 
-    pub fn alloc(&self, value: T) -> Weak<T> {
+    pub fn allocate(&self, value: T) -> Weak<T> {
         let obj = Rc::new(value);
         self.data.borrow_mut().push(Rc::clone(&obj));
         Rc::downgrade(&obj)

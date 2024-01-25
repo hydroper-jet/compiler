@@ -6,7 +6,6 @@
 * [x] `PlainMetadata`
   * [ ] Stored in other symbols behind a shared reference.
 * [ ] `SymbolHost`
-  * [ ] Arena
 * [ ] `Symbol`
 * [ ] `Unresolved`
 * Types
