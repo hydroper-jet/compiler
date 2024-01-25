@@ -7,6 +7,7 @@
   * [ ] Stored in other symbols behind a shared reference.
 * [ ] `SymbolHost`
 * [ ] `Symbol`
+* [ ] `SymbolFactory`
 * [x] `Unresolved`
 * Types
   * [ ] `AnyType`
@@ -24,21 +25,21 @@
   * [ ] `TupleType`
   * [ ] `NullableType`
   * [ ] `TypeParameter`
-  * [ ] `TypeAfterTypeSubstitution` (`T.<...>`)
+  * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
 * [ ] `Package`
   * [ ] JetDoc
 * [ ] `PackageSet`
 * [ ] `VariableProperty`
   * [ ] JetDoc
-* [ ] `VariablePropertyAfterTypeSubstitution`
+* [ ] `VariablePropertyAfterIndirectTypeSubstitution`
 * [ ] `VirtualProperty`
   * [ ] JetDoc
     * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
-* [ ] `VirtualPropertyAfterTypeSubstitution`
+* [ ] `VirtualPropertyAfterIndirectTypeSubstitution`
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
-* [ ] `FunctionAfterTypeSubstitution`
-* [ ] `FunctionAfterTypeSubstitution`
+* [ ] `FunctionAfterIndirectTypeSubstitution`
+* [ ] `FunctionAfterIndirectTypeSubstitution`
 * [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
 * [ ] `Scope`
 * [ ] `Value`

@@ -4,5 +4,7 @@ mod plain_metadata;
 pub use plain_metadata::*;
 mod symbol_host;
 pub use symbol_host::*;
+mod symbol_factory;
+pub use symbol_factory::*;
 mod symbol;
 pub use symbol::*;

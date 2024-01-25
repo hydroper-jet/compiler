@@ -1,6 +1,6 @@
 use std::cell::Cell;
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::rc::Weak;
 
 #[derive(Clone)]
 pub struct Symbol(pub(crate) Weak<SymbolKind>);
@@ -43,7 +43,7 @@ pub(crate) enum SymbolKind {
 ///
 /// # Supported methods
 /// 
-/// * `unresolved_count()`
+/// * `unresolved_count()` — Counter counting from zero (0).
 /// * `increment_unresolved_count()`
 pub struct UnresolvedSymbol(pub Symbol);
 
