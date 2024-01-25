@@ -7,7 +7,15 @@ pub struct SymbolFactory<'a> {
 }
 
 impl<'a> SymbolFactory<'a> {
-    pub fn create_unresolved(&self) -> UnresolvedSymbol {
-        UnresolvedSymbol(Symbol(self.arena.allocate(SymbolKind::Unresolved(Cell::new(0)))))
+    pub fn create_unresolved(&self) -> Symbol {
+        Symbol(self.arena.allocate(SymbolKind::Unresolved(Cell::new(0))))
+    }
+
+    pub fn create_any_type(&self) -> Symbol {
+        self.host.any_type()
+    }
+
+    pub fn create_void_type(&self) -> Symbol {
+        self.host.void_type()
     }
 }

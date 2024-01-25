@@ -10,9 +10,8 @@
 * [ ] `SymbolFactory`
 * [x] `Unresolved`
 * Types
-  * [ ] `AnyType`
-  * [ ] `VoidType`
-  * [ ] `NullType`
+  * [x] `AnyType`
+  * [x] `VoidType`
   * [ ] `ClassType`
     * [ ] JetDoc
     * [ ] Limited subclasses

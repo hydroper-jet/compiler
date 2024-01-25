@@ -38,6 +38,7 @@ pub enum DiagnosticKind {
     DirectiveNotAllowedInInterface = 1058,
     FailedParsingJetDocTag = 1059,
     UnrecognizedJetDocTag = 1060,
+    UnrecognizedProxy = 1061,
 }
 
 impl DiagnosticKind {

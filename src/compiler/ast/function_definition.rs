@@ -1,6 +1,6 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::rc::Rc;
+use std::{rc::Rc, str::FromStr};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct FunctionDefinition {
@@ -13,8 +13,8 @@ pub struct FunctionDefinition {
 }
 
 impl FunctionDefinition {
-    /// Indicates whether the function definition is not a getter, setter
-    /// or constructor.
+    /// Indicates whether the function definition is not a getter, setter,
+    /// constructor, or proxy.
     pub fn is_normal(&self) -> bool {
         matches!(self.name, FunctionName::Identifier(_))
     }
@@ -27,12 +27,16 @@ impl FunctionDefinition {
     pub fn is_constructor(&self) -> bool {
         matches!(self.name, FunctionName::Constructor(_))
     }
+    pub fn is_proxy(&self) -> bool {
+        matches!(self.name, FunctionName::Proxy(_, _))
+    }
     pub fn name_identifier(&self) -> (String, Location) {
         match &self.name {
             FunctionName::Identifier(name) => name.clone(),
             FunctionName::Getter(name) => name.clone(),
             FunctionName::Setter(name) => name.clone(),
             FunctionName::Constructor(name) => name.clone(),
+            FunctionName::Proxy(_, name) => name.clone(),
         }
     }
 }
@@ -45,6 +49,7 @@ pub enum FunctionName {
     /// A `FunctionName` is a `Constructor` variant
     /// when the corresponding function definition is a constructor.
     Constructor((String, Location)),
+    Proxy(ProxyKind, (String, Location)),
 }
 
 impl FunctionName {
@@ -54,6 +59,91 @@ impl FunctionName {
             Self::Getter((_, l)) => l.clone(),
             Self::Setter((_, l)) => l.clone(),
             Self::Constructor((_, l)) => l.clone(),
+            Self::Proxy(_, (_, l)) => l.clone(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ProxyKind {
+    Positive,
+    Negate,
+    BitwiseNot,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+    Power,
+    BitwiseAnd,
+    BitwiseXor,
+    BitwiseOr,
+    ShiftLeft,
+    ShiftRight,
+    ShiftRightUnsigned,
+    To,
+    ToOptional,
+    GetProperty,
+    SetProperty,
+    DeleteProperty,
+    Has,
+    Keys,
+    Values,
+}
+
+impl TryFrom<ProxyKind> for Operator {
+    type Error = ();
+    fn try_from(value: ProxyKind) -> Result<Self, Self::Error> {
+        match value {
+            ProxyKind::Positive => Ok(Operator::Positive),
+            ProxyKind::Negate => Ok(Operator::Negative),
+            ProxyKind::BitwiseNot => Ok(Operator::BitwiseNot),
+            ProxyKind::Add => Ok(Operator::Add),
+            ProxyKind::Subtract => Ok(Operator::Subtract),
+            ProxyKind::Multiply => Ok(Operator::Multiply),
+            ProxyKind::Divide => Ok(Operator::Divide),
+            ProxyKind::Remainder => Ok(Operator::Remainder),
+            ProxyKind::Power => Ok(Operator::Power),
+            ProxyKind::BitwiseAnd => Ok(Operator::BitwiseAnd),
+            ProxyKind::BitwiseXor => Ok(Operator::BitwiseXor),
+            ProxyKind::BitwiseOr => Ok(Operator::BitwiseOr),
+            ProxyKind::ShiftLeft => Ok(Operator::ShiftLeft),
+            ProxyKind::ShiftRight => Ok(Operator::ShiftRight),
+            ProxyKind::ShiftRightUnsigned => Ok(Operator::ShiftRightUnsigned),
+            ProxyKind::Has => Ok(Operator::In),
+            _ => Err(()),
+        }
+    }
+}
+
+impl FromStr for ProxyKind {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "positive" => Ok(Self::Positive),
+            "negate" => Ok(Self::Negate),
+            "bitwiseNot" => Ok(Self::BitwiseNot),
+            "add" => Ok(Self::Add),
+            "subtract" => Ok(Self::Subtract),
+            "multiply" => Ok(Self::Multiply),
+            "divide" => Ok(Self::Divide),
+            "remainder" => Ok(Self::Remainder),
+            "power" => Ok(Self::Power),
+            "bitwiseAnd" => Ok(Self::BitwiseAnd),
+            "bitwiseXor" => Ok(Self::BitwiseXor),
+            "bitwiseOr" => Ok(Self::BitwiseOr),
+            "shiftLeft" => Ok(Self::ShiftLeft),
+            "shiftRight" => Ok(Self::ShiftRight),
+            "shiftRightUnsigned" => Ok(Self::ShiftRightUnsigned),
+            "to" => Ok(Self::To),
+            "toOptional" => Ok(Self::ToOptional),
+            "getProperty" => Ok(Self::GetProperty),
+            "setProperty" => Ok(Self::SetProperty),
+            "deleteProperty" => Ok(Self::DeleteProperty),
+            "has" => Ok(Self::Has),
+            "keys" => Ok(Self::Keys),
+            "values" => Ok(Self::Values),
+            _ => Err(()),
         }
     }
 }

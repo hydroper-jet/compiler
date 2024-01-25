@@ -2,6 +2,7 @@ use crate::ns::*;
 use lazy_regex::*;
 use std::cell::Cell;
 use std::rc::Rc;
+use std::str::FromStr;
 
 pub struct Parser<'input> {
     tokenizer: Tokenizer<'input>,
@@ -2911,13 +2912,20 @@ impl<'input> Parser<'input> {
                 name = self.expect_identifier(true)?;
             }
         }
-        let constructor = !getter && !setter && context.function_name_is_constructor(&name);
+        let constructor = !getter && !setter && !has_proxy && context.function_name_is_constructor(&name);
         let name = if getter {
             FunctionName::Getter(name)
         } else if setter {
             FunctionName::Setter(name)
         } else if constructor {
             FunctionName::Constructor(name)
+        } else if has_proxy {
+            let proxy_kind = ProxyKind::from_str(&name.0);
+            if proxy_kind.is_err() {
+                self.add_syntax_error(&name.1, DiagnosticKind::UnrecognizedProxy, diagnostic_arguments![String(name.0.clone())]);
+                return Err(ParsingFailure);
+            }
+            FunctionName::Proxy(proxy_kind.unwrap(), name)
         } else {
             FunctionName::Identifier(name)
         };
