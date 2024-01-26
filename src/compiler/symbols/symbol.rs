@@ -80,7 +80,7 @@ impl ToString for Symbol {
                 let name_1 = self.fully_qualified_name();
                 let mut p = String::new();
                 if let Some(type_parameters) = self.type_parameters() {
-                    p = ".<" + type_parameters.join(", ") + ">";
+                    p = ".<" + type_parameters.map(|p| p.to_string()).join(", ") + ">";
                 }
                 name_1 + &p
             },
