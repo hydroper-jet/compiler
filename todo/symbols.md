@@ -15,6 +15,8 @@
   * [ ] `ClassType`
     * [ ] JetDoc
     * [ ] Limited subclasses
+    * [ ] `fully_qualified_name()`
+    * [ ] `ToString`
   * [ ] `EnumType`
     * [ ] JetDoc
   * [ ] `InterfaceType`
