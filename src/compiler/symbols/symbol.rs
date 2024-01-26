@@ -1,6 +1,5 @@
 use crate::ns::*;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
@@ -53,6 +52,17 @@ impl Symbol {
     pub fn is_class_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::ClassType(_)))
     }
+
+    pub fn name(&self) -> String {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref name, .. } = data.as_ref();
+                name.clone()
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -86,12 +96,14 @@ pub(crate) struct ClassTypeData {
     pub(crate) flags: Cell<ClassTypeFlags>,
     pub(crate) type_parameters: SharedArray<Vec<Symbol>>,
     pub(crate) static_properties: SharedMap<String, Symbol>,
+    pub(crate) constructor_function: RefCell<Option<Symbol>>,
     pub(crate) prototype: SharedMap<String, Symbol>,
     pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
     pub(crate) list_of_to_proxies: SharedArray<Vec<Symbol>>,
     pub(crate) list_of_to_optional_proxies: SharedArray<Vec<Symbol>>,
     pub(crate) limited_subclasses: SharedArray<Vec<Symbol>>,
     pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
 bitflags! {
@@ -166,6 +178,35 @@ impl Deref for VoidType {
 /// * `is_class_type()`
 /// * `fully_qualified_name()`
 /// * `to_string()`
+/// * `is_abstract()`
+/// * `set_is_abstract()`
+/// * `is_final()`
+/// * `set_is_final()`
+/// * `is_static()`
+/// * `set_is_static()`
+/// * `allow_literal()`
+/// * `set_allow_literal()`
+/// * `implements()` — Implements list of the class.
+/// * `name()` — Unqualified name.
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `super_class()`
+/// * `set_super_class()`
+/// * `type_parameters()`
+/// * `set_type_parameters()`
+/// * `static_properties()`
+/// * `constructor_function()`
+/// * `set_constructor_function()`
+/// * `prototype()`
+/// * `proxies()`
+/// * `list_of_to_proxies()`
+/// * `list_of_to_optional_proxies()`
+/// * `limited_subclasses()`
+/// * `plain_metadata()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
 #[derive(Clone)]
 pub struct ClassType(pub Symbol);
 
