@@ -63,6 +63,11 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn fully_qualified_name(&self) -> String {
+        let p: Option<Symbol> = self.parent_definition();
+        (if let Some(p) = p { p.fully_qualified_name() + "." } else { "".to_owned() }) + &self.name()
+    }
 }
 
 impl ToString for Symbol {
@@ -71,6 +76,14 @@ impl ToString for Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::AnyType) => "*".into(),
             SymbolKind::Type(TypeKind::VoidType) => "void".into(),
+            SymbolKind::Type(TypeKind::ClassType(_)) => {
+                let name_1 = self.fully_qualified_name();
+                let mut p = String::new();
+                if let Some(type_parameters) = self.type_parameters() {
+                    p = ".<" + type_parameters.join(", ") + ">";
+                }
+                name_1 + &p
+            },
             _ => panic!(),
         }
     }
