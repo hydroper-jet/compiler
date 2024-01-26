@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-/// A shared mutable array of `T`.
+/// A shared mutable array of `T` managed by reference counting.
 #[derive(Clone)]
 pub struct SharedArray<T>(Rc<Vec<T>>);
 
@@ -29,17 +29,34 @@ impl<T> SharedArray<T> {
         Rc::get_mut(&mut self.0).unwrap().remove(index);
     }
 
-    pub fn contains(&self, value: T) -> bool {}
+    pub fn contains(&self, value: T) -> bool where T: Clone + PartialEq {
+        for value_2 in self.iter() {
+            if value_2 == value {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn index_of(&self, value: T) -> Option<usize> where T: PartialEq {
+        for i in 0..self.length() {
+            let value_2 = self.0.get(i).unwrap();
+            if &value == value_2 {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    pub fn length(&self) -> usize {
+        self.0.len()
+    }
 
     pub fn push(&mut self, value: T) where T: Clone {
         Rc::get_mut(&mut self.0).unwrap().push(value.clone());
     }
-}
 
-impl<T> IntoIterator for SharedArray<T> {
-    type Item = T;
-    type IntoIter = SharedArrayIterator<T>;
-    fn into_iter(self) -> Self::IntoIter {
+    pub fn iter(&self) -> SharedArrayIterator<T> {
         SharedArrayIterator {
             array: &self,
             index: 0,
