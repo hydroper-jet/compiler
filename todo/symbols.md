@@ -42,3 +42,5 @@
 * [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
 * [ ] `Scope`
 * [ ] `Value`
+  * [ ] `ConversionValue`
+  * [ ] Reference values mentioned in property resolution
