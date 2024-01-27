@@ -4,7 +4,6 @@
 
 * [x] `Visibility`
 * [x] `PlainMetadata`
-  * [ ] Stored in other symbols behind a shared reference.
 * [ ] `SymbolHost`
 * [ ] `Symbol`
 * [ ] `SymbolFactory`
@@ -19,12 +18,22 @@
     * [x] Factory creation
   * [x] `InterfaceType`
     * [x] Factory creation
-  * [ ] `FunctionType`
+  * [x] `FunctionType`
+    * [x] `is_type()`
+    * [x] `is_function_type()`
+    * [x] `to_string()`
+    * [x] `parameters()`
+    * [x] `result_type()`
+    * [ ] Factory creation
   * [ ] `TupleType`
   * [ ] `NullableType`
   * [ ] `TypeParameter`
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
+* [ ] `Alias`
+  * [ ] Factory creation
+  * [ ] JetDoc
 * [ ] `Package`
+  * [ ] Factory creation
   * [ ] JetDoc
 * [ ] `PackageSet`
 * [ ] `VariableProperty`

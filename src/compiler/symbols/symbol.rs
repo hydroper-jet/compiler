@@ -61,6 +61,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::InterfaceType(_)))
     }
 
+    pub fn is_function_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::FunctionType(_)))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -546,6 +550,28 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn parameters(&self) -> SharedArray<Rc<FunctionTypeParameter>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::FunctionType(data)) => {
+                let FunctionTypeData { ref parameters, .. } = data.as_ref();
+                parameters.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn result_type(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::FunctionType(data)) => {
+                let FunctionTypeData { ref result_type, .. } = data.as_ref();
+                result_type.clone()
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -564,6 +590,23 @@ impl ToString for Symbol {
                 name_1 + &p
             },
             SymbolKind::Type(TypeKind::EnumType(_)) => self.fully_qualified_name(),
+            SymbolKind::Type(TypeKind::FunctionType(ft)) => {
+                let mut p = vec![];
+                for p_1 in ft.parameters.iter() {
+                    match p_1.kind {
+                        ParameterKind::Required => {
+                            p.push(format!("{}: {}", p_1.name, p_1.static_type.to_string()));
+                        },
+                        ParameterKind::Optional => {
+                            p.push(format!("{}?: {}", p_1.name, p_1.static_type.to_string()));
+                        },
+                        ParameterKind::Rest => {
+                            p.push(format!("...{}: {}", p_1.name, p_1.static_type.to_string()));
+                        },
+                    }
+                }
+                format!("function({}): {}", p.join(", "), ft.result_type.to_string())
+            },
             _ => panic!(),
         }
     }
@@ -580,6 +623,7 @@ pub(crate) enum TypeKind {
     ClassType(Rc<ClassTypeData>),
     EnumType(Rc<EnumTypeData>),
     InterfaceType(Rc<InterfaceTypeData>),
+    FunctionType(Rc<FunctionTypeData>),
 }
 
 pub(crate) struct ClassTypeData {
@@ -626,6 +670,11 @@ pub(crate) struct InterfaceTypeData {
     pub(crate) limited_implementors: SharedArray<Symbol>,
     pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct FunctionTypeData {
+    pub(crate) parameters: SharedArray<Rc<FunctionTypeParameter>>,
+    pub(crate) result_type: Symbol,
 }
 
 bitflags! {
@@ -806,4 +855,30 @@ impl Deref for InterfaceType {
         assert!(self.0.is_interface_type());
         &self.0
     }
+}
+
+/// Function type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_function_type()`
+/// * `to_string()`
+/// * `parameters()`
+/// * `result_type()`
+#[derive(Clone)]
+pub struct FunctionType(pub Symbol);
+
+impl Deref for FunctionType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_function_type());
+        &self.0
+    }
+}
+
+pub struct FunctionTypeParameter {
+    pub kind: ParameterKind,
+    pub name: String,
+    pub static_type: Symbol,
 }
