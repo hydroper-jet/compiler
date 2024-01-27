@@ -15,10 +15,8 @@
   * [x] `ClassType`
     * [x] Factory creation
     * [x] JetDoc
-    * [x] Limited subclasses
-    * [x] `fully_qualified_name()`
-    * [x] `ToString`
   * [ ] `EnumType`
+    * [ ] Factory creation
     * [ ] JetDoc
   * [ ] `InterfaceType`
     * [ ] JetDoc

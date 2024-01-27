@@ -53,11 +53,19 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::ClassType(_)))
     }
 
+    pub fn is_enum_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::EnumType(_)))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref name, .. } = data.as_ref();
+                name.clone()
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref name, .. } = data.as_ref();
                 name.clone()
             },
             _ => panic!(),
@@ -67,6 +75,28 @@ impl Symbol {
     pub fn fully_qualified_name(&self) -> String {
         let p: Option<Symbol> = self.parent_definition();
         (if let Some(p) = p { p.fully_qualified_name() + "." } else { "".to_owned() }) + &self.name()
+    }
+
+    pub fn is_set_enumeration(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref is_set_enumeration, .. } = data.as_ref();
+                is_set_enumeration.get()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_is_set_enumeration(&self, value: bool) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref is_set_enumeration, .. } = data.as_ref();
+                is_set_enumeration.set(value);
+            },
+            _ => panic!(),
+        }
     }
 
     pub fn is_abstract(&self) -> bool {
@@ -175,6 +205,10 @@ impl Symbol {
                 let ClassTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.borrow().clone()
+            },
             _ => panic!(),
         }
     }
@@ -184,6 +218,10 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.replace(value);
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.replace(value);
             },
             _ => panic!(),
@@ -207,6 +245,32 @@ impl Symbol {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref super_class, .. } = data.as_ref();
                 super_class.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    /// Enumeration representation type. It is an `Unresolved` symbol
+    /// by default.
+    pub fn enumeration_representation_type(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref representation_type, .. } = data.as_ref();
+                representation_type.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    /// Enumeration representation type. It is an `Unresolved` symbol
+    /// by default.
+    pub fn set_enumeration_representation_type(&self, value: Symbol) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref representation_type, .. } = data.as_ref();
+                representation_type.replace(value);
             },
             _ => panic!(),
         }
@@ -381,6 +445,7 @@ impl ToString for Symbol {
                 }
                 name_1 + &p
             },
+            SymbolKind::Type(TypeKind::EnumType(_)) => self.fully_qualified_name(),
             _ => panic!(),
         }
     }
@@ -395,6 +460,7 @@ pub(crate) enum TypeKind {
     AnyType,
     VoidType,
     ClassType(Rc<ClassTypeData>),
+    EnumType(Rc<EnumTypeData>),
 }
 
 pub(crate) struct ClassTypeData {
@@ -411,6 +477,22 @@ pub(crate) struct ClassTypeData {
     pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
     pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
     pub(crate) limited_subclasses: SharedArray<Symbol>,
+    pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct EnumTypeData {
+    pub(crate) name: String,
+    pub(crate) visibility: Cell<Visibility>,
+    pub(crate) parent_definition: RefCell<Option<Symbol>>,
+    pub(crate) super_class: RefCell<Option<Symbol>>,
+    pub(crate) representation_type: RefCell<Symbol>,
+    pub(crate) is_set_enumeration: Cell<bool>,
+    pub(crate) static_properties: SharedMap<String, Symbol>,
+    pub(crate) prototype: SharedMap<String, Symbol>,
+    pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
+    pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
+    pub(crate) enumeration_members: SharedMap<String, AbstractRangeNumber>,
     pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
@@ -522,6 +604,44 @@ impl Deref for ClassType {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_class_type());
+        &self.0
+    }
+}
+
+/// Enumeration type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_enum_type()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `is_set_enumeration()`
+/// * `set_is_set_enumeration()`
+/// * `enumeration_representation_type()`
+/// * `set_enumeration_representation_type()`
+/// * `name()` — Unqualified name.
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `super_class()`
+/// * `set_super_class()`
+/// * `static_properties()``
+/// * `prototype()`
+/// * `enumeration_members()`
+/// * `proxies()`
+/// * `list_of_to_proxies()`
+/// * `plain_metadata()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone)]
+pub struct EnumType(pub Symbol);
+
+impl Deref for EnumType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_enum_type());
         &self.0
     }
 }
