@@ -68,6 +68,303 @@ impl Symbol {
         let p: Option<Symbol> = self.parent_definition();
         (if let Some(p) = p { p.fully_qualified_name() + "." } else { "".to_owned() }) + &self.name()
     }
+
+    pub fn is_abstract(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref flags, .. } = data.as_ref();
+                flags.get().contains(ClassTypeFlags::IS_ABSTRACT)
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_is_abstract(&self, value: bool) {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
+            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
+                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
+                flags.get_mut().set(ClassTypeFlags::IS_ABSTRACT, value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn is_final(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref flags, .. } = data.as_ref();
+                flags.get().contains(ClassTypeFlags::IS_FINAL)
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_is_final(&self, value: bool) {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
+            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
+                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
+                flags.get_mut().set(ClassTypeFlags::IS_FINAL, value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn is_static(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref flags, .. } = data.as_ref();
+                flags.get().contains(ClassTypeFlags::IS_STATIC)
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_is_static(&self, value: bool) {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
+            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
+                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
+                flags.get_mut().set(ClassTypeFlags::IS_STATIC, value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn allow_literal(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref flags, .. } = data.as_ref();
+                flags.get().contains(ClassTypeFlags::ALLOW_LITERAL)
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_allow_literal(&self, value: bool) {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
+            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
+                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
+                flags.get_mut().set(ClassTypeFlags::ALLOW_LITERAL, value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn implements(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref implements, .. } = data.as_ref();
+                implements.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn parent_definition(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_parent_definition(&self, value: Option<Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn super_class(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref super_class, .. } = data.as_ref();
+                super_class.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_super_class(&self, value: Option<Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref super_class, .. } = data.as_ref();
+                super_class.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn type_parameters(&self) -> Option<SharedArray<Symbol>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref type_parameters, .. } = data.as_ref();
+                type_parameters.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_type_parameters(&self, value: Option<SharedArray<Symbol>>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref type_parameters, .. } = data.as_ref();
+                type_parameters.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn static_properties(&self) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref static_properties, .. } = data.as_ref();
+                static_properties.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn prototype(&self) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref prototype, .. } = data.as_ref();
+                prototype.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn proxies(&self) -> SharedMap<ProxyKind, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref proxies, .. } = data.as_ref();
+                proxies.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn list_of_to_proxies(&self) -> SharedMap<Symbol, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref list_of_to_proxies, .. } = data.as_ref();
+                list_of_to_proxies.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn constructor_function(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref constructor_function, .. } = data.as_ref();
+                constructor_function.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_constructor_function(&self, value: Option<Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref constructor_function, .. } = data.as_ref();
+                constructor_function.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn limited_subclasses(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref limited_subclasses, .. } = data.as_ref();
+                limited_subclasses.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn plain_metadata(&self) -> SharedArray<Rc<PlainMetadata>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref plain_metadata, .. } = data.as_ref();
+                plain_metadata.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn visibility(&self) -> Visibility {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref visibility, .. } = data.as_ref();
+                visibility.get()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_visibility(&self, value: Visibility) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref visibility, .. } = data.as_ref();
+                visibility.set(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn jetdoc(&self) -> Option<Rc<JetDoc>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.borrow().clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_jetdoc(&self, value: Option<Rc<JetDoc>>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                let ClassTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -80,7 +377,7 @@ impl ToString for Symbol {
                 let name_1 = self.fully_qualified_name();
                 let mut p = String::new();
                 if let Some(type_parameters) = self.type_parameters() {
-                    p = ".<" + type_parameters.map(|p| p.to_string()).join(", ") + ">";
+                    p = ".<".to_owned() + &type_parameters.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(", ") + ">";
                 }
                 name_1 + &p
             },
@@ -107,12 +404,12 @@ pub(crate) struct ClassTypeData {
     pub(crate) super_class: RefCell<Option<Symbol>>,
     pub(crate) implements: SharedArray<Symbol>,
     pub(crate) flags: Cell<ClassTypeFlags>,
-    pub(crate) type_parameters: SharedArray<Symbol>,
+    pub(crate) type_parameters: RefCell<Option<SharedArray<Symbol>>>,
     pub(crate) static_properties: SharedMap<String, Symbol>,
     pub(crate) constructor_function: RefCell<Option<Symbol>>,
     pub(crate) prototype: SharedMap<String, Symbol>,
     pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
-    pub(crate) list_of_to_proxies: SharedArray<Symbol>,
+    pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
     pub(crate) limited_subclasses: SharedArray<Symbol>,
     pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
@@ -212,7 +509,6 @@ impl Deref for VoidType {
 /// * `prototype()`
 /// * `proxies()`
 /// * `list_of_to_proxies()`
-/// * `list_of_to_optional_proxies()`
 /// * `limited_subclasses()`
 /// * `plain_metadata()`
 /// * `visibility()`

@@ -12,13 +12,12 @@
 * Types
   * [x] `AnyType`
   * [x] `VoidType`
-  * [ ] `ClassType`
-    * [ ] Factory creation
-    * [ ] JetDoc
-    * [ ] Limited subclasses
-    * [ ] `fully_qualified_name()`
-    * [ ] `ToString`
-      * Consider type parameters
+  * [x] `ClassType`
+    * [x] Factory creation
+    * [x] JetDoc
+    * [x] Limited subclasses
+    * [x] `fully_qualified_name()`
+    * [x] `ToString`
   * [ ] `EnumType`
     * [ ] JetDoc
   * [ ] `InterfaceType`

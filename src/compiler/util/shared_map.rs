@@ -4,6 +4,11 @@ use std::hash::Hash;
 use std::rc::Rc;
 
 /// A shared mutable hash map managed by reference counting.
+/// 
+/// # Cloning
+/// 
+/// The `Clone` trait implements cloning of the map by reference.
+/// Use the `clone_content()` method to clone the map by content.
 #[derive(Clone)]
 pub struct SharedMap<K, V>(Rc<HashMap<K, V>>);
 
@@ -42,6 +47,14 @@ impl<K, V> SharedMap<K, V> {
 
     pub fn iter(&self) -> SharedMapIterator<K, V> {
         SharedMapIterator(self.0.iter())
+    }
+
+    pub fn clone_content(&self) -> Self where K: Clone + Eq + Hash, V: Clone {
+        let mut r = Self::new();
+        for (k, v) in self.iter() {
+            r.set(k.clone(), v.clone());
+        }
+        r
     }
 }
 

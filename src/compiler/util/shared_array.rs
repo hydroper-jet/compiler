@@ -1,6 +1,11 @@
 use std::rc::Rc;
 
 /// A shared mutable array of `T` managed by reference counting.
+///
+/// # Cloning
+/// 
+/// The `Clone` trait implements cloning of the array by reference.
+/// Use the `clone_content()` method to clone the array by content.
 #[derive(Clone)]
 pub struct SharedArray<T>(Rc<Vec<T>>);
 
@@ -29,13 +34,8 @@ impl<T> SharedArray<T> {
         Rc::get_mut(&mut self.0).unwrap().remove(index);
     }
 
-    pub fn contains(&self, value: T) -> bool where T: Clone + PartialEq {
-        for value_2 in self.iter() {
-            if value_2 == value {
-                return true;
-            }
-        }
-        false
+    pub fn includes(&self, value: &T) -> bool where T: PartialEq {
+        self.0.contains(value)
     }
 
     pub fn index_of(&self, value: T) -> Option<usize> where T: PartialEq {
@@ -56,11 +56,19 @@ impl<T> SharedArray<T> {
         Rc::get_mut(&mut self.0).unwrap().push(value.clone());
     }
 
-    pub fn iter(&self) -> SharedArrayIterator<T> {
+    pub fn iter(&self) -> SharedArrayIterator<T> where T: Clone {
         SharedArrayIterator {
             array: &self,
             index: 0,
         }
+    }
+
+    pub fn clone_content(&self) -> Self where T: Clone {
+        let mut r = Self::new();
+        for v in self.iter() {
+            r.push(v);
+        }
+        r
     }
 }
 
