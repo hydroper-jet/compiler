@@ -37,7 +37,6 @@
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
 * [ ] `FunctionAfterIndirectTypeSubstitution`
-* [ ] `FunctionAfterIndirectTypeSubstitution`
 * [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
 * [ ] `Scope`
 * [ ] `Value`
