@@ -57,6 +57,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::EnumType(_)))
     }
 
+    pub fn is_interface_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::InterfaceType(_)))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -66,6 +70,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref name, .. } = data.as_ref();
+                name.clone()
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref name, .. } = data.as_ref();
                 name.clone()
             },
             _ => panic!(),
@@ -187,6 +195,17 @@ impl Symbol {
         }
     }
 
+    pub fn super_interfaces(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref super_interfaces, .. } = data.as_ref();
+                super_interfaces.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
     pub fn parent_definition(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -196,6 +215,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.borrow().clone()
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.borrow().clone()
             },
             _ => panic!(),
@@ -211,6 +234,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref parent_definition, .. } = data.as_ref();
+                parent_definition.replace(value);
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.replace(value);
             },
             _ => panic!(),
@@ -282,6 +309,10 @@ impl Symbol {
                 let ClassTypeData { ref type_parameters, .. } = data.as_ref();
                 type_parameters.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref type_parameters, .. } = data.as_ref();
+                type_parameters.borrow().clone()
+            },
             _ => panic!(),
         }
     }
@@ -291,6 +322,10 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref type_parameters, .. } = data.as_ref();
+                type_parameters.replace(value);
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref type_parameters, .. } = data.as_ref();
                 type_parameters.replace(value);
             },
             _ => panic!(),
@@ -321,6 +356,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref prototype, .. } = data.as_ref();
+                prototype.clone()
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref prototype, .. } = data.as_ref();
                 prototype.clone()
             },
             _ => panic!(),
@@ -402,6 +441,17 @@ impl Symbol {
         }
     }
 
+    pub fn limited_implementors(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref limited_implementors, .. } = data.as_ref();
+                limited_implementors.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
     pub fn plain_metadata(&self) -> SharedArray<Rc<PlainMetadata>> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -411,6 +461,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref plain_metadata, .. } = data.as_ref();
+                plain_metadata.clone()
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref plain_metadata, .. } = data.as_ref();
                 plain_metadata.clone()
             },
             _ => panic!(),
@@ -428,6 +482,10 @@ impl Symbol {
                 let EnumTypeData { ref visibility, .. } = data.as_ref();
                 visibility.get()
             },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref visibility, .. } = data.as_ref();
+                visibility.get()
+            },
             _ => panic!(),
         }
     }
@@ -441,6 +499,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref visibility, .. } = data.as_ref();
+                visibility.set(value);
+            },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref visibility, .. } = data.as_ref();
                 visibility.set(value);
             },
             _ => panic!(),
@@ -458,6 +520,10 @@ impl Symbol {
                 let EnumTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.borrow().clone()
+            },
             _ => panic!(),
         }
     }
@@ -473,6 +539,10 @@ impl Symbol {
                 let EnumTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.replace(value);
             },
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
+                let InterfaceTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.replace(value);
+            },
             _ => panic!(),
         }
     }
@@ -484,7 +554,8 @@ impl ToString for Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::AnyType) => "*".into(),
             SymbolKind::Type(TypeKind::VoidType) => "void".into(),
-            SymbolKind::Type(TypeKind::ClassType(_)) => {
+            SymbolKind::Type(TypeKind::ClassType(_)) |
+            SymbolKind::Type(TypeKind::InterfaceType(_)) => {
                 let name_1 = self.fully_qualified_name();
                 let mut p = String::new();
                 if let Some(type_parameters) = self.type_parameters() {
@@ -508,6 +579,7 @@ pub(crate) enum TypeKind {
     VoidType,
     ClassType(Rc<ClassTypeData>),
     EnumType(Rc<EnumTypeData>),
+    InterfaceType(Rc<InterfaceTypeData>),
 }
 
 pub(crate) struct ClassTypeData {
@@ -540,6 +612,18 @@ pub(crate) struct EnumTypeData {
     pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
     pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
     pub(crate) enumeration_members: SharedMap<String, AbstractRangeNumber>,
+    pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct InterfaceTypeData {
+    pub(crate) name: String,
+    pub(crate) visibility: Cell<Visibility>,
+    pub(crate) parent_definition: RefCell<Option<Symbol>>,
+    pub(crate) super_interfaces: SharedArray<Symbol>,
+    pub(crate) type_parameters: RefCell<Option<SharedArray<Symbol>>>,
+    pub(crate) prototype: SharedMap<String, Symbol>,
+    pub(crate) limited_implementors: SharedArray<Symbol>,
     pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
@@ -688,6 +772,38 @@ impl Deref for EnumType {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_enum_type());
+        &self.0
+    }
+}
+
+/// Interface type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_interface_type()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `name()` — Unqualified name.
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `super_interfaces()` — Extends list of the interface.
+/// * `type_parameters()`
+/// * `set_type_parameters()`
+/// * `prototype()`
+/// * `limited_implementors()`
+/// * `plain_metadata()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone)]
+pub struct InterfaceType(pub Symbol);
+
+impl Deref for InterfaceType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_interface_type());
         &self.0
     }
 }

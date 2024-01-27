@@ -17,9 +17,8 @@
     * [x] JetDoc
   * [x] `EnumType`
     * [x] Factory creation
-  * [ ] `InterfaceType`
-    * [ ] Factory creation
-    * [ ] Limited implementors
+  * [x] `InterfaceType`
+    * [x] Factory creation
   * [ ] `FunctionType`
   * [ ] `TupleType`
   * [ ] `NullableType`

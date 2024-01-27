@@ -57,4 +57,18 @@ impl<'a> SymbolFactory<'a> {
             jetdoc: RefCell::new(None),
         })))))
     }
+
+    pub fn create_interface_type(&self, name: String) -> Symbol {
+        Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::InterfaceType(Rc::new(InterfaceTypeData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            parent_definition: RefCell::new(None),
+            super_interfaces: SharedArray::new(),
+            type_parameters: RefCell::new(None),
+            prototype: SharedMap::new(),
+            limited_implementors: SharedArray::new(),
+            plain_metadata: SharedArray::new(),
+            jetdoc: RefCell::new(None),
+        })))))
+    }
 }
