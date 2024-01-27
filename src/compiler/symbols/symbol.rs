@@ -81,19 +81,8 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref is_set_enumeration, .. } = data.as_ref();
-                is_set_enumeration.get()
-            },
-            _ => panic!(),
-        }
-    }
-
-    pub fn set_is_set_enumeration(&self, value: bool) {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref is_set_enumeration, .. } = data.as_ref();
-                is_set_enumeration.set(value);
+                let EnumTypeData { is_set_enumeration, .. } = data.as_ref();
+                *is_set_enumeration
             },
             _ => panic!(),
         }
@@ -235,6 +224,10 @@ impl Symbol {
                 let ClassTypeData { ref super_class, .. } = data.as_ref();
                 super_class.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref super_class, .. } = data.as_ref();
+                super_class.borrow().clone()
+            },
             _ => panic!(),
         }
     }
@@ -246,13 +239,18 @@ impl Symbol {
                 let ClassTypeData { ref super_class, .. } = data.as_ref();
                 super_class.replace(value);
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref super_class, .. } = data.as_ref();
+                super_class.replace(value);
+            },
             _ => panic!(),
         }
     }
 
-    /// Enumeration representation type. It is an `Unresolved` symbol
-    /// by default.
-    pub fn enumeration_representation_type(&self) -> Symbol {
+    /// Enumeration representation type. It may be `Unresolved` in certain occasions.
+    /// 
+    /// **Default**: `None`.
+    pub fn enumeration_representation_type(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
@@ -263,9 +261,10 @@ impl Symbol {
         }
     }
 
-    /// Enumeration representation type. It is an `Unresolved` symbol
-    /// by default.
-    pub fn set_enumeration_representation_type(&self, value: Symbol) {
+    /// Enumeration representation type. It may be `Unresolved` in certain occasions.
+    ///
+    /// **Default**: `None`.
+    pub fn set_enumeration_representation_type(&self, value: Option<Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
@@ -305,6 +304,10 @@ impl Symbol {
                 let ClassTypeData { ref static_properties, .. } = data.as_ref();
                 static_properties.clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref static_properties, .. } = data.as_ref();
+                static_properties.clone()
+            },
             _ => panic!(),
         }
     }
@@ -314,6 +317,10 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref prototype, .. } = data.as_ref();
+                prototype.clone()
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref prototype, .. } = data.as_ref();
                 prototype.clone()
             },
             _ => panic!(),
@@ -327,6 +334,10 @@ impl Symbol {
                 let ClassTypeData { ref proxies, .. } = data.as_ref();
                 proxies.clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref proxies, .. } = data.as_ref();
+                proxies.clone()
+            },
             _ => panic!(),
         }
     }
@@ -337,6 +348,22 @@ impl Symbol {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref list_of_to_proxies, .. } = data.as_ref();
                 list_of_to_proxies.clone()
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref list_of_to_proxies, .. } = data.as_ref();
+                list_of_to_proxies.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    /// Members of an enumeration type as (*string*, *number*) groups.
+    pub fn enumeration_members(&self) -> SharedMap<String, AbstractRangeNumber> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref enumeration_members, .. } = data.as_ref();
+                enumeration_members.clone()
             },
             _ => panic!(),
         }
@@ -382,6 +409,10 @@ impl Symbol {
                 let ClassTypeData { ref plain_metadata, .. } = data.as_ref();
                 plain_metadata.clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref plain_metadata, .. } = data.as_ref();
+                plain_metadata.clone()
+            },
             _ => panic!(),
         }
     }
@@ -391,6 +422,10 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref visibility, .. } = data.as_ref();
+                visibility.get()
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref visibility, .. } = data.as_ref();
                 visibility.get()
             },
             _ => panic!(),
@@ -404,6 +439,10 @@ impl Symbol {
                 let ClassTypeData { ref visibility, .. } = data.as_ref();
                 visibility.set(value);
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref visibility, .. } = data.as_ref();
+                visibility.set(value);
+            },
             _ => panic!(),
         }
     }
@@ -415,6 +454,10 @@ impl Symbol {
                 let ClassTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.borrow().clone()
+            },
             _ => panic!(),
         }
     }
@@ -424,6 +467,10 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref jetdoc, .. } = data.as_ref();
+                jetdoc.replace(value);
+            },
+            SymbolKind::Type(TypeKind::EnumType(data)) => {
+                let EnumTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.replace(value);
             },
             _ => panic!(),
@@ -486,8 +533,8 @@ pub(crate) struct EnumTypeData {
     pub(crate) visibility: Cell<Visibility>,
     pub(crate) parent_definition: RefCell<Option<Symbol>>,
     pub(crate) super_class: RefCell<Option<Symbol>>,
-    pub(crate) representation_type: RefCell<Symbol>,
-    pub(crate) is_set_enumeration: Cell<bool>,
+    pub(crate) representation_type: RefCell<Option<Symbol>>,
+    pub(crate) is_set_enumeration: bool,
     pub(crate) static_properties: SharedMap<String, Symbol>,
     pub(crate) prototype: SharedMap<String, Symbol>,
     pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
@@ -617,7 +664,6 @@ impl Deref for ClassType {
 /// * `fully_qualified_name()`
 /// * `to_string()`
 /// * `is_set_enumeration()`
-/// * `set_is_set_enumeration()`
 /// * `enumeration_representation_type()`
 /// * `set_enumeration_representation_type()`
 /// * `name()` — Unqualified name.

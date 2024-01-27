@@ -39,4 +39,22 @@ impl<'a> SymbolFactory<'a> {
             jetdoc: RefCell::new(None),
         })))))
     }
+
+    pub fn create_enum_type(&self, name: String, is_set_enumeration: bool) -> Symbol {
+        Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::EnumType(Rc::new(EnumTypeData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            parent_definition: RefCell::new(None),
+            super_class: RefCell::new(None),
+            representation_type: RefCell::new(None),
+            is_set_enumeration,
+            static_properties: SharedMap::new(),
+            prototype: SharedMap::new(),
+            proxies: SharedMap::new(),
+            list_of_to_proxies: SharedMap::new(),
+            enumeration_members: SharedMap::new(),
+            plain_metadata: SharedArray::new(),
+            jetdoc: RefCell::new(None),
+        })))))
+    }
 }

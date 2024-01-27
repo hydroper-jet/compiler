@@ -183,16 +183,14 @@ impl AbstractRangeNumber {
         }
     }
 
-    pub fn is_power_of_two(&self, rhs: &Self) -> bool {
+    pub fn is_power_of_two(&self) -> bool {
         // Based on https://stackoverflow.com/a/600306
         match self {
             Self::Single(v) => {
-                let Self::Single(rhs) = rhs else { panic!(); };
                 let v = unsafe { v.to_int_unchecked::<u32>() };
                 (v != 0) && ((v & (v - 1)) == 0)
             },
             Self::Number(v) => {
-                let Self::Number(rhs) = rhs else { panic!(); };
                 let v = unsafe { v.to_int_unchecked::<u32>() };
                 (v != 0) && ((v & (v - 1)) == 0)
             },
