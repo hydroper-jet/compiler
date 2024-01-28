@@ -31,14 +31,12 @@
     * [x] `to_string()`
     * [x] `element_types()`
     * [x] Factory creation
-  * [ ] `NullableType`
-    * [ ] `is_type()`
-    * [ ] `is_nullable_type()`
-    * [ ] `to_string()`
-      * [ ] With function base, it uses `?` prefix instead
-    * [ ] `base()`
-    * [ ] Factory creation
-      * [ ] Do not wrap base into nullable if it already contains null
+  * [x] `NullableType`
+    * [x] `is_type()`
+    * [x] `is_nullable_type()`
+    * [x] `to_string()`
+    * [x] `base()`
+    * [x] Factory creation
   * [ ] `TypeParameter`
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
 * [ ] `Alias`

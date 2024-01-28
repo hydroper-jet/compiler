@@ -134,4 +134,17 @@ impl<'a> SymbolFactory<'a> {
 
         tt
     }
+
+    pub fn create_nullable_type(&mut self, base: Symbol) -> Symbol {
+        if base.includes_null() {
+            return base.clone();
+        }
+        let nt = self.host.nullable_types.get(&base);
+        if let Some(nt) = nt {
+            return nt.clone();
+        }
+        let nt = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::NullableType(base.clone()))));
+        self.host.nullable_types.insert(base, nt.clone());
+        nt
+    }
 }

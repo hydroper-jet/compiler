@@ -1,5 +1,6 @@
 use crate::ns::*;
 use std::cell::{Cell, RefCell};
+use std::hash::Hash;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
@@ -13,6 +14,13 @@ impl Eq for Symbol {}
 impl PartialEq for Symbol {
     fn eq(&self, other: &Self) -> bool {
         self.0.ptr_eq(&other.0)
+    }
+}
+
+impl Hash for Symbol {
+    /// Performs hashing of the symbol by reference.
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.as_ptr().hash(state)
     }
 }
 
@@ -67,6 +75,10 @@ impl Symbol {
 
     pub fn is_tuple_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TupleType(_)))
+    }
+
+    pub fn is_nullable_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::NullableType(_)))
     }
 
     pub fn name(&self) -> String {
@@ -588,6 +600,31 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn base(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::NullableType(ref base)) => {
+                base.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    /// Indicates whether a type includes the `null` value or not.
+    pub fn includes_null(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::AnyType) => { return true; },
+            SymbolKind::Type(TypeKind::NullableType(_)) => { return true; },
+            _ => {
+                if self.is_type() {
+                    return false;
+                }
+                panic!();
+            },
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -626,6 +663,13 @@ impl ToString for Symbol {
             SymbolKind::Type(TypeKind::TupleType(tt)) => {
                 format!("[{}]", tt.element_types.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", "))
             },
+            SymbolKind::Type(TypeKind::NullableType(base)) => {
+                if base.is_function_type() {
+                    format!("?{}", base.to_string())
+                } else {
+                    format!("{}?", base.to_string())
+                }
+            },
             _ => panic!(),
         }
     }
@@ -644,6 +688,7 @@ pub(crate) enum TypeKind {
     InterfaceType(Rc<InterfaceTypeData>),
     FunctionType(Rc<FunctionTypeData>),
     TupleType(Rc<TupleTypeData>),
+    NullableType(Symbol),
 }
 
 pub(crate) struct ClassTypeData {
@@ -718,7 +763,7 @@ bitflags! {
 /// * `is_unresolved()`
 /// * `unresolved_count()` — Counter counting from zero (0).
 /// * `increment_unresolved_count()`
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub struct UnresolvedSymbol(pub Symbol);
 
 impl Deref for UnresolvedSymbol {
@@ -736,7 +781,8 @@ impl Deref for UnresolvedSymbol {
 /// * `is_type()`
 /// * `is_any_type()`
 /// * `to_string()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `true`.
+#[derive(Clone, Hash)]
 pub struct AnyType(pub Symbol);
 
 impl Deref for AnyType {
@@ -754,7 +800,8 @@ impl Deref for AnyType {
 /// * `is_type()`
 /// * `is_void_type()`
 /// * `to_string()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct VoidType(pub Symbol);
 
 impl Deref for VoidType {
@@ -801,7 +848,8 @@ impl Deref for VoidType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct ClassType(pub Symbol);
 
 impl Deref for ClassType {
@@ -838,7 +886,8 @@ impl Deref for ClassType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct EnumType(pub Symbol);
 
 impl Deref for EnumType {
@@ -870,7 +919,8 @@ impl Deref for EnumType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct InterfaceType(pub Symbol);
 
 impl Deref for InterfaceType {
@@ -890,7 +940,8 @@ impl Deref for InterfaceType {
 /// * `to_string()`
 /// * `parameters()`
 /// * `result_type()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct FunctionType(pub Symbol);
 
 impl Deref for FunctionType {
@@ -915,13 +966,34 @@ pub struct FunctionTypeParameter {
 /// * `is_tuple_type()`
 /// * `to_string()`
 /// * `element_types()`
-#[derive(Clone)]
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
 pub struct TupleType(pub Symbol);
 
 impl Deref for TupleType {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_tuple_type());
+        &self.0
+    }
+}
+
+/// Nullable type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_nullable_type()`
+/// * `to_string()`
+/// * `base()`
+/// * `includes_null()` — Returns `true`.
+#[derive(Clone, Hash)]
+pub struct NullableType(pub Symbol);
+
+impl Deref for NullableType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_nullable_type());
         &self.0
     }
 }
