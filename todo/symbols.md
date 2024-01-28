@@ -44,6 +44,7 @@
     * [x] `name()`
     * [x] Factory creation
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
+    * https://github.com/violetscript/violetc/blob/master/parser/src/semantic/model/typeSystem.cs#L918
 * [ ] `Alias`
   * [ ] Factory creation
   * [ ] JetDoc
