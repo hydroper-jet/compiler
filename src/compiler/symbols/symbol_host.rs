@@ -6,6 +6,7 @@ pub struct SymbolHost {
     pub(crate) any_type: Symbol,
     pub(crate) void_type: Symbol,
     pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
+    pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
 }
 
 impl SymbolHost {
@@ -15,6 +16,7 @@ impl SymbolHost {
             any_type: Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::AnyType))),
             void_type: Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
             function_types: HashMap::new(),
+            tuple_types: HashMap::new(),
         }
     }
 

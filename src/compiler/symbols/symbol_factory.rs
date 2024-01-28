@@ -104,4 +104,34 @@ impl<'a> SymbolFactory<'a> {
 
         ft
     }
+
+    pub fn create_tuple_type(&mut self, element_types: Vec<Symbol>) -> Symbol {
+        let element_count = element_types.len();
+        let mut collection = self.host.tuple_types.get_mut(&element_count);
+        let mut empty_collection = vec![];
+        if collection.is_none() {
+            collection = Some(&mut empty_collection);
+            self.host.tuple_types.insert(element_count, vec![]);
+        }
+        for tt in collection.unwrap() {
+            let mut element_types_1 = element_types.iter();
+            let element_types_2 = tt.element_types();
+            let mut element_types_2 = element_types_2.iter();
+            while let Some(e_1) = element_types_1.next() {
+                let e_2 = element_types_2.next().unwrap();
+                if e_1 != &e_2 {
+                    continue;
+                }
+            }
+            return tt.clone();
+        }
+        let tt = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::TupleType(Rc::new(TupleTypeData {
+            element_types: SharedArray::from(element_types),
+        })))));
+
+        let collection = self.host.tuple_types.get_mut(&element_count);
+        collection.unwrap().push(tt.clone());
+
+        tt
+    }
 }

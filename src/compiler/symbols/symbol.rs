@@ -65,6 +65,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::FunctionType(_)))
     }
 
+    pub fn is_tuple_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TupleType(_)))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -572,6 +576,18 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    /// Element types of a tuple type.
+    pub fn element_types(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::TupleType(data)) => {
+                let TupleTypeData { ref element_types } = data.as_ref();
+                element_types.clone()
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -607,6 +623,9 @@ impl ToString for Symbol {
                 }
                 format!("function({}): {}", p.join(", "), ft.result_type.to_string())
             },
+            SymbolKind::Type(TypeKind::TupleType(tt)) => {
+                format!("[{}]", tt.element_types.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", "))
+            },
             _ => panic!(),
         }
     }
@@ -624,6 +643,7 @@ pub(crate) enum TypeKind {
     EnumType(Rc<EnumTypeData>),
     InterfaceType(Rc<InterfaceTypeData>),
     FunctionType(Rc<FunctionTypeData>),
+    TupleType(Rc<TupleTypeData>),
 }
 
 pub(crate) struct ClassTypeData {
@@ -675,6 +695,10 @@ pub(crate) struct InterfaceTypeData {
 pub(crate) struct FunctionTypeData {
     pub(crate) parameters: SharedArray<Rc<FunctionTypeParameter>>,
     pub(crate) result_type: Symbol,
+}
+
+pub(crate) struct TupleTypeData {
+    pub(crate) element_types: SharedArray<Symbol>,
 }
 
 bitflags! {
@@ -881,4 +905,23 @@ pub struct FunctionTypeParameter {
     pub kind: ParameterKind,
     pub name: String,
     pub static_type: Symbol,
+}
+
+/// Tuple type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_tuple_type()`
+/// * `to_string()`
+/// * `element_types()`
+#[derive(Clone)]
+pub struct TupleType(pub Symbol);
+
+impl Deref for TupleType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_tuple_type());
+        &self.0
+    }
 }

@@ -25,7 +25,12 @@
     * [x] `parameters()`
     * [x] `result_type()`
     * [x] Factory creation
-  * [ ] `TupleType`
+  * [x] `TupleType`
+    * [x] `is_type()`
+    * [x] `is_tuple_type()`
+    * [x] `to_string()`
+    * [x] `element_types()`
+    * [x] Factory creation
   * [ ] `NullableType`
   * [ ] `TypeParameter`
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
