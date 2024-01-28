@@ -21,6 +21,9 @@ pub enum JetDocTag {
     },
     EventType(Rc<Expression>),
     Example(String),
+    Image {
+        path: String,
+    },
     Internal(String),
     Param {
         name: String,

@@ -3685,6 +3685,19 @@ impl<'input> Parser<'input> {
                     tags.push((JetDocTag::Example(text), location));
                 },
 
+                // @image path/to/file
+                "image" => {
+                    let (path, location) = join_jetdoc_content(building_content);
+                    let location = tag_location.combine_with(location);
+
+                    // Content must be non empty
+                    if regex_is_match!(r"^\s*$", &path) {
+                        self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
+                    }
+
+                    tags.push((JetDocTag::Image { path }, location));
+                },
+
                 // @internal text
                 "internal" => {
                     let (text, location) = join_jetdoc_content(building_content);
