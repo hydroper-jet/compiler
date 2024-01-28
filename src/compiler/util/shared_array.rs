@@ -90,6 +90,18 @@ impl<'a, T> Iterator for SharedArrayIterator<'a, T> where T: Clone {
     }
 }
 
+impl<const N: usize, T> From<[T; N]> for SharedArray<T> where T: Clone {
+    fn from(value: [T; N]) -> Self {
+        Self::from_iter(value)
+    }
+}
+
+impl<T> From<Vec<T>> for SharedArray<T> where T: Clone {
+    fn from(value: Vec<T>) -> Self {
+        Self::from_iter(value)
+    }
+}
+
 impl<T> FromIterator<T> for SharedArray<T> where T: Clone {
     fn from_iter<T2: IntoIterator<Item = T>>(iter: T2) -> Self {
         let mut r = Self::new();

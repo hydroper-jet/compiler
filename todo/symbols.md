@@ -24,7 +24,7 @@
     * [x] `to_string()`
     * [x] `parameters()`
     * [x] `result_type()`
-    * [ ] Factory creation
+    * [x] Factory creation
   * [ ] `TupleType`
   * [ ] `NullableType`
   * [ ] `TypeParameter`

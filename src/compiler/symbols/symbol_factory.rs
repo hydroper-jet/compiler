@@ -3,13 +3,12 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 pub struct SymbolFactory<'a> {
-    pub(crate) host: &'a SymbolHost,
-    pub(crate) arena: &'a Arena<SymbolKind>,
+    pub(crate) host: &'a mut SymbolHost,
 }
 
 impl<'a> SymbolFactory<'a> {
     pub fn create_unresolved(&self) -> Symbol {
-        Symbol(self.arena.allocate(SymbolKind::Unresolved(Cell::new(0))))
+        Symbol(self.host.arena.allocate(SymbolKind::Unresolved(Cell::new(0))))
     }
 
     pub fn create_any_type(&self) -> Symbol {
@@ -21,7 +20,7 @@ impl<'a> SymbolFactory<'a> {
     }
 
     pub fn create_class_type(&self, name: String) -> Symbol {
-        Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::ClassType(Rc::new(ClassTypeData {
+        Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::ClassType(Rc::new(ClassTypeData {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
@@ -41,7 +40,7 @@ impl<'a> SymbolFactory<'a> {
     }
 
     pub fn create_enum_type(&self, name: String, is_set_enumeration: bool) -> Symbol {
-        Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::EnumType(Rc::new(EnumTypeData {
+        Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::EnumType(Rc::new(EnumTypeData {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
@@ -59,7 +58,7 @@ impl<'a> SymbolFactory<'a> {
     }
 
     pub fn create_interface_type(&self, name: String) -> Symbol {
-        Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::InterfaceType(Rc::new(InterfaceTypeData {
+        Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::InterfaceType(Rc::new(InterfaceTypeData {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
@@ -70,5 +69,39 @@ impl<'a> SymbolFactory<'a> {
             plain_metadata: SharedArray::new(),
             jetdoc: RefCell::new(None),
         })))))
+    }
+
+    pub fn create_function_type(&mut self, parameters: Vec<Rc<FunctionTypeParameter>>, result_type: Symbol) -> Symbol {
+        let parameter_count = parameters.len();
+        let mut collection = self.host.function_types.get_mut(&parameter_count);
+        let mut empty_collection = vec![];
+        if collection.is_none() {
+            collection = Some(&mut empty_collection);
+            self.host.function_types.insert(parameters.len(), vec![]);
+        }
+        for ft in collection.unwrap() {
+            if result_type != ft.result_type() {
+                continue;
+            }
+            let mut parameters_1 = parameters.iter();
+            let parameters_2 = ft.parameters();
+            let mut parameters_2 = parameters_2.iter();
+            while let Some(param_1) = parameters_1.next() {
+                let param_2 = parameters_2.next().unwrap();
+                if !(param_1.kind == param_2.kind && param_1.name == param_2.name && param_1.static_type == param_2.static_type) {
+                    continue;
+                }
+            }
+            return ft.clone();
+        }
+        let ft = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::FunctionType(Rc::new(FunctionTypeData {
+            parameters: SharedArray::from(parameters),
+            result_type,
+        })))));
+
+        let collection = self.host.function_types.get_mut(&parameter_count);
+        collection.unwrap().push(ft.clone());
+
+        ft
     }
 }

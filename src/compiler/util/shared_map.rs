@@ -67,6 +67,24 @@ impl<'a, K, V> Iterator for SharedMapIterator<'a, K, V> {
     }
 }
 
+impl<const N: usize, K: Eq + Hash, V> From<[(K, V); N]> for SharedMap<K, V> {
+    fn from(value: [(K, V); N]) -> Self {
+        Self::from_iter(value)
+    }
+}
+
+impl<K: Eq + Hash, V> From<Vec<(K, V)>> for SharedMap<K, V> {
+    fn from(value: Vec<(K, V)>) -> Self {
+        Self::from_iter(value)
+    }
+}
+
+impl<K: Eq + Hash, V> From<HashMap<K, V>> for SharedMap<K, V> {
+    fn from(value: HashMap<K, V>) -> Self {
+        Self::from_iter(value)
+    }
+}
+
 impl<K: Eq + Hash, V> FromIterator<(K, V)> for SharedMap<K, V> {
     fn from_iter<T2: IntoIterator<Item = (K, V)>>(iter: T2) -> Self {
         let mut r = Self::new();
