@@ -81,6 +81,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::NullableType(_)))
     }
 
+    pub fn is_type_parameter_type(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TypeParameterType(_)))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -94,6 +98,10 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref name, .. } = data.as_ref();
+                name.clone()
+            },
+            SymbolKind::Type(TypeKind::TypeParameterType(data)) => {
+                let TypeParameterTypeData { ref name, .. } = data.as_ref();
                 name.clone()
             },
             _ => panic!(),
@@ -670,6 +678,7 @@ impl ToString for Symbol {
                     format!("{}?", base.to_string())
                 }
             },
+            SymbolKind::Type(TypeKind::TypeParameterType(_)) => self.name(),
             _ => panic!(),
         }
     }
@@ -689,6 +698,7 @@ pub(crate) enum TypeKind {
     FunctionType(Rc<FunctionTypeData>),
     TupleType(Rc<TupleTypeData>),
     NullableType(Symbol),
+    TypeParameterType(Rc<TypeParameterTypeData>),
 }
 
 pub(crate) struct ClassTypeData {
@@ -744,6 +754,10 @@ pub(crate) struct FunctionTypeData {
 
 pub(crate) struct TupleTypeData {
     pub(crate) element_types: SharedArray<Symbol>,
+}
+
+pub(crate) struct TypeParameterTypeData {
+    pub(crate) name: String,
 }
 
 bitflags! {
@@ -994,6 +1008,26 @@ impl Deref for NullableType {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_nullable_type());
+        &self.0
+    }
+}
+
+/// Type parameter type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_type_parameter_type()`
+/// * `to_string()`
+/// * `name()`
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
+pub struct TypeParameterType(pub Symbol);
+
+impl Deref for TypeParameterType {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_type_parameter_type());
         &self.0
     }
 }

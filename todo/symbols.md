@@ -37,7 +37,12 @@
     * [x] `to_string()`
     * [x] `base()`
     * [x] Factory creation
-  * [ ] `TypeParameter`
+  * [x] `TypeParameterType`
+    * [x] `is_type()`
+    * [x] `is_type_parameter_type()`
+    * [x] `to_string()`
+    * [x] `name()`
+    * [x] Factory creation
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
 * [ ] `Alias`
   * [ ] Factory creation

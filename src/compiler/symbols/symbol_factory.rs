@@ -147,4 +147,10 @@ impl<'a> SymbolFactory<'a> {
         self.host.nullable_types.insert(base, nt.clone());
         nt
     }
+
+    pub fn create_type_parameter_type(&self, name: String) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::TypeParameterType(Rc::new(TypeParameterTypeData {
+            name,
+        })))))
+    }
 }
