@@ -10,11 +10,12 @@ pub struct SymbolHost {
 }
 
 impl SymbolHost {
-    pub fn new(&self) -> Self {
+    pub fn new() -> Self {
+        let arena = Arena::new();
         Self {
             arena: Arena::new(),
-            any_type: Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::AnyType))),
-            void_type: Symbol(self.arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
+            any_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType))),
+            void_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
             function_types: HashMap::new(),
             tuple_types: HashMap::new(),
         }
