@@ -55,14 +55,18 @@
 * [ ] `VariableProperty`
   * [ ] JetDoc
 * [ ] `VariablePropertyAfterIndirectTypeSubstitution`
+  * Static type, if unresolved, mutates on next retrieval.
 * [ ] `VirtualProperty`
   * [ ] JetDoc
     * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
 * [ ] `VirtualPropertyAfterIndirectTypeSubstitution`
+  * Static type, if unresolved, mutates on next retrieval.
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
 * [ ] `FunctionAfterIndirectTypeSubstitution`
+  * Static type, if unresolved, mutates on next retrieval.
 * [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
+  * Static type, if unresolved, mutates on next retrieval.
 * [ ] `Scope`
 * [ ] `Value`
   * [ ] Constants
