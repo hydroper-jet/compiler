@@ -26,23 +26,7 @@ impl Hash for Symbol {
 
 impl Symbol {
     pub fn is_unresolved(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Unresolved(_))
-    }
-
-    pub fn unresolved_count(&self) -> u32 {
-        let symbol = self.0.upgrade().unwrap();
-        let SymbolKind::Unresolved(ref symbol) = symbol.as_ref() else {
-            panic!();
-        };
-        symbol.get()
-    }
-
-    pub fn increment_unresolved_count(&self) {
-        let symbol = self.0.upgrade().unwrap();
-        let SymbolKind::Unresolved(ref symbol) = symbol.as_ref() else {
-            panic!();
-        };
-        symbol.set(symbol.get() + 1);
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Unresolved)
     }
 
     pub fn is_type(&self) -> bool {
@@ -242,12 +226,12 @@ impl Symbol {
         }
     }
 
-    pub fn super_interfaces(&self) -> SharedArray<Symbol> {
+    pub fn extends_interfaces(&self) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref super_interfaces, .. } = data.as_ref();
-                super_interfaces.clone()
+                let InterfaceTypeData { ref extends_interfaces, .. } = data.as_ref();
+                extends_interfaces.clone()
             },
             _ => panic!(),
         }
@@ -291,31 +275,31 @@ impl Symbol {
         }
     }
 
-    pub fn super_class(&self) -> Option<Symbol> {
+    pub fn extends_class(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref super_class, .. } = data.as_ref();
-                super_class.borrow().clone()
+                let ClassTypeData { ref extends_class, .. } = data.as_ref();
+                extends_class.borrow().clone()
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref super_class, .. } = data.as_ref();
-                super_class.borrow().clone()
+                let EnumTypeData { ref extends_class, .. } = data.as_ref();
+                extends_class.borrow().clone()
             },
             _ => panic!(),
         }
     }
 
-    pub fn set_super_class(&self, value: Option<Symbol>) {
+    pub fn set_extends_class(&self, value: Option<Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref super_class, .. } = data.as_ref();
-                super_class.replace(value);
+                let ClassTypeData { ref extends_class, .. } = data.as_ref();
+                extends_class.replace(value);
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref super_class, .. } = data.as_ref();
-                super_class.replace(value);
+                let EnumTypeData { ref extends_class, .. } = data.as_ref();
+                extends_class.replace(value);
             },
             _ => panic!(),
         }
@@ -725,7 +709,7 @@ impl ToString for Symbol {
 }
 
 pub(crate) enum SymbolKind {
-    Unresolved(Cell<u32>),
+    Unresolved,
     Type(TypeKind),
 }
 
@@ -746,7 +730,7 @@ pub(crate) struct ClassTypeData {
     pub name: String,
     pub visibility: Cell<Visibility>,
     pub parent_definition: RefCell<Option<Symbol>>,
-    pub super_class: RefCell<Option<Symbol>>,
+    pub extends_class: RefCell<Option<Symbol>>,
     pub implements: SharedArray<Symbol>,
     pub flags: Cell<ClassTypeFlags>,
     pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
@@ -764,7 +748,7 @@ pub(crate) struct EnumTypeData {
     pub name: String,
     pub visibility: Cell<Visibility>,
     pub parent_definition: RefCell<Option<Symbol>>,
-    pub super_class: RefCell<Option<Symbol>>,
+    pub extends_class: RefCell<Option<Symbol>>,
     pub representation_type: RefCell<Option<Symbol>>,
     pub is_set_enumeration: bool,
     pub static_properties: SharedMap<String, Symbol>,
@@ -780,7 +764,7 @@ pub(crate) struct InterfaceTypeData {
     pub name: String,
     pub visibility: Cell<Visibility>,
     pub parent_definition: RefCell<Option<Symbol>>,
-    pub super_interfaces: SharedArray<Symbol>,
+    pub extends_interfaces: SharedArray<Symbol>,
     pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
     pub prototype: SharedMap<String, Symbol>,
     pub limited_implementors: SharedArray<Symbol>,
@@ -826,12 +810,10 @@ bitflags! {
 /// # Supported methods
 /// 
 /// * `is_unresolved()`
-/// * `unresolved_count()` — Counter counting from zero (0).
-/// * `increment_unresolved_count()`
 #[derive(Clone, Hash)]
-pub struct UnresolvedSymbol(pub Symbol);
+pub struct Unresolved(pub Symbol);
 
-impl Deref for UnresolvedSymbol {
+impl Deref for Unresolved {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_unresolved());
@@ -897,8 +879,8 @@ impl Deref for VoidType {
 /// * `name()` — Unqualified name.
 /// * `parent_definition()`
 /// * `set_parent_definition()`
-/// * `super_class()`
-/// * `set_super_class()`
+/// * `extends_class()`
+/// * `set_extends_class()`
 /// * `type_parameters()`
 /// * `set_type_parameters()`
 /// * `static_properties()`
@@ -939,8 +921,8 @@ impl Deref for ClassType {
 /// * `name()` — Unqualified name.
 /// * `parent_definition()`
 /// * `set_parent_definition()`
-/// * `super_class()`
-/// * `set_super_class()`
+/// * `extends_class()`
+/// * `set_extends_class()`
 /// * `static_properties()``
 /// * `prototype()`
 /// * `enumeration_members()`
@@ -974,7 +956,7 @@ impl Deref for EnumType {
 /// * `name()` — Unqualified name.
 /// * `parent_definition()`
 /// * `set_parent_definition()`
-/// * `super_interfaces()` — Extends list of the interface.
+/// * `extends_interfaces()` — Extends list of the interface.
 /// * `type_parameters()`
 /// * `set_type_parameters()`
 /// * `prototype()`
@@ -1100,10 +1082,10 @@ impl Deref for TypeParameterType {
 /// * `is_static()`
 /// * `allow_literal()`
 /// * `implements()` — Implements list of a class.
-/// * `super_interfaces()` — Extends list of an interface.
+/// * `extends_interfaces()` — Extends list of an interface.
 /// * `name()` — Unqualified name.
 /// * `parent_definition()`
-/// * `super_class()`
+/// * `extends_class()`
 /// * `type_parameters()`
 /// * `static_properties()`
 /// * `constructor_function()`

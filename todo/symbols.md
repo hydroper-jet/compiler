@@ -59,10 +59,10 @@
     * [x] `is_static()`
     * [x] `allow_literal()`
     * [ ] `implements()` — Implements list of a class.
-    * [ ] `super_interfaces()` — Extends list of an interface.
+    * [ ] `extends_interfaces()` — Extends list of an interface.
     * [ ] `name()` — Unqualified name.
     * [ ] `parent_definition()`
-    * [ ] `super_class()`
+    * [ ] `extends_class()`
     * [ ] `type_parameters()`
     * [ ] `static_properties()`
     * [ ] `constructor_function()`

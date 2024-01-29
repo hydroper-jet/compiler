@@ -8,7 +8,7 @@ pub struct SymbolFactory<'a> {
 
 impl<'a> SymbolFactory<'a> {
     pub fn create_unresolved(&self) -> Symbol {
-        Symbol(self.host.arena.allocate(SymbolKind::Unresolved(Cell::new(0))))
+        self.host.unresolved()
     }
 
     pub fn create_any_type(&self) -> Symbol {
@@ -24,7 +24,7 @@ impl<'a> SymbolFactory<'a> {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
-            super_class: RefCell::new(None),
+            extends_class: RefCell::new(None),
             implements: SharedArray::new(),
             flags: Cell::new(ClassTypeFlags::empty()),
             type_parameters: RefCell::new(None),
@@ -44,7 +44,7 @@ impl<'a> SymbolFactory<'a> {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
-            super_class: RefCell::new(None),
+            extends_class: RefCell::new(None),
             representation_type: RefCell::new(None),
             is_set_enumeration,
             static_properties: SharedMap::new(),
@@ -62,7 +62,7 @@ impl<'a> SymbolFactory<'a> {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
-            super_interfaces: SharedArray::new(),
+            extends_interfaces: SharedArray::new(),
             type_parameters: RefCell::new(None),
             prototype: SharedMap::new(),
             limited_implementors: SharedArray::new(),
