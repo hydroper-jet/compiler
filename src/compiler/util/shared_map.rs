@@ -9,6 +9,10 @@ use std::rc::Rc;
 /// 
 /// The `Clone` trait implements cloning of the map by reference.
 /// Use the `clone_content()` method to clone the map by content.
+/// 
+/// # Equality
+/// 
+/// The `PartialEq` trait performs reference comparison of two maps.
 #[derive(Clone)]
 pub struct SharedMap<K, V>(Rc<HashMap<K, V>>);
 

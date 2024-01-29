@@ -399,9 +399,9 @@ impl Symbol {
         }
     }
 
-    pub fn static_properties(&self) -> SharedMap<String, Symbol> {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
+    pub fn static_properties(&self, host: &mut SymbolHost) -> SharedMap<String, Symbol> {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref static_properties, .. } = data.as_ref();
                 static_properties.clone()
@@ -410,11 +410,23 @@ impl Symbol {
                 let EnumTypeData { ref static_properties, .. } = data.as_ref();
                 static_properties.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                let TypeAfterExplicitTypeSubstitutionData { ref static_properties, .. } = data.as_ref();
+                if let Some(r) = static_properties.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r: SharedMap<String, Symbol> = data.origin.static_properties(host).iter().map(|(name, p)| {
+                    let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
+                    (*name, p)
+                }).collect();
+                static_properties.replace(Some(r.clone()));
+                r
+            },
             _ => panic!(),
         }
     }
 
-    pub fn prototype(&self) -> SharedMap<String, Symbol> {
+    pub fn prototype(&self, host: &mut SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -429,11 +441,23 @@ impl Symbol {
                 let InterfaceTypeData { ref prototype, .. } = data.as_ref();
                 prototype.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                let TypeAfterExplicitTypeSubstitutionData { ref prototype, .. } = data.as_ref();
+                if let Some(r) = prototype.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r: SharedMap<String, Symbol> = data.origin.prototype(host).iter().map(|(name, p)| {
+                    let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
+                    (*name, p)
+                }).collect();
+                prototype.replace(Some(r.clone()));
+                r
+            },
             _ => panic!(),
         }
     }
 
-    pub fn proxies(&self) -> SharedMap<ProxyKind, Symbol> {
+    pub fn proxies(&self, host: &mut SymbolHost) -> SharedMap<ProxyKind, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -444,11 +468,23 @@ impl Symbol {
                 let EnumTypeData { ref proxies, .. } = data.as_ref();
                 proxies.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                let TypeAfterExplicitTypeSubstitutionData { ref proxies, .. } = data.as_ref();
+                if let Some(r) = proxies.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r: SharedMap<ProxyKind, Symbol> = data.origin.proxies(host).iter().map(|(kind, p)| {
+                    let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
+                    (*kind, p)
+                }).collect();
+                proxies.replace(Some(r.clone()));
+                r
+            },
             _ => panic!(),
         }
     }
 
-    pub fn list_of_to_proxies(&self) -> SharedMap<Symbol, Symbol> {
+    pub fn list_of_to_proxies(&self, host: &mut SymbolHost) -> SharedMap<Symbol, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -458,6 +494,20 @@ impl Symbol {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref list_of_to_proxies, .. } = data.as_ref();
                 list_of_to_proxies.clone()
+            },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                let TypeAfterExplicitTypeSubstitutionData { ref list_of_to_proxies, .. } = data.as_ref();
+                if let Some(r) = list_of_to_proxies.borrow().as_ref() {
+                    return r.clone();
+                }
+                let type_parameters = data.origin.type_parameters().unwrap();
+                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).iter().map(|(result_type, proxy_function)| {
+                    let result_type = TypeSubstitution(host).execute(&result_type, &type_parameters, &data.substitute_types);
+                    let proxy_function = TypeSubstitution(host).execute(&proxy_function, &type_parameters, &data.substitute_types);
+                    (result_type, proxy_function)
+                }).collect();
+                list_of_to_proxies.replace(Some(r.clone()));
+                r
             },
             _ => panic!(),
         }

@@ -63,11 +63,11 @@
     * [x] `name()` — Unqualified name.
     * [x] `parent_definition()`
     * [x] `extends_class()`
-    * [ ] `static_properties()`
+    * [x] `static_properties()`
+    * [x] `prototype()`
+    * [x] `proxies()`
+    * [x] `list_of_to_proxies()`
     * [ ] `constructor_function()`
-    * [ ] `prototype()`
-    * [ ] `proxies()`
-    * [ ] `list_of_to_proxies()`
     * [ ] `plain_metadata()`
     * [ ] `visibility()`
     * [ ] `jetdoc()`
@@ -91,9 +91,7 @@
   * Static type, if unresolved, mutates on next retrieval.
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
-* [ ] `FunctionAfterIndirectTypeSubstitution`
-  * Static type, if unresolved, mutates on next retrieval.
-* [ ] `FunctionAfterExplicitTypeSubstitution` (`f.<...>`)
+* [ ] `FunctionAfterExplicitOrIndirectTypeSubstitution`
   * Static type, if unresolved, mutates on next retrieval.
 * [ ] `Scope`
 * [ ] `Value`

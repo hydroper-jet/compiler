@@ -6,6 +6,10 @@ use std::rc::Rc;
 /// 
 /// The `Clone` trait implements cloning of the array by reference.
 /// Use the `clone_content()` method to clone the array by content.
+/// 
+/// # Equality
+/// 
+/// The `PartialEq` trait performs reference comparison of two arrays.
 #[derive(Clone)]
 pub struct SharedArray<T>(Rc<Vec<T>>);
 

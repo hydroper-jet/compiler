@@ -64,7 +64,7 @@ impl FunctionName {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ProxyKind {
     Positive,
     Negate,
