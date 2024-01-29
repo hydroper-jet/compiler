@@ -58,12 +58,11 @@
     * [x] `is_final()`
     * [x] `is_static()`
     * [x] `allow_literal()`
-    * [ ] `implements()` — Implements list of a class.
-    * [ ] `extends_interfaces()` — Extends list of an interface.
-    * [ ] `name()` — Unqualified name.
-    * [ ] `parent_definition()`
-    * [ ] `extends_class()`
-    * [ ] `type_parameters()`
+    * [x] `implements()` — Implements list of a class.
+    * [x] `extends_interfaces()` — Extends list of an interface.
+    * [x] `name()` — Unqualified name.
+    * [x] `parent_definition()`
+    * [x] `extends_class()`
     * [ ] `static_properties()`
     * [ ] `constructor_function()`
     * [ ] `prototype()`
@@ -73,6 +72,7 @@
     * [ ] `visibility()`
     * [ ] `jetdoc()`
     * [ ] `includes_null()` — Returns `false`.
+    * [ ] Factory creation
 * [ ] `Alias`
   * [ ] Factory creation
   * [ ] JetDoc

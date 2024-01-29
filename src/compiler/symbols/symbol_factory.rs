@@ -12,10 +12,12 @@ impl<'a> SymbolFactory<'a> {
         self.host.unresolved()
     }
 
+    /// Returns the unique `AnyType` symbol.
     pub fn create_any_type(&self) -> Symbol {
         self.host.any_type()
     }
 
+    /// Returns the unique `VoidType` symbol.
     pub fn create_void_type(&self) -> Symbol {
         self.host.void_type()
     }
@@ -72,6 +74,7 @@ impl<'a> SymbolFactory<'a> {
         })))))
     }
 
+    /// Creates an interned function type.
     pub fn create_function_type(&mut self, parameters: Vec<Rc<FunctionTypeParameter>>, result_type: Symbol) -> Symbol {
         let parameter_count = parameters.len();
         let mut collection = self.host.function_types.get_mut(&parameter_count);
@@ -106,6 +109,7 @@ impl<'a> SymbolFactory<'a> {
         ft
     }
 
+    /// Creates an interned tuple type.
     pub fn create_tuple_type(&mut self, element_types: Vec<Symbol>) -> Symbol {
         let element_count = element_types.len();
         let mut collection = self.host.tuple_types.get_mut(&element_count);
@@ -136,6 +140,7 @@ impl<'a> SymbolFactory<'a> {
         tt
     }
 
+    /// Creates an interned nullable type.
     pub fn create_nullable_type(&mut self, base: Symbol) -> Symbol {
         if base.includes_null() {
             return base.clone();

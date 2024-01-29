@@ -100,6 +100,7 @@ impl Symbol {
                 let TypeParameterTypeData { ref name, .. } = data.as_ref();
                 name.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.name(),
             _ => panic!(),
         }
     }
@@ -215,23 +216,39 @@ impl Symbol {
         }
     }
 
-    pub fn implements(&self) -> SharedArray<Symbol> {
+    pub fn implements(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref implements, .. } = data.as_ref();
                 implements.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                if let Some(r) = data.implements.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r: SharedArray<Symbol> = data.origin.implements(host).iter().map(|t| TypeSubstitution(host).execute(&t, &data.origin.type_parameters().unwrap(), &data.substitute_types)).collect();
+                data.implements.replace(Some(r.clone()));
+                r
+            },
             _ => panic!(),
         }
     }
 
-    pub fn extends_interfaces(&self) -> SharedArray<Symbol> {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
+    pub fn extends_interfaces(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
+        let mut symbol = self.0.upgrade().unwrap();
+        match Rc::get_mut(&mut symbol).unwrap() {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref extends_interfaces, .. } = data.as_ref();
                 extends_interfaces.clone()
+            },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                if let Some(r) = data.extends_interfaces.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r: SharedArray<Symbol> = data.origin.extends_interfaces(host).iter().map(|t| TypeSubstitution(host).execute(&t, &data.origin.type_parameters().unwrap(), &data.substitute_types)).collect();
+                data.extends_interfaces.replace(Some(r.clone()));
+                r
             },
             _ => panic!(),
         }
@@ -252,6 +269,7 @@ impl Symbol {
                 let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.parent_definition(),
             _ => panic!(),
         }
     }
@@ -275,7 +293,9 @@ impl Symbol {
         }
     }
 
-    pub fn extends_class(&self) -> Option<Symbol> {
+    /// The class which a class extends. This field may possibly be
+    /// `Unresolved`.
+    pub fn extends_class(&self, host: &mut SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -285,6 +305,22 @@ impl Symbol {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref extends_class, .. } = data.as_ref();
                 extends_class.borrow().clone()
+            },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                if let Some(r) = data.extends_class.borrow().as_ref() {
+                    return Some(r.clone());
+                }
+                let r = data.origin.extends_class(host);
+                if r.is_none() {
+                    return None;
+                }
+                let r = r.unwrap();
+                if r.is_unresolved() {
+                    return Some(r.clone());
+                }
+                let r = TypeSubstitution(host).execute(&r, &data.origin.type_parameters().unwrap(), &data.substitute_types);
+                data.extends_class.replace(Some(r.clone()));
+                Some(r)
             },
             _ => panic!(),
         }
@@ -788,6 +824,9 @@ pub(crate) struct TypeParameterTypeData {
 pub(crate) struct TypeAfterExplicitTypeSubstitutionData {
     pub origin: Symbol,
     pub substitute_types: SharedArray<Symbol>,
+    pub extends_class: RefCell<Option<Symbol>>,
+    pub extends_interfaces: RefCell<Option<SharedArray<Symbol>>>,
+    pub implements: RefCell<Option<SharedArray<Symbol>>>,
     pub static_properties: RefCell<Option<SharedMap<String, Symbol>>>,
     pub constructor_function: RefCell<Option<Symbol>>,
     pub prototype: RefCell<Option<SharedMap<String, Symbol>>>,
@@ -1086,7 +1125,6 @@ impl Deref for TypeParameterType {
 /// * `name()` — Unqualified name.
 /// * `parent_definition()`
 /// * `extends_class()`
-/// * `type_parameters()`
 /// * `static_properties()`
 /// * `constructor_function()`
 /// * `prototype()`
