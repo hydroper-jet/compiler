@@ -45,6 +45,7 @@
     * [x] Factory creation
   * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
     * https://github.com/violetscript/violetc/blob/master/parser/src/semantic/model/typeSystem.cs#L918
+    * Constructor, if unresolved, mutates on next retrieval.
 * [ ] `Alias`
   * [ ] Factory creation
   * [ ] JetDoc
