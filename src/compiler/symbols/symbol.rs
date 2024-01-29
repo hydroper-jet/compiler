@@ -58,7 +58,11 @@ impl Symbol {
     }
 
     pub fn is_class_type(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::ClassType(_)))
+        match self.0.upgrade().unwrap().as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(_)) => true,
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(ref t)) => t.origin.is_class_type(),
+            _ => false,
+        }
     }
 
     pub fn is_enum_type(&self) -> bool {
@@ -66,7 +70,11 @@ impl Symbol {
     }
 
     pub fn is_interface_type(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::InterfaceType(_)))
+        match self.0.upgrade().unwrap().as_ref() {
+            SymbolKind::Type(TypeKind::InterfaceType(_)) => true,
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(ref t)) => t.origin.is_interface_type(),
+            _ => false,
+        }
     }
 
     pub fn is_function_type(&self) -> bool {
@@ -83,6 +91,10 @@ impl Symbol {
 
     pub fn is_type_parameter_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TypeParameterType(_)))
+    }
+
+    pub fn is_type_after_explicit_type_substitution(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(_)))
     }
 
     pub fn name(&self) -> String {
@@ -109,6 +121,9 @@ impl Symbol {
     }
 
     pub fn fully_qualified_name(&self) -> String {
+        if let SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(ref t)) = self.0.upgrade().unwrap().as_ref() {
+            return t.origin.fully_qualified_name();
+        }
         let p: Option<Symbol> = self.parent_definition();
         (if let Some(p) = p { p.fully_qualified_name() + "." } else { "".to_owned() }) + &self.name()
     }
@@ -131,6 +146,7 @@ impl Symbol {
                 let ClassTypeData { ref flags, .. } = data.as_ref();
                 flags.get().contains(ClassTypeFlags::IS_ABSTRACT)
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_abstract(),
             _ => panic!(),
         }
     }
@@ -153,6 +169,7 @@ impl Symbol {
                 let ClassTypeData { ref flags, .. } = data.as_ref();
                 flags.get().contains(ClassTypeFlags::IS_FINAL)
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_final(),
             _ => panic!(),
         }
     }
@@ -175,6 +192,7 @@ impl Symbol {
                 let ClassTypeData { ref flags, .. } = data.as_ref();
                 flags.get().contains(ClassTypeFlags::IS_STATIC)
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_static(),
             _ => panic!(),
         }
     }
@@ -197,6 +215,7 @@ impl Symbol {
                 let ClassTypeData { ref flags, .. } = data.as_ref();
                 flags.get().contains(ClassTypeFlags::ALLOW_LITERAL)
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.allow_literal(),
             _ => panic!(),
         }
     }
@@ -633,6 +652,22 @@ impl Symbol {
             },
         }
     }
+
+    pub fn origin(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn substitute_types(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.substitute_types.clone(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -679,6 +714,11 @@ impl ToString for Symbol {
                 }
             },
             SymbolKind::Type(TypeKind::TypeParameterType(_)) => self.name(),
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(t)) => {
+                let name_1 = self.fully_qualified_name();
+                let p = ".<".to_owned() + &t.substitute_types.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ") + ">";
+                name_1 + &p
+            },
             _ => panic!(),
         }
     }
@@ -699,65 +739,76 @@ pub(crate) enum TypeKind {
     TupleType(Rc<TupleTypeData>),
     NullableType(Symbol),
     TypeParameterType(Rc<TypeParameterTypeData>),
+    TypeAfterExplicitTypeSubstitution(Rc<TypeAfterExplicitTypeSubstitutionData>),
 }
 
 pub(crate) struct ClassTypeData {
-    pub(crate) name: String,
-    pub(crate) visibility: Cell<Visibility>,
-    pub(crate) parent_definition: RefCell<Option<Symbol>>,
-    pub(crate) super_class: RefCell<Option<Symbol>>,
-    pub(crate) implements: SharedArray<Symbol>,
-    pub(crate) flags: Cell<ClassTypeFlags>,
-    pub(crate) type_parameters: RefCell<Option<SharedArray<Symbol>>>,
-    pub(crate) static_properties: SharedMap<String, Symbol>,
-    pub(crate) constructor_function: RefCell<Option<Symbol>>,
-    pub(crate) prototype: SharedMap<String, Symbol>,
-    pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
-    pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
-    pub(crate) limited_subclasses: SharedArray<Symbol>,
-    pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
-    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+    pub name: String,
+    pub visibility: Cell<Visibility>,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub super_class: RefCell<Option<Symbol>>,
+    pub implements: SharedArray<Symbol>,
+    pub flags: Cell<ClassTypeFlags>,
+    pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
+    pub static_properties: SharedMap<String, Symbol>,
+    pub constructor_function: RefCell<Option<Symbol>>,
+    pub prototype: SharedMap<String, Symbol>,
+    pub proxies: SharedMap<ProxyKind, Symbol>,
+    pub list_of_to_proxies: SharedMap<Symbol, Symbol>,
+    pub limited_subclasses: SharedArray<Symbol>,
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
 pub(crate) struct EnumTypeData {
-    pub(crate) name: String,
-    pub(crate) visibility: Cell<Visibility>,
-    pub(crate) parent_definition: RefCell<Option<Symbol>>,
-    pub(crate) super_class: RefCell<Option<Symbol>>,
-    pub(crate) representation_type: RefCell<Option<Symbol>>,
-    pub(crate) is_set_enumeration: bool,
-    pub(crate) static_properties: SharedMap<String, Symbol>,
-    pub(crate) prototype: SharedMap<String, Symbol>,
-    pub(crate) proxies: SharedMap<ProxyKind, Symbol>,
-    pub(crate) list_of_to_proxies: SharedMap<Symbol, Symbol>,
-    pub(crate) enumeration_members: SharedMap<String, AbstractRangeNumber>,
-    pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
-    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+    pub name: String,
+    pub visibility: Cell<Visibility>,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub super_class: RefCell<Option<Symbol>>,
+    pub representation_type: RefCell<Option<Symbol>>,
+    pub is_set_enumeration: bool,
+    pub static_properties: SharedMap<String, Symbol>,
+    pub prototype: SharedMap<String, Symbol>,
+    pub proxies: SharedMap<ProxyKind, Symbol>,
+    pub list_of_to_proxies: SharedMap<Symbol, Symbol>,
+    pub enumeration_members: SharedMap<String, AbstractRangeNumber>,
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
 pub(crate) struct InterfaceTypeData {
-    pub(crate) name: String,
-    pub(crate) visibility: Cell<Visibility>,
-    pub(crate) parent_definition: RefCell<Option<Symbol>>,
-    pub(crate) super_interfaces: SharedArray<Symbol>,
-    pub(crate) type_parameters: RefCell<Option<SharedArray<Symbol>>>,
-    pub(crate) prototype: SharedMap<String, Symbol>,
-    pub(crate) limited_implementors: SharedArray<Symbol>,
-    pub(crate) plain_metadata: SharedArray<Rc<PlainMetadata>>,
-    pub(crate) jetdoc: RefCell<Option<Rc<JetDoc>>>,
+    pub name: String,
+    pub visibility: Cell<Visibility>,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub super_interfaces: SharedArray<Symbol>,
+    pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
+    pub prototype: SharedMap<String, Symbol>,
+    pub limited_implementors: SharedArray<Symbol>,
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
 pub(crate) struct FunctionTypeData {
-    pub(crate) parameters: SharedArray<Rc<FunctionTypeParameter>>,
-    pub(crate) result_type: Symbol,
+    pub parameters: SharedArray<Rc<FunctionTypeParameter>>,
+    pub result_type: Symbol,
 }
 
 pub(crate) struct TupleTypeData {
-    pub(crate) element_types: SharedArray<Symbol>,
+    pub element_types: SharedArray<Symbol>,
 }
 
 pub(crate) struct TypeParameterTypeData {
-    pub(crate) name: String,
+    pub name: String,
+}
+
+pub(crate) struct TypeAfterExplicitTypeSubstitutionData {
+    pub origin: Symbol,
+    pub substitute_types: SharedArray<Symbol>,
+    pub static_properties: RefCell<Option<SharedMap<String, Symbol>>>,
+    pub constructor_function: RefCell<Option<Symbol>>,
+    pub prototype: RefCell<Option<SharedMap<String, Symbol>>>,
+    pub proxies: RefCell<Option<SharedMap<ProxyKind, Symbol>>>,
+    pub list_of_to_proxies: RefCell<Option<SharedMap<Symbol, Symbol>>>,
 }
 
 bitflags! {
@@ -1028,6 +1079,48 @@ impl Deref for TypeParameterType {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_type_parameter_type());
+        &self.0
+    }
+}
+
+/// Symbol for a type after an explicit type substitution.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `is_type_after_explicit_type_substitution()`
+/// * `is_class_type()`
+/// * `is_interface_type()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `origin()`
+/// * `substitute_types()`
+/// * `is_abstract()`
+/// * `is_final()`
+/// * `is_static()`
+/// * `allow_literal()`
+/// * `implements()` — Implements list of a class.
+/// * `super_interfaces()` — Extends list of an interface.
+/// * `name()` — Unqualified name.
+/// * `parent_definition()`
+/// * `super_class()`
+/// * `type_parameters()`
+/// * `static_properties()`
+/// * `constructor_function()`
+/// * `prototype()`
+/// * `proxies()`
+/// * `list_of_to_proxies()`
+/// * `plain_metadata()`
+/// * `visibility()`
+/// * `jetdoc()`
+/// * `includes_null()` — Returns `false`.
+#[derive(Clone, Hash)]
+pub struct TypeAfterExplicitTypeSubstitution(pub Symbol);
+
+impl Deref for TypeAfterExplicitTypeSubstitution {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_type_after_explicit_type_substitution());
         &self.0
     }
 }
