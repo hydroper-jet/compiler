@@ -29,6 +29,7 @@ impl SymbolHost {
         SymbolFactory { host: self }
     }
 
+    /// Returns the unique `Unresolved` symbol.
     pub fn unresolved(&self) -> Symbol {
         (self.unresolved).clone()
     }

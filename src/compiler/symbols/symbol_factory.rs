@@ -7,6 +7,7 @@ pub struct SymbolFactory<'a> {
 }
 
 impl<'a> SymbolFactory<'a> {
+    /// Returns the unique `Unresolved` symbol.
     pub fn create_unresolved(&self) -> Symbol {
         self.host.unresolved()
     }

@@ -810,7 +810,7 @@ bitflags! {
 /// # Supported methods
 /// 
 /// * `is_unresolved()`
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct Unresolved(pub Symbol);
 
 impl Deref for Unresolved {
@@ -829,7 +829,7 @@ impl Deref for Unresolved {
 /// * `is_any_type()`
 /// * `to_string()`
 /// * `includes_null()` — Returns `true`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct AnyType(pub Symbol);
 
 impl Deref for AnyType {
@@ -848,7 +848,7 @@ impl Deref for AnyType {
 /// * `is_void_type()`
 /// * `to_string()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct VoidType(pub Symbol);
 
 impl Deref for VoidType {
@@ -896,7 +896,7 @@ impl Deref for VoidType {
 /// * `jetdoc()`
 /// * `set_jetdoc()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ClassType(pub Symbol);
 
 impl Deref for ClassType {
@@ -934,7 +934,7 @@ impl Deref for ClassType {
 /// * `jetdoc()`
 /// * `set_jetdoc()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct EnumType(pub Symbol);
 
 impl Deref for EnumType {
@@ -967,7 +967,7 @@ impl Deref for EnumType {
 /// * `jetdoc()`
 /// * `set_jetdoc()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct InterfaceType(pub Symbol);
 
 impl Deref for InterfaceType {
@@ -988,7 +988,7 @@ impl Deref for InterfaceType {
 /// * `parameters()`
 /// * `result_type()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionType(pub Symbol);
 
 impl Deref for FunctionType {
@@ -1014,7 +1014,7 @@ pub struct FunctionTypeParameter {
 /// * `to_string()`
 /// * `element_types()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TupleType(pub Symbol);
 
 impl Deref for TupleType {
@@ -1034,7 +1034,7 @@ impl Deref for TupleType {
 /// * `to_string()`
 /// * `base()`
 /// * `includes_null()` — Returns `true`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct NullableType(pub Symbol);
 
 impl Deref for NullableType {
@@ -1054,7 +1054,7 @@ impl Deref for NullableType {
 /// * `to_string()`
 /// * `name()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeParameterType(pub Symbol);
 
 impl Deref for TypeParameterType {
@@ -1096,7 +1096,7 @@ impl Deref for TypeParameterType {
 /// * `visibility()`
 /// * `jetdoc()`
 /// * `includes_null()` — Returns `false`.
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeAfterExplicitTypeSubstitution(pub Symbol);
 
 impl Deref for TypeAfterExplicitTypeSubstitution {
