@@ -33,6 +33,7 @@
 * [x] `Package`
   * [x] Factory creation
 * [ ] `PackageSet`
+  * [ ] JetDoc
   * [ ] Factory creation
 * [ ] `VariableProperty`
   * [ ] JetDoc
