@@ -9,6 +9,7 @@ pub struct SymbolHost {
     pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) nullable_types: HashMap<Symbol, Symbol>,
+    pub(crate) types_after_explicit_type_substitution: HashMap<Symbol, Vec<Symbol>>,
 }
 
 impl SymbolHost {
@@ -22,6 +23,7 @@ impl SymbolHost {
             function_types: HashMap::new(),
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
+            types_after_explicit_type_substitution: HashMap::new(),
         }
     }
 

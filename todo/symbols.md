@@ -43,36 +43,8 @@
     * [x] `to_string()`
     * [x] `name()`
     * [x] Factory creation
-  * [ ] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
-    * https://github.com/violetscript/violetc/blob/master/parser/src/semantic/model/typeSystem.cs#L918
-    * Constructor, if unresolved, mutates on next retrieval.
-    * [x] `is_type()`
-    * [x] `is_type_after_explicit_type_substitution()`
-    * [x] `is_class_type()`
-    * [x] `is_interface_type()`
-    * [x] `fully_qualified_name()`
-    * [x] `to_string()`
-    * [x] `origin()`
-    * [x] `substitute_types()`
-    * [x] `is_abstract()`
-    * [x] `is_final()`
-    * [x] `is_static()`
-    * [x] `allow_literal()`
-    * [x] `implements()` — Implements list of a class.
-    * [x] `extends_interfaces()` — Extends list of an interface.
-    * [x] `name()` — Unqualified name.
-    * [x] `parent_definition()`
-    * [x] `extends_class()`
-    * [x] `static_properties()`
-    * [x] `prototype()`
-    * [x] `proxies()`
-    * [x] `list_of_to_proxies()`
-    * [ ] `constructor_function()`
-    * [ ] `plain_metadata()`
-    * [ ] `visibility()`
-    * [ ] `jetdoc()`
-    * [ ] `includes_null()` — Returns `false`.
-    * [ ] Factory creation
+  * [x] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
+    * [x] Factory creation
 * [ ] `Alias`
   * [ ] Factory creation
   * [ ] JetDoc

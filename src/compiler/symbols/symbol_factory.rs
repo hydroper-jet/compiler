@@ -83,9 +83,9 @@ impl<'a> SymbolFactory<'a> {
             collection = Some(&mut empty_collection);
             self.host.function_types.insert(parameters.len(), vec![]);
         }
-        for ft in collection.unwrap() {
+        'ft: for ft in collection.unwrap() {
             if result_type != ft.result_type() {
-                continue;
+                continue 'ft;
             }
             let mut parameters_1 = parameters.iter();
             let parameters_2 = ft.parameters();
@@ -93,7 +93,7 @@ impl<'a> SymbolFactory<'a> {
             while let Some(param_1) = parameters_1.next() {
                 let param_2 = parameters_2.next().unwrap();
                 if !(param_1.kind == param_2.kind && param_1.name == param_2.name && param_1.static_type == param_2.static_type) {
-                    continue;
+                    continue 'ft;
                 }
             }
             return ft.clone();
@@ -118,14 +118,14 @@ impl<'a> SymbolFactory<'a> {
             collection = Some(&mut empty_collection);
             self.host.tuple_types.insert(element_count, vec![]);
         }
-        for tt in collection.unwrap() {
+        'tt: for tt in collection.unwrap() {
             let mut element_types_1 = element_types.iter();
             let element_types_2 = tt.element_types();
             let mut element_types_2 = element_types_2.iter();
             while let Some(e_1) = element_types_1.next() {
                 let e_2 = element_types_2.next().unwrap();
                 if e_1 != &e_2 {
-                    continue;
+                    continue 'tt;
                 }
             }
             return tt.clone();
@@ -141,16 +141,16 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned nullable type.
-    pub fn create_nullable_type(&mut self, base: Symbol) -> Symbol {
+    pub fn create_nullable_type(&mut self, base: &Symbol) -> Symbol {
         if base.includes_null() {
             return base.clone();
         }
-        let nt = self.host.nullable_types.get(&base);
+        let nt = self.host.nullable_types.get(base);
         if let Some(nt) = nt {
             return nt.clone();
         }
         let nt = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::NullableType(base.clone()))));
-        self.host.nullable_types.insert(base, nt.clone());
+        self.host.nullable_types.insert(base.clone(), nt.clone());
         nt
     }
 
@@ -158,5 +158,49 @@ impl<'a> SymbolFactory<'a> {
         Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::TypeParameterType(Rc::new(TypeParameterTypeData {
             name,
         })))))
+    }
+
+    /// Creates an interned type after explicit type substitution.
+    pub fn create_type_after_explicit_type_substitution(&mut self, origin: &Symbol, substitute_types: &SharedArray<Symbol>) -> Symbol {
+        // Verify parameter count
+        let parameters = origin.type_parameters().unwrap();
+        let parameter_count = parameters.length();
+        assert_eq!(substitute_types.length(), parameter_count);
+
+        let mut list = self.host.types_after_explicit_type_substitution.get(&origin);
+        let empty_list = vec![];
+        if list.is_none() {
+            list = Some(&empty_list);
+            self.host.types_after_explicit_type_substitution.insert(origin.clone(), vec![]);
+        }
+        'taets: for taets in list.unwrap() {
+            let mut substitute_types_1 = substitute_types.iter();
+            let mut substitute_types_2 = taets.substitute_types().iter();
+            while let Some(substitute_type_1) = substitute_types_1.next() {
+                let substitute_type_2 = substitute_types_2.next().unwrap();
+                if substitute_type_1 != substitute_type_2 {
+                    continue 'taets;
+                }
+            }
+            return taets.clone();
+        }
+
+        let taets = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(Rc::new(TypeAfterExplicitTypeSubstitutionData {
+            origin: origin.clone(),
+            substitute_types: substitute_types.clone(),
+            extends_class: RefCell::new(None),
+            implements: RefCell::new(None),
+            extends_interfaces: RefCell::new(None),
+            static_properties: RefCell::new(None),
+            constructor_function: RefCell::new(None),
+            prototype: RefCell::new(None),
+            proxies: RefCell::new(None),
+            list_of_to_proxies: RefCell::new(None),
+        })))));
+
+        let mut list = self.host.types_after_explicit_type_substitution.get_mut(&origin).unwrap();
+        list.push(taets.clone());
+
+        taets
     }
 }

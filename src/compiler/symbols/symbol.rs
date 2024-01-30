@@ -525,12 +525,25 @@ impl Symbol {
         }
     }
 
-    pub fn constructor_function(&self) -> Option<Symbol> {
+    pub fn constructor_function(&self, host: &mut SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref constructor_function, .. } = data.as_ref();
                 constructor_function.borrow().clone()
+            },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
+                if let Some(r) = data.constructor_function.borrow().as_ref() {
+                    return Some(r.clone());
+                }
+                let r = data.origin.constructor_function(host);
+                if r.is_none() {
+                    return None;
+                }
+                let r = r.unwrap();
+                let r = TypeSubstitution(host).execute(&r, &data.origin.type_parameters().unwrap(), &data.substitute_types);
+                data.constructor_function.replace(Some(r.clone()));
+                Some(r)
             },
             _ => panic!(),
         }
@@ -584,6 +597,7 @@ impl Symbol {
                 let InterfaceTypeData { ref plain_metadata, .. } = data.as_ref();
                 plain_metadata.clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.plain_metadata(),
             _ => panic!(),
         }
     }
@@ -603,6 +617,7 @@ impl Symbol {
                 let InterfaceTypeData { ref visibility, .. } = data.as_ref();
                 visibility.get()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.visibility(),
             _ => panic!(),
         }
     }
@@ -641,6 +656,7 @@ impl Symbol {
                 let InterfaceTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.borrow().clone()
             },
+            SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.jetdoc(),
             _ => panic!(),
         }
     }
