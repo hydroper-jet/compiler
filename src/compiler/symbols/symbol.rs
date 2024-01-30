@@ -416,7 +416,7 @@ impl Symbol {
                 if let Some(r) = static_properties.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<String, Symbol> = data.origin.static_properties(host).iter().map(|(name, p)| {
+                let r: SharedMap<String, Symbol> = data.origin.static_properties(host).entries().iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (name.clone(), p)
                 }).collect();
@@ -447,7 +447,7 @@ impl Symbol {
                 if let Some(r) = prototype.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<String, Symbol> = data.origin.prototype(host).iter().map(|(name, p)| {
+                let r: SharedMap<String, Symbol> = data.origin.prototype(host).entries().iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (name.clone(), p)
                 }).collect();
@@ -474,7 +474,7 @@ impl Symbol {
                 if let Some(r) = proxies.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<ProxyKind, Symbol> = data.origin.proxies(host).iter().map(|(kind, p)| {
+                let r: SharedMap<ProxyKind, Symbol> = data.origin.proxies(host).entries().iter().map(|(kind, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (*kind, p)
                 }).collect();
@@ -502,7 +502,7 @@ impl Symbol {
                     return r.clone();
                 }
                 let type_parameters = data.origin.type_parameters().unwrap();
-                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).iter().map(|(result_type, proxy_function)| {
+                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).entries().iter().map(|(result_type, proxy_function)| {
                     let result_type = TypeSubstitution(host).execute(&result_type, &type_parameters, &data.substitute_types);
                     let proxy_function = TypeSubstitution(host).execute(&proxy_function, &type_parameters, &data.substitute_types);
                     (result_type, proxy_function)

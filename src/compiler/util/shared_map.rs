@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::rc::Rc;
@@ -50,25 +49,24 @@ impl<K, V> SharedMap<K, V> {
         self.0.borrow().len()
     }
 
-    pub fn iter(&self) -> SharedMapIterator<K, V> {
-        SharedMapIterator(self.0.borrow().iter())
+    pub fn entries(&self) -> Vec<(K, V)> where K: Clone, V: Clone {
+        self.0.borrow().iter().map(|(k, v)| (k.clone(), v.clone())).collect::<Vec<_>>()
+    }
+
+    pub fn keys(&self) -> Vec<K> where K: Clone {
+        self.0.borrow().iter().map(|(k, _)| k.clone()).collect::<Vec<_>>()
+    }
+
+    pub fn values(&self) -> Vec<V> where V: Clone {
+        self.0.borrow().iter().map(|(_, v)| v.clone()).collect::<Vec<_>>()
     }
 
     pub fn clone_content(&self) -> Self where K: Clone + Eq + Hash, V: Clone {
         let mut r = Self::new();
-        for (k, v) in self.iter() {
+        for (k, v) in self.entries() {
             r.set(k.clone(), v.clone());
         }
         r
-    }
-}
-
-pub struct SharedMapIterator<'a, K, V>(Iter<'a, K, V>);
-
-impl<'a, K, V> Iterator for SharedMapIterator<'a, K, V> {
-    type Item = (&'a K, &'a V);
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
     }
 }
 
@@ -95,6 +93,16 @@ impl<K: Eq + Hash, V> FromIterator<(K, V)> for SharedMap<K, V> {
         let mut r = Self::new();
         for (k, v) in iter {
             r.set(k, v);
+        }
+        r
+    }
+}
+
+impl<'a, K: Eq + Hash + Clone, V: Clone> FromIterator<(&'a K, &'a V)> for SharedMap<K, V> {
+    fn from_iter<T2: IntoIterator<Item = (&'a K, &'a V)>>(iter: T2) -> Self {
+        let mut r = Self::new();
+        for (k, v) in iter {
+            r.set(k.clone(), v.clone());
         }
         r
     }

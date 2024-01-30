@@ -8,6 +8,5 @@ impl<'a> TypeSubstitution<'a> {
         // * Handle variable properties, virtual properties and functions.
         //   * Functions result into `FunctionAfterExplicitOrIndirectTypeSubstitution`.
         // * Handle `Unresolved`... as well.
-        unimplemented!();
     }
 }

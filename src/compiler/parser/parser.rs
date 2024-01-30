@@ -3585,7 +3585,7 @@ impl<'input> Parser<'input> {
     fn split_jetdoc_lines(&mut self, location: &Location, content: &str) -> Vec<ParsingJetDocLine> {
         let mut builder = String::new();
         let mut lines = vec![];
-        let mut line_number = location.first_line_number();
+        let mut _line_number = location.first_line_number();
         let mut index = location.first_offset();
         let mut line_first_offset = index;
         let mut characters = content.chars();
@@ -3602,7 +3602,7 @@ impl<'input> Parser<'input> {
                     characters.next();
                 }
                 builder = String::new();
-                line_number += 1;
+                _line_number += 1;
                 line_first_offset = index;
             } else {
                 builder.push(ch);
