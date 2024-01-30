@@ -19,35 +19,17 @@
   * [x] `InterfaceType`
     * [x] Factory creation
   * [x] `FunctionType`
-    * [x] `is_type()`
-    * [x] `is_function_type()`
-    * [x] `to_string()`
-    * [x] `parameters()`
-    * [x] `result_type()`
     * [x] Factory creation
   * [x] `TupleType`
-    * [x] `is_type()`
-    * [x] `is_tuple_type()`
-    * [x] `to_string()`
-    * [x] `element_types()`
     * [x] Factory creation
   * [x] `NullableType`
-    * [x] `is_type()`
-    * [x] `is_nullable_type()`
-    * [x] `to_string()`
-    * [x] `base()`
     * [x] Factory creation
   * [x] `TypeParameterType`
-    * [x] `is_type()`
-    * [x] `is_type_parameter_type()`
-    * [x] `to_string()`
-    * [x] `name()`
     * [x] Factory creation
   * [x] `TypeAfterExplicitTypeSubstitution` (`T.<...>`)
     * [x] Factory creation
-* [ ] `Alias`
-  * [ ] Factory creation
-  * [ ] JetDoc
+* [x] `Alias`
+  * [x] Factory creation
 * [ ] `Package`
   * [ ] Factory creation
   * [ ] JetDoc

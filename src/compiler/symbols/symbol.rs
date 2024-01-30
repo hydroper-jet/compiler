@@ -81,6 +81,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(_)))
     }
 
+    pub fn is_alias(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Alias(_))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -101,6 +105,7 @@ impl Symbol {
                 name.clone()
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.name(),
+            SymbolKind::Alias(data) => data.name.clone(),
             _ => panic!(),
         }
     }
@@ -270,6 +275,9 @@ impl Symbol {
                 parent_definition.borrow().clone()
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.parent_definition(),
+            SymbolKind::Alias(data) => {
+                data.parent_definition.borrow().map(|d| d.clone())
+            },
             _ => panic!(),
         }
     }
@@ -288,6 +296,9 @@ impl Symbol {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
                 parent_definition.replace(value);
+            },
+            SymbolKind::Alias(data) => {
+                data.parent_definition.replace(value);
             },
             _ => panic!(),
         }
@@ -598,6 +609,7 @@ impl Symbol {
                 plain_metadata.clone()
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.plain_metadata(),
+            SymbolKind::Alias(data) => data.plain_metadata.clone(),
             _ => panic!(),
         }
     }
@@ -618,6 +630,7 @@ impl Symbol {
                 visibility.get()
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.visibility(),
+            SymbolKind::Alias(data) => data.visibility.get(),
             _ => panic!(),
         }
     }
@@ -636,6 +649,9 @@ impl Symbol {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref visibility, .. } = data.as_ref();
                 visibility.set(value);
+            },
+            SymbolKind::Alias(data) => {
+                data.visibility.set(value);
             },
             _ => panic!(),
         }
@@ -657,6 +673,7 @@ impl Symbol {
                 jetdoc.borrow().clone()
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.jetdoc(),
+            SymbolKind::Alias(data) => data.jetdoc.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -675,6 +692,9 @@ impl Symbol {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref jetdoc, .. } = data.as_ref();
                 jetdoc.replace(value);
+            },
+            SymbolKind::Alias(data) => {
+                data.jetdoc.replace(value);
             },
             _ => panic!(),
         }
@@ -754,6 +774,25 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    /// The symbol aliased by an `Alias` symbol. Possibly `Unresolved`.
+    pub fn alias_of(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Alias(data) => data.alias_of.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_alias_of(&self, alias_of: Symbol) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Alias(data) => {
+                data.alias_of.replace(alias_of);
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -813,6 +852,7 @@ impl ToString for Symbol {
 pub(crate) enum SymbolKind {
     Unresolved,
     Type(TypeKind),
+    Alias(Rc<AliasData>),
 }
 
 pub(crate) enum TypeKind {
@@ -908,6 +948,15 @@ bitflags! {
         const IS_ABSTRACT = 0b00000100;
         const ALLOW_LITERAL = 0b00001000;
     }
+}
+
+pub(crate) struct AliasData {
+    pub name: String,
+    pub visibility: Cell<Visibility>,
+    pub alias_of: RefCell<Symbol>,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
 /// Unresolved symbol.
@@ -1207,6 +1256,32 @@ impl Deref for TypeAfterExplicitTypeSubstitution {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_type_after_explicit_type_substitution());
+        &self.0
+    }
+}
+
+/// Alias symbol.
+///
+/// # Supported methods
+///
+/// * `is_alias()`
+/// * `name()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `alias_of()` — The aliased symbol, possibly `Unresolved`.
+/// * `set_alias_of()`
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `plain_metadata()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Alias(pub Symbol);
+
+impl Deref for Alias {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_alias());
         &self.0
     }
 }

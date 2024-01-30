@@ -203,4 +203,15 @@ impl<'a> SymbolFactory<'a> {
 
         taets
     }
+
+    pub fn create_alias(&self, name: String, alias_of: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Alias(Rc::new(AliasData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            alias_of: RefCell::new(alias_of.clone()),
+            parent_definition: RefCell::new(None),
+            plain_metadata: SharedArray::new(),
+            jetdoc: RefCell::new(None),
+        }))))
+    }
 }
