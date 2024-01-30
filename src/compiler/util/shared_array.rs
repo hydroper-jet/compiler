@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 /// A shared mutable array of `T` managed by reference counting.
@@ -11,7 +12,7 @@ use std::rc::Rc;
 /// 
 /// The `PartialEq` trait performs reference comparison of two arrays.
 #[derive(Clone)]
-pub struct SharedArray<T>(Rc<Vec<T>>);
+pub struct SharedArray<T>(Rc<RefCell<Vec<T>>>);
 
 impl<T> PartialEq for SharedArray<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -23,28 +24,29 @@ impl<T> Eq for SharedArray<T> {}
 
 impl<T> SharedArray<T> {
     pub fn new() -> Self {
-        Self(Rc::new(vec![]))
+        Self(Rc::new(RefCell::new(vec![])))
     }
 
     pub fn get(&self, index: usize) -> Option<T> where T: Clone {
-        self.0.get(index).map(|v| v.clone())
+        self.0.borrow().get(index).map(|v| v.clone())
     }
 
     pub fn set(&mut self, index: usize, value: T) where T: Clone {
-        Rc::get_mut(&mut self.0).unwrap()[index] = value.clone();
+        self.0.borrow_mut()[index] = value.clone();
     }
 
     pub fn remove(&mut self, index: usize) {
-        Rc::get_mut(&mut self.0).unwrap().remove(index);
+        self.0.borrow_mut().remove(index);
     }
 
     pub fn includes(&self, value: &T) -> bool where T: PartialEq {
-        self.0.contains(value)
+        self.0.borrow().contains(value)
     }
 
     pub fn index_of(&self, value: T) -> Option<usize> where T: PartialEq {
+        let this = self.0.borrow();
         for i in 0..self.length() {
-            let value_2 = self.0.get(i).unwrap();
+            let value_2 = this.get(i).unwrap();
             if &value == value_2 {
                 return Some(i);
             }
@@ -53,11 +55,11 @@ impl<T> SharedArray<T> {
     }
 
     pub fn length(&self) -> usize {
-        self.0.len()
+        self.0.borrow().len()
     }
 
     pub fn push(&mut self, value: T) {
-        Rc::get_mut(&mut self.0).unwrap().push(value);
+        self.0.borrow_mut().push(value);
     }
 
     pub fn iter(&self) -> SharedArrayIterator<T> where T: Clone {

@@ -29,7 +29,7 @@ impl<'a> SymbolFactory<'a> {
             parent_definition: RefCell::new(None),
             extends_class: RefCell::new(None),
             implements: SharedArray::new(),
-            flags: Cell::new(ClassTypeFlags::empty()),
+            flags: RefCell::new(ClassTypeFlags::empty()),
             type_parameters: RefCell::new(None),
             static_properties: SharedMap::new(),
             constructor_function: RefCell::new(None),

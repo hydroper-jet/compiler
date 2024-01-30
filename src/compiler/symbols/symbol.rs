@@ -144,21 +144,17 @@ impl Symbol {
     pub fn is_abstract(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref flags, .. } = data.as_ref();
-                flags.get().contains(ClassTypeFlags::IS_ABSTRACT)
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::IS_ABSTRACT),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_abstract(),
             _ => panic!(),
         }
     }
 
     pub fn set_is_abstract(&self, value: bool) {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
-            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
-                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
-                flags.get_mut().set(ClassTypeFlags::IS_ABSTRACT, value);
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                data.flags.borrow_mut().set(ClassTypeFlags::IS_ABSTRACT, value);
             },
             _ => panic!(),
         }
@@ -167,21 +163,17 @@ impl Symbol {
     pub fn is_final(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref flags, .. } = data.as_ref();
-                flags.get().contains(ClassTypeFlags::IS_FINAL)
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::IS_FINAL),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_final(),
             _ => panic!(),
         }
     }
 
     pub fn set_is_final(&self, value: bool) {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
-            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
-                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
-                flags.get_mut().set(ClassTypeFlags::IS_FINAL, value);
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                data.flags.borrow_mut().set(ClassTypeFlags::IS_FINAL, value);
             },
             _ => panic!(),
         }
@@ -190,21 +182,17 @@ impl Symbol {
     pub fn is_static(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref flags, .. } = data.as_ref();
-                flags.get().contains(ClassTypeFlags::IS_STATIC)
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::IS_STATIC),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_static(),
             _ => panic!(),
         }
     }
 
     pub fn set_is_static(&self, value: bool) {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
-            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
-                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
-                flags.get_mut().set(ClassTypeFlags::IS_STATIC, value);
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                data.flags.borrow_mut().set(ClassTypeFlags::IS_STATIC, value);
             },
             _ => panic!(),
         }
@@ -213,21 +201,17 @@ impl Symbol {
     pub fn allow_literal(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref flags, .. } = data.as_ref();
-                flags.get().contains(ClassTypeFlags::ALLOW_LITERAL)
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::ALLOW_LITERAL),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.allow_literal(),
             _ => panic!(),
         }
     }
 
     pub fn set_allow_literal(&self, value: bool) {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
-            SymbolKind::Type(TypeKind::ClassType(ref mut data)) => {
-                let ClassTypeData { ref mut flags, .. } = Rc::get_mut(data).unwrap();
-                flags.get_mut().set(ClassTypeFlags::ALLOW_LITERAL, value);
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(data)) => {
+                data.flags.borrow_mut().set(ClassTypeFlags::ALLOW_LITERAL, value);
             },
             _ => panic!(),
         }
@@ -253,8 +237,8 @@ impl Symbol {
     }
 
     pub fn extends_interfaces(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref extends_interfaces, .. } = data.as_ref();
                 extends_interfaces.clone()
@@ -417,8 +401,8 @@ impl Symbol {
     }
 
     pub fn static_properties(&self, host: &mut SymbolHost) -> SharedMap<String, Symbol> {
-        let mut symbol = self.0.upgrade().unwrap();
-        match Rc::get_mut(&mut symbol).unwrap() {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref static_properties, .. } = data.as_ref();
                 static_properties.clone()
@@ -938,7 +922,7 @@ pub(crate) struct ClassTypeData {
     pub parent_definition: RefCell<Option<Symbol>>,
     pub extends_class: RefCell<Option<Symbol>>,
     pub implements: SharedArray<Symbol>,
-    pub flags: Cell<ClassTypeFlags>,
+    pub flags: RefCell<ClassTypeFlags>,
     pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
     pub static_properties: SharedMap<String, Symbol>,
     pub constructor_function: RefCell<Option<Symbol>>,

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -14,7 +15,7 @@ use std::rc::Rc;
 /// 
 /// The `PartialEq` trait performs reference comparison of two maps.
 #[derive(Clone)]
-pub struct SharedMap<K, V>(Rc<HashMap<K, V>>);
+pub struct SharedMap<K, V>(Rc<RefCell<HashMap<K, V>>>);
 
 impl<K, V> PartialEq for SharedMap<K, V> {
     fn eq(&self, other: &Self) -> bool {
@@ -26,31 +27,31 @@ impl<K, V> Eq for SharedMap<K, V> {}
 
 impl<K, V> SharedMap<K, V> {
     pub fn new() -> Self {
-        Self(Rc::new(HashMap::new()))
+        Self(Rc::new(RefCell::new(HashMap::new())))
     }
 
     pub fn get(&self, key: &K) -> Option<V> where K: Eq + Hash, V: Clone {
-        self.0.get(key).map(|v| v.clone())
+        self.0.borrow().get(key).map(|v| v.clone())
     }
 
     pub fn set(&mut self, key: K, value: V) where K: Eq + Hash {
-        Rc::get_mut(&mut self.0).unwrap().insert(key, value);
+        self.0.borrow_mut().insert(key, value);
     }
 
     pub fn remove(&mut self, key: &K) -> Option<V> where K: Eq + Hash {
-        Rc::get_mut(&mut self.0).unwrap().remove(key)
+        self.0.borrow_mut().remove(key)
     }
 
     pub fn has(&self, key: &K) -> bool where K: Eq + Hash {
-        self.0.contains_key(key)
+        self.0.borrow().contains_key(key)
     }
 
     pub fn length(&self) -> usize {
-        self.0.len()
+        self.0.borrow().len()
     }
 
     pub fn iter(&self) -> SharedMapIterator<K, V> {
-        SharedMapIterator(self.0.iter())
+        SharedMapIterator(self.0.borrow().iter())
     }
 
     pub fn clone_content(&self) -> Self where K: Clone + Eq + Hash, V: Clone {
