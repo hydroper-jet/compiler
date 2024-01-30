@@ -13,3 +13,4 @@
 ## JetDoc
 
 * [ ] Invoke `set_jetdoc()` appropriately for the symbol of definitions such as package definitions, variable definitions and virtual properties.*
+  * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.

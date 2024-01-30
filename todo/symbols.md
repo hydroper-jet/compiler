@@ -31,32 +31,32 @@
 * [x] `Alias`
   * [x] Factory creation
 * [x] `Package`
-  * [x] `is_package()`
-  * [x] `name()`
-  * [x] `parent_definition()`
-  * [x] `set_parent_definition()`
-  * [x] `properties()`
-  * [x] `redirect_packages()`
-  * [x] `subpackages()`
-  * [x] `jetdoc()`
-  * [x] `set_jetdoc()`
-  * [x] Factory creation through a fully qualified name (`Vec<&str>`)
+  * [x] Factory creation
 * [ ] `PackageSet`
+  * [ ] Factory creation
 * [ ] `VariableProperty`
   * [ ] JetDoc
+  * [ ] Factory creation
 * [ ] `VariablePropertyAfterIndirectTypeSubstitution`
-  * Static type, if unresolved, mutates on next retrieval.
+  * [ ] Static type, if unresolved, mutates on next retrieval.
+  * [ ] JetDoc
+  * [ ] Factory creation
 * [ ] `VirtualProperty`
   * [ ] JetDoc
-    * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
+  * [ ] Factory creation
 * [ ] `VirtualPropertyAfterIndirectTypeSubstitution`
-  * Static type, if unresolved, mutates on next retrieval.
+  * [ ] Static type, if unresolved, mutates on next retrieval.
+  * [ ] Factory creation
 * [ ] `FunctionSymbol`
   * [ ] JetDoc
+  * [ ] Factory creation
 * [ ] `FunctionAfterExplicitOrIndirectTypeSubstitution`
-  * Static type, if unresolved, mutates on next retrieval.
+  * [ ] Static type, if unresolved, mutates on next retrieval.
+  * [ ] Factory creation
 * [ ] `Scope`
+  * [ ] Factory creation
 * [ ] `Value`
   * [ ] Constants
   * [ ] `ConversionValue`
   * [ ] Reference values mentioned in property resolution
+  * [ ] Factory creation
