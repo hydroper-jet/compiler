@@ -115,12 +115,12 @@ impl Location {
 
     /// First line offset, counted from one.
     pub fn first_line_offset(&self) -> usize {
-        self.compilation_unit.get_line_offset(self.first_line_number()).unwrap()
+        self.compilation_unit.get_line_offset_from_offset(self.first_offset())
     }
 
     /// Last line offset, counted from one.
     pub fn last_line_offset(&self) -> usize {
-        self.compilation_unit.get_line_offset(self.last_line_number()).unwrap()
+        self.compilation_unit.get_line_offset_from_offset(self.last_offset())
     }
 
     // The first byte offset of this location.
@@ -135,7 +135,7 @@ impl Location {
 
     /// Zero based first column of the location in code points.
     pub fn first_column(&self) -> usize {
-        let line_offset = self.first_line_number();
+        let line_offset = self.first_line_offset();
         let target_offset = self.first_offset;
         if line_offset > target_offset {
             return 0;
@@ -149,7 +149,7 @@ impl Location {
 
     /// Zero based last column of the location in code points.
     pub fn last_column(&self) -> usize {
-        let line_offset = self.last_line_number();
+        let line_offset = self.last_line_offset();
         let target_offset = self.last_offset;
         if line_offset > target_offset {
             return 0;

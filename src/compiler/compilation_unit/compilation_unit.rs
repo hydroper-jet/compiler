@@ -223,14 +223,14 @@ impl CompilationUnit {
 
         let mut current_line = last_skip.line_number;
         let mut characters = CharacterReader::from(&self.text[last_skip.offset..]);
-        while characters.index() < offset {
+        while last_skip.offset + characters.index() < offset {
             let ch_1 = characters.next();
             if let Some(ch_1) = ch_1 {
                 if CharacterValidator::is_line_terminator(ch_1) {
-                    current_line += 1;
                     if ch_1 == '\r' && characters.peek_or_zero() == '\n' {
                         characters.next();
                     }
+                    current_line += 1;
                 }
             } else {
                 break;
@@ -280,16 +280,69 @@ impl CompilationUnit {
             let ch_1 = characters.next();
             if let Some(ch_1) = ch_1 {
                 if CharacterValidator::is_line_terminator(ch_1) {
-                    current_line += 1;
                     if ch_1 == '\r' && characters.peek_or_zero() == '\n' {
                         characters.next();
                     }
+                    current_line += 1;
                 }
             } else {
                 return None;
             }
         }
-        Some(characters.index())
+        Some(last_skip.offset + characters.index())
+    }
+
+    /// Retrieves the offset from the corresponding line of an offset.
+    pub fn get_line_offset_from_offset(&self, offset: usize) -> usize {
+        // Extra higher line skips
+        let mut last_skip = HigherLineSkip { skip_index: 0, offset: 0, line_number: 1 };
+        let skips = self.extra_higher_line_skips.borrow();
+        let mut skips = skips.iter();
+        while let Some(skip_1) = skips.next() {
+            if offset < skip_1.offset {
+                break;
+            }
+            last_skip = *skip_1;
+        }
+
+        // Higher line skips
+        let skips = self.higher_line_skips.borrow();
+        let mut skips = skips[last_skip.skip_index..].iter();
+        let mut last_skip = skips.next().unwrap();
+        while let Some(skip_1) = skips.next() {
+            if offset < skip_1.offset {
+                break;
+            }
+            last_skip = skip_1;
+        }
+
+        // Line skips
+        let skips = self.line_skips.borrow();
+        let mut skips = skips[last_skip.skip_index..].iter();
+        let mut last_skip = skips.next().unwrap();
+        while let Some(skip_1) = skips.next() {
+            if offset < skip_1.offset {
+                break;
+            }
+            last_skip = skip_1;
+        }
+
+        let mut current_line_offset = last_skip.offset;
+        let mut characters = CharacterReader::from(&self.text[last_skip.offset..]);
+        while last_skip.offset + characters.index() < offset {
+            let ch_1 = characters.next();
+            if let Some(ch_1) = ch_1 {
+                if CharacterValidator::is_line_terminator(ch_1) {
+                    if ch_1 == '\r' && characters.peek_or_zero() == '\n' {
+                        characters.next();
+                    }
+                    current_line_offset = last_skip.offset + characters.index();
+                }
+            } else {
+                break;
+            }
+        }
+        current_line_offset
     }
 
     pub fn get_line_indent(&self, line: usize) -> usize {
