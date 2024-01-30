@@ -98,3 +98,20 @@ impl<K: Eq + Hash, V> FromIterator<(K, V)> for SharedMap<K, V> {
         r
     }
 }
+
+impl<K, V> Extend<(K, V)> for SharedMap<K, V> where K: Eq + Hash {
+    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
+        for (k, v) in iter.into_iter() {
+            self.set(k, v);
+        }
+    }
+}
+
+pub macro shared_map {
+    ($($key:expr => $value:expr),*) => {
+        SharedMap::from([$(($key, $value)),*])
+    },
+    ($($key:expr => $value:expr),+ ,) => {
+        SharedMap::from([$(($key, $value)),+])
+    },
+}

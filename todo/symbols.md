@@ -13,7 +13,6 @@
   * [x] `VoidType`
   * [x] `ClassType`
     * [x] Factory creation
-    * [x] JetDoc
   * [x] `EnumType`
     * [x] Factory creation
   * [x] `InterfaceType`
@@ -32,9 +31,8 @@
   * [x] Factory creation
 * [x] `Package`
   * [x] Factory creation
-* [ ] `PackageSet`
-  * [ ] JetDoc
-  * [ ] Factory creation
+* [x] `PackageSet`
+  * [x] Factory creation
 * [ ] `VariableProperty`
   * [ ] JetDoc
   * [ ] Factory creation

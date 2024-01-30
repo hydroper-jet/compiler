@@ -56,8 +56,8 @@ impl<T> SharedArray<T> {
         self.0.len()
     }
 
-    pub fn push(&mut self, value: T) where T: Clone {
-        Rc::get_mut(&mut self.0).unwrap().push(value.clone());
+    pub fn push(&mut self, value: T) {
+        Rc::get_mut(&mut self.0).unwrap().push(value);
     }
 
     pub fn iter(&self) -> SharedArrayIterator<T> where T: Clone {
@@ -114,4 +114,21 @@ impl<T> FromIterator<T> for SharedArray<T> where T: Clone {
         }
         r
     }
+}
+
+impl<A> Extend<A> for SharedArray<A> {
+    fn extend<T: IntoIterator<Item = A>>(&mut self, iter: T) {
+        for v in iter.into_iter() {
+            self.push(v);
+        }
+    }
+}
+
+pub macro shared_array {
+    ($($element:expr),*) => {
+        SharedArray::from([$($element),*])
+    },
+    ($($element:expr),+ ,) => {
+        SharedArray::from([$($element),+])
+    },
 }

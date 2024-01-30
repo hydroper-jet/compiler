@@ -248,4 +248,14 @@ impl<'a> SymbolFactory<'a> {
         }
         result
     }
+
+    pub fn create_package_set(&self, name: String, packages: SharedArray<Symbol>) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::PackageSet(Rc::new(PackageSetData {
+            name,
+            parent_definition: RefCell::new(None),
+            packages,
+            visibility: Cell::new(Visibility::Internal),
+            jetdoc: RefCell::new(None),
+        }))))
+    }
 }

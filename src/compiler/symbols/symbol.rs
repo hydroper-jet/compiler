@@ -96,6 +96,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Package(_))
     }
 
+    pub fn is_package_set(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::PackageSet(_))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -106,6 +110,7 @@ impl Symbol {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.name(),
             SymbolKind::Alias(data) => data.name.clone(),
             SymbolKind::Package(data) => data.name.clone(),
+            SymbolKind::PackageSet(data) => data.name.clone(),
             _ => panic!(),
         }
     }
@@ -275,6 +280,7 @@ impl Symbol {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.parent_definition(),
             SymbolKind::Alias(data) => data.parent_definition.borrow().clone(),
             SymbolKind::Package(data) => data.parent_definition.borrow().clone(),
+            SymbolKind::PackageSet(data) => data.parent_definition.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -295,6 +301,9 @@ impl Symbol {
                 data.parent_definition.replace(value);
             },
             SymbolKind::Package(data) => {
+                data.parent_definition.replace(value);
+            },
+            SymbolKind::PackageSet(data) => {
                 data.parent_definition.replace(value);
             },
             _ => panic!(),
@@ -628,6 +637,7 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.visibility(),
             SymbolKind::Alias(data) => data.visibility.get(),
+            SymbolKind::PackageSet(data) => data.visibility.get(),
             _ => panic!(),
         }
     }
@@ -648,6 +658,9 @@ impl Symbol {
                 visibility.set(value);
             },
             SymbolKind::Alias(data) => {
+                data.visibility.set(value);
+            },
+            SymbolKind::PackageSet(data) => {
                 data.visibility.set(value);
             },
             _ => panic!(),
@@ -672,6 +685,7 @@ impl Symbol {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.jetdoc(),
             SymbolKind::Alias(data) => data.jetdoc.borrow().clone(),
             SymbolKind::Package(data) => data.jetdoc.borrow().clone(),
+            SymbolKind::PackageSet(data) => data.jetdoc.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -695,6 +709,9 @@ impl Symbol {
                 data.jetdoc.replace(value);
             },
             SymbolKind::Package(data) => {
+                data.jetdoc.replace(value);
+            },
+            SymbolKind::PackageSet(data) => {
                 data.jetdoc.replace(value);
             },
             _ => panic!(),
@@ -826,6 +843,15 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    /// The packages of a package set.
+    pub fn packages(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::PackageSet(data) => data.packages.clone(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -877,8 +903,9 @@ impl ToString for Symbol {
                 let p = ".<".to_owned() + &t.substitute_types.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ") + ">";
                 name_1 + &p
             },
-            SymbolKind::Alias(_) => self.fully_qualified_name(),
-            SymbolKind::Package(_) => self.fully_qualified_name(),
+            SymbolKind::Alias(_) |
+            SymbolKind::Package(_) |
+            SymbolKind::PackageSet(_) => self.fully_qualified_name(),
             _ => panic!(),
         }
     }
@@ -889,6 +916,7 @@ pub(crate) enum SymbolKind {
     Type(TypeKind),
     Alias(Rc<AliasData>),
     Package(Rc<PackageData>),
+    PackageSet(Rc<PackageSetData>),
 }
 
 pub(crate) enum TypeKind {
@@ -1001,6 +1029,14 @@ pub(crate) struct PackageData {
     pub properties: SharedMap<String, Symbol>,
     pub redirect_packages: SharedArray<Symbol>,
     pub subpackages: SharedMap<String, Symbol>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct PackageSetData {
+    pub name: String,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub visibility: Cell<Visibility>,
+    pub packages: SharedArray<Symbol>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
@@ -1355,6 +1391,32 @@ impl Deref for Package {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_package());
+        &self.0
+    }
+}
+
+/// Package set symbol.
+///
+/// # Supported methods
+///
+/// * `is_package_set()`
+/// * `name()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `packages()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct PackageSet(pub Symbol);
+
+impl Deref for PackageSet {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_package_set());
         &self.0
     }
 }
