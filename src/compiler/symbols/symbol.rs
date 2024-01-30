@@ -6,6 +6,13 @@ use std::rc::{Rc, Weak};
 
 use bitflags::bitflags;
 
+/// An union data type that represents one of several symbols of the
+/// Jet semantics.
+///
+/// The several `is` prefix methods are used to test a `Symbol` reference
+/// against a symbol kind. The miscellaneous structures that wrap a `Symbol` such as `ClassType`
+/// and `Package` are used both for kind assertions and to describe supported methods.
+/// Methods that are not compatible with a symbol kind result in a panic.
 #[derive(Clone)]
 pub struct Symbol(pub(crate) Weak<SymbolKind>);
 
@@ -85,27 +92,20 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Alias(_))
     }
 
+    pub fn is_package(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Package(_))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref name, .. } = data.as_ref();
-                name.clone()
-            },
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref name, .. } = data.as_ref();
-                name.clone()
-            },
-            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref name, .. } = data.as_ref();
-                name.clone()
-            },
-            SymbolKind::Type(TypeKind::TypeParameterType(data)) => {
-                let TypeParameterTypeData { ref name, .. } = data.as_ref();
-                name.clone()
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.name.clone(),
+            SymbolKind::Type(TypeKind::EnumType(data)) => data.name.clone(),
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => data.name.clone(),
+            SymbolKind::Type(TypeKind::TypeParameterType(data)) => data.name.clone(),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.name(),
             SymbolKind::Alias(data) => data.name.clone(),
+            SymbolKind::Package(data) => data.name.clone(),
             _ => panic!(),
         }
     }
@@ -115,7 +115,14 @@ impl Symbol {
             return t.origin.fully_qualified_name();
         }
         let p: Option<Symbol> = self.parent_definition();
-        (if let Some(p) = p { p.fully_qualified_name() + "." } else { "".to_owned() }) + &self.name()
+        (if let Some(p) = p {
+            let pn = p.fully_qualified_name();
+            if pn.is_empty() {
+                "".to_owned()
+            } else {
+                pn + "."
+            }
+        } else { "".to_owned() }) + &self.name()
     }
 
     pub fn is_set_enumeration(&self) -> bool {
@@ -262,22 +269,12 @@ impl Symbol {
     pub fn parent_definition(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.borrow().clone()
-            },
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.borrow().clone()
-            },
-            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.borrow().clone()
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.parent_definition.borrow().clone(),
+            SymbolKind::Type(TypeKind::EnumType(data)) => data.parent_definition.borrow().clone(),
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => data.parent_definition.borrow().clone(),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.parent_definition(),
-            SymbolKind::Alias(data) => {
-                data.parent_definition.borrow().map(|d| d.clone())
-            },
+            SymbolKind::Alias(data) => data.parent_definition.borrow().clone(),
+            SymbolKind::Package(data) => data.parent_definition.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -286,18 +283,18 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.replace(value);
+                data.parent_definition.replace(value);
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.replace(value);
+                data.parent_definition.replace(value);
             },
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref parent_definition, .. } = data.as_ref();
-                parent_definition.replace(value);
+                data.parent_definition.replace(value);
             },
             SymbolKind::Alias(data) => {
+                data.parent_definition.replace(value);
+            },
+            SymbolKind::Package(data) => {
                 data.parent_definition.replace(value);
             },
             _ => panic!(),
@@ -674,6 +671,7 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.jetdoc(),
             SymbolKind::Alias(data) => data.jetdoc.borrow().clone(),
+            SymbolKind::Package(data) => data.jetdoc.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -694,6 +692,9 @@ impl Symbol {
                 jetdoc.replace(value);
             },
             SymbolKind::Alias(data) => {
+                data.jetdoc.replace(value);
+            },
+            SymbolKind::Package(data) => {
                 data.jetdoc.replace(value);
             },
             _ => panic!(),
@@ -793,6 +794,38 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn resolve_alias(&self) -> Symbol {
+        if self.is_alias() {
+            return self.alias_of().resolve_alias();
+        }
+        return self.clone();
+    }
+
+    pub fn properties(&self, _host: &mut SymbolHost) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Package(data) => data.properties.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn redirect_packages(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Package(data) => data.redirect_packages.clone(),
+            _ => panic!(),
+        }
+    }
+
+    /// Indicates subpackages of a package from their unqualified name to their `Package` symbol.
+    pub fn subpackages(&self) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Package(data) => data.subpackages.clone(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -844,6 +877,8 @@ impl ToString for Symbol {
                 let p = ".<".to_owned() + &t.substitute_types.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ") + ">";
                 name_1 + &p
             },
+            SymbolKind::Alias(_) => self.fully_qualified_name(),
+            SymbolKind::Package(_) => self.fully_qualified_name(),
             _ => panic!(),
         }
     }
@@ -853,6 +888,7 @@ pub(crate) enum SymbolKind {
     Unresolved,
     Type(TypeKind),
     Alias(Rc<AliasData>),
+    Package(Rc<PackageData>),
 }
 
 pub(crate) enum TypeKind {
@@ -956,6 +992,15 @@ pub(crate) struct AliasData {
     pub alias_of: RefCell<Symbol>,
     pub parent_definition: RefCell<Option<Symbol>>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct PackageData {
+    pub name: String,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub properties: SharedMap<String, Symbol>,
+    pub redirect_packages: SharedArray<Symbol>,
+    pub subpackages: SharedMap<String, Symbol>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
 }
 
@@ -1266,6 +1311,8 @@ impl Deref for TypeAfterExplicitTypeSubstitution {
 ///
 /// * `is_alias()`
 /// * `name()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
 /// * `visibility()`
 /// * `set_visibility()`
 /// * `alias_of()` — The aliased symbol, possibly `Unresolved`.
@@ -1282,6 +1329,32 @@ impl Deref for Alias {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_alias());
+        &self.0
+    }
+}
+
+/// Package symbol.
+///
+/// # Supported methods
+///
+/// * `is_package()`
+/// * `name()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `properties()`
+/// * `redirect_packages()`
+/// * `subpackages()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Package(pub Symbol);
+
+impl Deref for Package {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_package());
         &self.0
     }
 }

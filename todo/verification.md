@@ -9,3 +9,7 @@
 ## Type definitions
 
 * [ ] `alias_of` may have to be deferred in resolution (`Unresolved`).
+
+## JetDoc
+
+* [ ] Invoke `set_jetdoc()` appropriately for the symbol of definitions such as package definitions, variable definitions and virtual properties.*

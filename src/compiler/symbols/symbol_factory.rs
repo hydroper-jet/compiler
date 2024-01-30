@@ -214,4 +214,38 @@ impl<'a> SymbolFactory<'a> {
             jetdoc: RefCell::new(None),
         }))))
     }
+
+    /// Creates an interned package from a fully qualified name.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// assert_eq!(host.factory.create_package(["q", "b", "w"]).fully_qualified_name(), "q.b.w");
+    /// ```
+    pub fn create_package<'b>(&self, name: impl IntoIterator<Item = &'b str>) -> Symbol {
+        self.create_package_1(&name.into_iter().collect())
+    }
+
+    fn create_package_1(&self, name: &Vec<&str>) -> Symbol {
+        let mut result: Symbol = self.host.top_level_package.clone();
+        for name_1 in name {
+            let name_1 = (*name_1).to_owned();
+            let result_1 = result.subpackages().get(&name_1);
+            if let Some(result_1) = result_1 {
+                result = result_1;
+            } else {
+                let result_1 = Symbol(self.host.arena.allocate(SymbolKind::Package(Rc::new(PackageData {
+                    name: name_1.clone(),
+                    parent_definition: RefCell::new(Some(result.clone())),
+                    properties: SharedMap::new(),
+                    redirect_packages: SharedArray::new(),
+                    subpackages: SharedMap::new(),
+                    jetdoc: RefCell::new(None),
+                }))));
+                result.subpackages().set(name_1, result_1);
+                result = result_1;
+            }
+        }
+        result
+    }
 }

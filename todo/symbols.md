@@ -30,9 +30,17 @@
     * [x] Factory creation
 * [x] `Alias`
   * [x] Factory creation
-* [ ] `Package`
-  * [ ] Factory creation
-  * [ ] JetDoc
+* [x] `Package`
+  * [x] `is_package()`
+  * [x] `name()`
+  * [x] `parent_definition()`
+  * [x] `set_parent_definition()`
+  * [x] `properties()`
+  * [x] `redirect_packages()`
+  * [x] `subpackages()`
+  * [x] `jetdoc()`
+  * [x] `set_jetdoc()`
+  * [x] Factory creation through a fully qualified name (`Vec<&str>`)
 * [ ] `PackageSet`
 * [ ] `VariableProperty`
   * [ ] JetDoc

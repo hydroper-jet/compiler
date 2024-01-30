@@ -1,5 +1,7 @@
 use crate::ns::*;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct SymbolHost {
     pub(crate) arena: Arena<SymbolKind>,
@@ -10,6 +12,7 @@ pub struct SymbolHost {
     pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) nullable_types: HashMap<Symbol, Symbol>,
     pub(crate) types_after_explicit_type_substitution: HashMap<Symbol, Vec<Symbol>>,
+    pub(crate) top_level_package: Symbol,
 }
 
 impl SymbolHost {
@@ -24,6 +27,14 @@ impl SymbolHost {
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
             types_after_explicit_type_substitution: HashMap::new(),
+            top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
+                name: String::new(),
+                parent_definition: RefCell::new(None),
+                properties: SharedMap::new(),
+                redirect_packages: SharedArray::new(),
+                subpackages: SharedMap::new(),
+                jetdoc: RefCell::new(None),
+            })))),
         }
     }
 
@@ -37,10 +48,14 @@ impl SymbolHost {
     }
 
     pub fn any_type(&self) -> Symbol {
-        self.any_type.clone()
+        (self.any_type).clone()
     }
 
     pub fn void_type(&self) -> Symbol {
-        self.void_type.clone()
+        (self.void_type).clone()
+    }
+
+    pub fn top_level_package(&self) -> Symbol {
+        (self.top_level_package).clone()
     }
 }
