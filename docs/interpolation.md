@@ -5,7 +5,7 @@ If a Jet source is interpolated in a place such as inside a XML file and it is d
 The following XML is an example of interpolated Jet source:
 
 ```xml
-<??>
+<?xml version="1.0"?>
 <document>
     <![CDATA[
         override protected function run(): void {}
