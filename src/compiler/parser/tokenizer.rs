@@ -475,14 +475,13 @@ impl<'input> Tokenizer<'input> {
     fn character_ahead_location(&self) -> Location {
         let offset = self.characters.index();
         let mut next_characters = self.characters.clone();
-        let next_character = next_characters.next().unwrap();
-        let next_line_number = self.line_number + (if CharacterValidator::is_line_terminator(next_character) { 1 } else { 0 });
-        Location::with_lines_and_offsets(&self.compilation_unit, self.line_number, next_line_number, offset, next_characters.index() + 1)
+        next_characters.next().unwrap();
+        Location::with_offsets(&self.compilation_unit, offset, next_characters.index() + 1)
     }
 
     fn cursor_location(&self) -> Location {
         let offset = self.characters.index();
-        Location::with_line_and_offset(&self.compilation_unit, self.line_number, offset)
+        Location::with_offset(&self.compilation_unit, offset)
     }
 
     fn add_unexpected_error(&self) {
@@ -498,14 +497,14 @@ impl<'input> Tokenizer<'input> {
         let ch = self.characters.peek_or_zero();
         if ch == '\x0D' && self.characters.peek_at_or_zero(1) == '\x0A' {
             self.characters.skip_count_in_place(2);
-            self.compilation_unit.line_number_offsets.borrow_mut().push(self.characters.index());
             self.line_number += 1;
+            self.compilation_unit.push_line_skip(self.line_number, self.characters.index());
             return true;
         }
         if CharacterValidator::is_line_terminator(ch) {
             self.characters.next();
-            self.compilation_unit.line_number_offsets.borrow_mut().push(self.characters.index());
             self.line_number += 1;
+            self.compilation_unit.push_line_skip(self.line_number, self.characters.index());
             return true;
         }
         false

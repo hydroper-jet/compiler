@@ -175,7 +175,8 @@ impl<'a> SymbolFactory<'a> {
         }
         'taets: for taets in list.unwrap() {
             let mut substitute_types_1 = substitute_types.iter();
-            let mut substitute_types_2 = taets.substitute_types().iter();
+            let substitute_types_2 = taets.substitute_types();
+            let mut substitute_types_2 = substitute_types_2.iter();
             while let Some(substitute_type_1) = substitute_types_1.next() {
                 let substitute_type_2 = substitute_types_2.next().unwrap();
                 if substitute_type_1 != substitute_type_2 {
@@ -198,7 +199,7 @@ impl<'a> SymbolFactory<'a> {
             list_of_to_proxies: RefCell::new(None),
         })))));
 
-        let mut list = self.host.types_after_explicit_type_substitution.get_mut(&origin).unwrap();
+        let list = self.host.types_after_explicit_type_substitution.get_mut(&origin).unwrap();
         list.push(taets.clone());
 
         taets
@@ -242,7 +243,7 @@ impl<'a> SymbolFactory<'a> {
                     subpackages: SharedMap::new(),
                     jetdoc: RefCell::new(None),
                 }))));
-                result.subpackages().set(name_1, result_1);
+                result.subpackages().set(name_1, result_1.clone());
                 result = result_1;
             }
         }

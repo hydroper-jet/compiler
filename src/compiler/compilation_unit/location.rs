@@ -12,14 +12,6 @@ pub struct Location {
     #[serde(skip)]
     pub(crate) compilation_unit: Rc<CompilationUnit>,
 
-    /// First line number, counted from 1 (one).
-    #[serde(skip)]
-    pub(crate) first_line_number: usize,
-
-    /// Last line number, counted from 1 (one).
-    #[serde(skip)]
-    pub(crate) last_line_number: usize,
-
     /// First UTF-8 offset.
     #[serde(skip)]
     pub(crate) first_offset: usize,
@@ -33,10 +25,10 @@ impl Debug for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,
             "Location(first_line_number={}, first_column={}, first_offset={}, last_line_number={}, last_column={}, last_offset={})",
-            self.first_line_number,
+            self.first_line_number(),
             self.first_column(),
             self.first_offset,
-            self.last_line_number,
+            self.last_line_number(),
             self.last_column(),
             self.last_offset
         )
@@ -48,8 +40,6 @@ impl Eq for Location {}
 impl PartialEq for Location {
     fn eq(&self, other: &Self) -> bool {
         Rc::ptr_eq(&self.compilation_unit, &other.compilation_unit) &&
-            self.first_line_number == other.first_line_number &&
-            self.last_line_number == other.last_line_number &&
             self.first_offset == other.first_offset &&
             self.last_offset == other.last_offset
     }
@@ -69,35 +59,21 @@ impl PartialOrd for Location {
 
 impl Location {
     /// Builds a location.
-    pub fn with_lines_and_offsets(
+    pub fn with_offsets(
         compilation_unit: &Rc<CompilationUnit>,
-        first_line_number: usize,
-        last_line_number: usize,
         first_offset: usize,
         last_offset: usize,
     ) -> Self {
         Self {
             compilation_unit: compilation_unit.clone(),
-            first_line_number,
-            last_line_number,
             first_offset,
             last_offset,
         }
     }
 
     /// Builds a location.
-    pub fn with_line_and_offsets(
-        compilation_unit: &Rc<CompilationUnit>,
-        line_number: usize,
-        first_offset: usize,
-        last_offset: usize,
-    ) -> Self {
-        Self::with_lines_and_offsets(compilation_unit, line_number, line_number, first_offset, last_offset)
-    }
-
-    /// Builds a location.
-    pub fn with_line_and_offset(compilation_unit: &Rc<CompilationUnit>, line_number: usize, offset: usize) -> Self {
-        Self::with_lines_and_offsets(compilation_unit, line_number, line_number, offset, offset)
+    pub fn with_offset(compilation_unit: &Rc<CompilationUnit>, offset: usize) -> Self {
+        Self::with_offsets(compilation_unit, offset, offset)
     }
 
     /// Build a location by combining two locations. `self`
@@ -106,8 +82,6 @@ impl Location {
     pub fn combine_with(&self, other: Location) -> Self {
         Self {
             compilation_unit: self.compilation_unit.clone(),
-            first_line_number: self.first_line_number,
-            last_line_number: other.last_line_number,
             first_offset: self.first_offset,
             last_offset: other.last_offset,
         }
@@ -119,8 +93,6 @@ impl Location {
     pub fn combine_with_start_of(&self, other: Location) -> Self {
         Self {
             compilation_unit: self.compilation_unit.clone(),
-            first_line_number: self.first_line_number,
-            last_line_number: other.first_line_number,
             first_offset: self.first_offset,
             last_offset: other.first_offset,
         }
@@ -133,12 +105,22 @@ impl Location {
 
     /// First line number, counted from one.
     pub fn first_line_number(&self) -> usize {
-        self.first_line_number
+        self.compilation_unit.get_line_number(self.first_offset)
     }
 
     /// Last line number, counted from one.
     pub fn last_line_number(&self) -> usize {
-        self.first_line_number
+        self.compilation_unit.get_line_number(self.last_offset)
+    }
+
+    /// First line offset, counted from one.
+    pub fn first_line_offset(&self) -> usize {
+        self.compilation_unit.get_line_offset(self.first_line_number()).unwrap()
+    }
+
+    /// Last line offset, counted from one.
+    pub fn last_line_offset(&self) -> usize {
+        self.compilation_unit.get_line_offset(self.last_line_number()).unwrap()
     }
 
     // The first byte offset of this location.
@@ -153,7 +135,7 @@ impl Location {
 
     /// Zero based first column of the location in code points.
     pub fn first_column(&self) -> usize {
-        let line_offset = *self.compilation_unit.line_number_offsets.borrow().get(self.first_line_number).unwrap_or(&0);
+        let line_offset = self.first_line_number();
         let target_offset = self.first_offset;
         if line_offset > target_offset {
             return 0;
@@ -167,7 +149,7 @@ impl Location {
 
     /// Zero based last column of the location in code points.
     pub fn last_column(&self) -> usize {
-        let line_offset = *self.compilation_unit.line_number_offsets.borrow().get(self.last_line_number).unwrap_or(&0);
+        let line_offset = self.last_line_number();
         let target_offset = self.last_offset;
         if line_offset > target_offset {
             return 0;
@@ -186,6 +168,6 @@ impl Location {
     /// Indicates whether a previous location and a next location
     /// have a line break in between.
     pub fn line_break(&self, other: &Self) -> bool {
-        self.last_line_number != other.first_line_number
+        self.last_line_number() != other.first_line_number()
     }
 }

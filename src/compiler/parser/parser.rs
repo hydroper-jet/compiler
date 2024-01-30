@@ -17,8 +17,8 @@ impl<'input> Parser<'input> {
     pub fn new(compilation_unit: &'input Rc<CompilationUnit>) -> Self {
         Self {
             tokenizer: Tokenizer::new(compilation_unit),
-            previous_token: (Token::Eof, Location::with_line_and_offset(&compilation_unit, 1, 0)),
-            token: (Token::Eof, Location::with_line_and_offset(&compilation_unit, 1, 0)),
+            previous_token: (Token::Eof, Location::with_offset(&compilation_unit, 0)),
+            token: (Token::Eof, Location::with_offset(&compilation_unit, 0)),
             locations: vec![],
             activations: vec![],
         }
@@ -3518,7 +3518,7 @@ impl<'input> Parser<'input> {
                 self.compilation_unit().comments_mut().pop();
                 let location = comment.location();
                 let comment_prefix_length: usize = 3;
-                let location = Location::with_lines_and_offsets(self.compilation_unit(), location.first_line_number, location.last_line_number, location.first_offset + comment_prefix_length, location.last_offset - 2);
+                let location = Location::with_offsets(self.compilation_unit(), location.first_offset + comment_prefix_length, location.last_offset - 2);
                 let content = &comment.content.borrow()[1..];
                 let (main_body, tags) = self.parse_jetdoc_content(&location, content);
                 Some(Rc::new(JetDoc {
@@ -3559,9 +3559,9 @@ impl<'input> Parser<'input> {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &tag_content) {
                     inside_code_block = true;
                 }
-                let tag_name_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_prefix.len() - 1, line.location.first_offset() + tag_prefix.len() + tag_name.len());
+                let tag_name_location = Location::with_offsets(self.compilation_unit(), line.location.first_offset() + tag_prefix.len() - 1, line.location.first_offset() + tag_prefix.len() + tag_name.len());
                 building_content_tag_name = Some((tag_name.into(), tag_name_location));
-                let tag_content_location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + tag_prefix.len() + tag_name.len(), line.location.last_offset());
+                let tag_content_location = Location::with_offsets(self.compilation_unit(), line.location.first_offset() + tag_prefix.len() + tag_name.len(), line.location.last_offset());
                 building_content.push((tag_content.into(), tag_content_location));
             } else {
                 if regex_is_match!(r"^[\s\t]*```([^`]|$)", &line.content) {
@@ -3593,7 +3593,7 @@ impl<'input> Parser<'input> {
             if CharacterValidator::is_line_terminator(ch) {
                 lines.push(ParsingJetDocLine {
                     content: builder,
-                    location: Location::with_line_and_offsets(self.compilation_unit(), line_number, line_first_offset, index),
+                    location: Location::with_offsets(self.compilation_unit(), line_first_offset, index),
                 });
                 index += ch.len_utf8();
                 // <CR><LF> sequence
@@ -3611,14 +3611,14 @@ impl<'input> Parser<'input> {
         }
         lines.push(ParsingJetDocLine {
             content: builder,
-            location: Location::with_line_and_offsets(self.compilation_unit(), line_number, line_first_offset, index),
+            location: Location::with_offsets(self.compilation_unit(), line_first_offset, index),
         });
         for line in &mut lines {
             let line_content = line.content.to_owned();
             let prefix = regex_captures!(r"^\s*(\*\s?)?", &line_content);
             if let Some((prefix, _)) = prefix {
                 line.content = line.content[prefix.len()..].to_owned();
-                line.location = Location::with_line_and_offsets(self.compilation_unit(), line.location.first_line_number(), line.location.first_offset() + prefix.len(), line.location.last_offset());
+                line.location = Location::with_offsets(self.compilation_unit(), line.location.first_offset() + prefix.len(), line.location.last_offset());
             }
         }
 

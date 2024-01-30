@@ -434,7 +434,7 @@ impl Symbol {
                 }
                 let r: SharedMap<String, Symbol> = data.origin.static_properties(host).iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
-                    (*name, p)
+                    (name.clone(), p)
                 }).collect();
                 static_properties.replace(Some(r.clone()));
                 r
@@ -465,7 +465,7 @@ impl Symbol {
                 }
                 let r: SharedMap<String, Symbol> = data.origin.prototype(host).iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
-                    (*name, p)
+                    (name.clone(), p)
                 }).collect();
                 prototype.replace(Some(r.clone()));
                 r

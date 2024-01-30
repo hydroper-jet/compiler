@@ -99,14 +99,14 @@ mod tests {
     fn test_minimum_maximum() {
         // Long.MIN_VALUE
         let literal = NumericLiteral {
-            location: Location::with_line_and_offset(&Rc::new(CompilationUnit::default()), 1, 0),
+            location: Location::with_offset(&Rc::new(CompilationUnit::default()), 0),
             value: "0x8000_0000_0000_0000".to_owned(),
         };
         assert_eq!(i64::MIN, literal.parse_long(true).unwrap());
 
         // Long.MAX_VALUE
         let literal = NumericLiteral {
-            location: Location::with_line_and_offset(&Rc::new(CompilationUnit::default()), 1, 0),
+            location: Location::with_offset(&Rc::new(CompilationUnit::default()), 0),
             value: "0x7FFF_FFFF_FFFF_FFFF".to_owned(),
         };
         assert_eq!(i64::MAX, literal.parse_long(false).unwrap());
