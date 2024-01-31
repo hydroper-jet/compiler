@@ -1659,6 +1659,25 @@ impl Deref for Unresolved {
     }
 }
 
+/// Type symbol.
+///
+/// # Supported methods
+///
+/// * `is_type()`
+/// * `to_string()`
+/// * `includes_undefined()`
+/// * `includes_null()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Type(pub Symbol);
+
+impl Deref for Type {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_type());
+        &self.0
+    }
+}
+
 /// Any type (`*`) symbol.
 ///
 /// # Supported methods
