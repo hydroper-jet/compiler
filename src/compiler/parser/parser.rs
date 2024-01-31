@@ -2945,6 +2945,11 @@ impl<'input> Parser<'input> {
         let common = self.parse_function_common(false, block_context, true)?;
         let semicolon = if common.has_block_body() { true } else { self.parse_semicolon()? };
 
+        // Constructor must not contain a result type.
+        if constructor && common.signature.result_type.is_some() {
+            self.add_syntax_error(&name.location(), DiagnosticKind::ConstructorMustNotSpecifyResultType, diagnostic_arguments![]);
+        }
+
         // Not all kinds of functions may be generators.
         if common.contains_yield && (constructor || getter || setter) {
             self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMayNotBeGenerator, diagnostic_arguments![]);

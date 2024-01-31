@@ -307,4 +307,16 @@ impl<'a> SymbolFactory<'a> {
 
         vpaits
     }
+
+    pub fn create_virtual_property(&self, name: String) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::VirtualProperty(Rc::new(VirtualPropertyData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            static_type: RefCell::new(None),
+            getter: RefCell::new(None),
+            setter: RefCell::new(None),
+            parent_definition: RefCell::new(None),
+            jetdoc: RefCell::new(None),
+        }))))
+    }
 }

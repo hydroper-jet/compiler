@@ -40,6 +40,7 @@ pub enum DiagnosticKind {
     UnrecognizedJetDocTag = 1060,
     UnrecognizedProxy = 1061,
     EnumMembersMustBeConst = 1062,
+    ConstructorMustNotSpecifyResultType = 1063,
 }
 
 impl DiagnosticKind {

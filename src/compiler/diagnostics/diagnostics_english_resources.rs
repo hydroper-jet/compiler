@@ -45,6 +45,7 @@ lazy_static! {
         DiagnosticKind::UnrecognizedJetDocTag.id() => "Unrecognized JetDoc tag: '@{1}'".into(),
         DiagnosticKind::UnrecognizedProxy.id() => "Unrecognized proxy: '{1}'".into(),
         DiagnosticKind::EnumMembersMustBeConst.id() => "Enumeration members must be 'const'".into(),
+        DiagnosticKind::ConstructorMustNotSpecifyResultType.id() => "Constructor must not specify result type".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

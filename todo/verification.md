@@ -12,11 +12,12 @@
 ## JetDoc
 
 * [ ] Invoke `set_jetdoc()` appropriately for the symbol of definitions such as package definitions, variable definitions and virtual properties.*
-  * [ ] Verification delegates JetDoc from getter or setter to the corresponding property.
+  * [ ] Verification propagates JetDoc from getter or setter to the corresponding virtual property.
 
 ## Visibility
 
 * [ ] Always remember to set visibility of properties properly, specially calling `definition.set_visibility(Attribute::visibility(&list, at_interface_block));`.
+* [ ] Propagate visibility from getter or setter to the corresponding virtual property.
 
 ## Deferred verification
 
