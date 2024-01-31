@@ -13,7 +13,11 @@ use std::rc::Rc;
 /// # Equality
 /// 
 /// The `PartialEq` trait performs reference comparison of two maps.
+///
+/// # Hashing
 /// 
+/// The `Hash` trait performs hashing of the map by reference.
+///
 /// # Iteration
 /// 
 /// To iterate a `SharedMap`, it is required to invoke the `borrow()` method,
@@ -35,6 +39,13 @@ impl<K, V> PartialEq for SharedMap<K, V> {
 }
 
 impl<K, V> Eq for SharedMap<K, V> {}
+
+impl<K, V> Hash for SharedMap<K, V> {
+    /// Performs hashing of the map by reference.
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.as_ptr().hash(state)
+    }
+}
 
 impl<K, V> SharedMap<K, V> {
     pub fn new() -> Self {

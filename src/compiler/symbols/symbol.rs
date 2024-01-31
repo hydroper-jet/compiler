@@ -101,7 +101,14 @@ impl Symbol {
     }
 
     pub fn is_variable_property(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::VariableProperty(_))
+        matches!(
+            self.0.upgrade().unwrap().as_ref(),
+            SymbolKind::VariableProperty(_) | SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(_)
+        )
+    }
+
+    pub fn is_variable_property_after_indirect_type_substitution(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(_))
     }
 
     pub fn name(&self) -> String {
@@ -116,6 +123,7 @@ impl Symbol {
             SymbolKind::Package(data) => data.name.clone(),
             SymbolKind::PackageSet(data) => data.name.clone(),
             SymbolKind::VariableProperty(data) => data.name.clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.name(),
             _ => panic!(),
         }
     }
@@ -271,6 +279,7 @@ impl Symbol {
             SymbolKind::Package(data) => data.parent_definition.borrow().clone(),
             SymbolKind::PackageSet(data) => data.parent_definition.borrow().clone(),
             SymbolKind::VariableProperty(data) => data.parent_definition.borrow().clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.parent_definition(),
             _ => panic!(),
         }
     }
@@ -597,6 +606,7 @@ impl Symbol {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.plain_metadata(),
             SymbolKind::Alias(data) => data.plain_metadata.clone(),
             SymbolKind::VariableProperty(data) => data.plain_metadata.clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.plain_metadata(),
             _ => panic!(),
         }
     }
@@ -611,6 +621,7 @@ impl Symbol {
             SymbolKind::Alias(data) => data.visibility.get(),
             SymbolKind::PackageSet(data) => data.visibility.get(),
             SymbolKind::VariableProperty(data) => data.visibility.get(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.visibility(),
             _ => panic!(),
         }
     }
@@ -660,6 +671,7 @@ impl Symbol {
             SymbolKind::Package(data) => data.jetdoc.borrow().clone(),
             SymbolKind::PackageSet(data) => data.jetdoc.borrow().clone(),
             SymbolKind::VariableProperty(data) => data.jetdoc.borrow().clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.jetdoc(),
             _ => panic!(),
         }
     }
@@ -758,6 +770,7 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.clone(),
             _ => panic!(),
         }
     }
@@ -766,6 +779,22 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.substitute_types.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn indirect_type_parameters(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.indirect_type_parameters.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn indirect_substitute_types(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.indirect_substitute_types.clone(),
             _ => panic!(),
         }
     }
@@ -830,10 +859,22 @@ impl Symbol {
         }
     }
 
-    pub fn static_type(&self) -> Symbol {
+    pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => data.static_type.borrow().clone(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => {
+                if let Some(r) = data.static_type.borrow().as_ref() {
+                    return r.clone();
+                }
+                let r = data.origin.static_type(host);
+                if r.is_unresolved() {
+                    return r.clone();
+                }
+                let r = TypeSubstitution(host).execute(&r, &data.indirect_type_parameters, &data.indirect_substitute_types);
+                data.static_type.replace(Some(r.clone()));
+                r
+            },
             _ => panic!(),
         }
     }
@@ -852,6 +893,7 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => data.read_only.get(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(),
             _ => panic!(),
         }
     }
@@ -938,6 +980,7 @@ impl ToString for Symbol {
             SymbolKind::Package(_) |
             SymbolKind::PackageSet(_) |
             SymbolKind::VariableProperty(_) => self.fully_qualified_name(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.fully_qualified_name(),
             _ => panic!(),
         }
     }
@@ -950,6 +993,7 @@ pub(crate) enum SymbolKind {
     Package(Rc<PackageData>),
     PackageSet(Rc<PackageSetData>),
     VariableProperty(Rc<VariablePropertyData>),
+    VariablePropertyAfterIndirectTypeSubstitution(Rc<VariablePropertyAfterIndirectTypeSubstitutionData>),
 }
 
 pub(crate) enum TypeKind {
@@ -1081,6 +1125,13 @@ pub(crate) struct VariablePropertyData {
     pub constant_initializer: RefCell<Option<Symbol>>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+}
+
+pub(crate) struct VariablePropertyAfterIndirectTypeSubstitutionData {
+    pub origin: Symbol,
+    pub indirect_type_parameters: SharedArray<Symbol>,
+    pub indirect_substitute_types: SharedArray<Symbol>,
+    pub static_type: RefCell<Option<Symbol>>,
 }
 
 /// Unresolved symbol.
@@ -1491,6 +1542,35 @@ impl Deref for VariableProperty {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_variable_property());
+        &self.0
+    }
+}
+
+/// Symbol for variable property after indirect type substitution.
+///
+/// # Supported methods
+///
+/// * `is_variable_property()`
+/// * `is_variable_property_after_indirect_type_substitution()`
+/// * `name()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `parent_definition()`
+/// * `origin()` — The original variable property.
+/// * `indirect_type_parameters()` — Type parameters from indirect symbol.
+/// * `indirect_substitute_types()` — Substitute types from indirect symbol.
+/// * `visibility()`
+/// * `static_type()`
+/// * `read_only()`
+/// * `plain_metadata()`
+/// * `jetdoc()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct VariablePropertyAfterIndirectTypeSubstitution(pub Symbol);
+
+impl Deref for VariablePropertyAfterIndirectTypeSubstitution {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_variable_property_after_indirect_type_substitution());
         &self.0
     }
 }

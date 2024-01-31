@@ -166,11 +166,11 @@ impl<'a> SymbolFactory<'a> {
         let parameter_count = parameters.length();
         assert_eq!(substitute_types.length(), parameter_count);
 
-        let mut list = self.host.types_after_explicit_type_substitution.get(&origin);
+        let mut list = self.host.taets.get(&origin);
         let empty_list = vec![];
         if list.is_none() {
             list = Some(&empty_list);
-            self.host.types_after_explicit_type_substitution.insert(origin.clone(), vec![]);
+            self.host.taets.insert(origin.clone(), vec![]);
         }
         'taets: for taets in list.unwrap() {
             let mut substitute_types_1 = substitute_types.iter();
@@ -198,7 +198,7 @@ impl<'a> SymbolFactory<'a> {
             list_of_to_proxies: RefCell::new(None),
         })))));
 
-        let list = self.host.types_after_explicit_type_substitution.get_mut(&origin).unwrap();
+        let list = self.host.taets.get_mut(&origin).unwrap();
         list.push(taets.clone());
 
         taets
@@ -270,5 +270,41 @@ impl<'a> SymbolFactory<'a> {
             plain_metadata: SharedArray::new(),
             jetdoc: RefCell::new(None),
         }))))
+    }
+
+    pub fn create_variable_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
+        // Verify parameter count
+        assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
+
+        let mut list = self.host.vpaits.get(indirect_type_parameters);
+        let empty_list = vec![];
+        if list.is_none() {
+            list = Some(&empty_list);
+            self.host.vpaits.insert(indirect_type_parameters.clone(), vec![]);
+        }
+        'vpaits: for vpaits in list.unwrap() {
+            let mut substitute_types_1 = indirect_substitute_types.iter();
+            let substitute_types_2 = vpaits.indirect_substitute_types();
+            let mut substitute_types_2 = substitute_types_2.iter();
+            while let Some(substitute_type_1) = substitute_types_1.next() {
+                let substitute_type_2 = substitute_types_2.next().unwrap();
+                if substitute_type_1 != substitute_type_2 {
+                    continue 'vpaits;
+                }
+            }
+            return vpaits.clone();
+        }
+
+        let vpaits = Symbol(self.host.arena.allocate(SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(Rc::new(VariablePropertyAfterIndirectTypeSubstitutionData {
+            origin: origin.clone(),
+            indirect_type_parameters: indirect_type_parameters.clone(),
+            indirect_substitute_types: indirect_substitute_types.clone(),
+            static_type: RefCell::new(None),
+        }))));
+
+        let list = self.host.vpaits.get_mut(&indirect_type_parameters).unwrap();
+        list.push(vpaits.clone());
+
+        vpaits
     }
 }

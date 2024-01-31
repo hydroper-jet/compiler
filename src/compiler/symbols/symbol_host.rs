@@ -8,10 +8,16 @@ pub struct SymbolHost {
     pub(crate) unresolved: Symbol,
     pub(crate) any_type: Symbol,
     pub(crate) void_type: Symbol,
+
     pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) nullable_types: HashMap<Symbol, Symbol>,
-    pub(crate) types_after_explicit_type_substitution: HashMap<Symbol, Vec<Symbol>>,
+
+    /// Types after explicit type substitution.
+    pub(crate) taets: HashMap<Symbol, Vec<Symbol>>,
+    /// Variable properties after indirect type substitution.
+    pub(crate) vpaits: HashMap<SharedArray<Symbol>, Vec<Symbol>>,
+
     pub(crate) top_level_package: Symbol,
     pub(crate) jet_lang_package: RefCell<Option<Symbol>>,
     pub(crate) object_type: RefCell<Option<Symbol>>,
@@ -28,7 +34,8 @@ impl SymbolHost {
             function_types: HashMap::new(),
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
-            types_after_explicit_type_substitution: HashMap::new(),
+            taets: HashMap::new(),
+            vpaits: HashMap::new(),
             top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
                 name: String::new(),
                 parent_definition: RefCell::new(None),

@@ -17,3 +17,11 @@
 ## Visibility
 
 * [ ] Always remember to set visibility of properties properly, specially calling `definition.set_visibility(Attribute::visibility(&list, at_interface_block));`.
+
+## Deferred verification
+
+Verification must be deferred in cases where the semantic model produces the `Unresolved` symbol.
+
+* Structural types such as function types and these after type substitution must not be constructed containing any `Unresolved` compound.
+* Extends list and implements list must not contain `Unresolved` compound.
+* There are miscellaneous other cases not written here yet.

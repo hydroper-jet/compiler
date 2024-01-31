@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::hash::Hash;
 use std::rc::Rc;
 
 /// A shared mutable array of `T` managed by reference counting.
@@ -11,6 +12,10 @@ use std::rc::Rc;
 /// # Equality
 /// 
 /// The `PartialEq` trait performs reference comparison of two arrays.
+/// 
+/// # Hashing
+/// 
+/// The `Hash` trait performs hashing of the array by reference.
 #[derive(Clone)]
 pub struct SharedArray<T>(Rc<RefCell<Vec<T>>>);
 
@@ -21,6 +26,13 @@ impl<T> PartialEq for SharedArray<T> {
 }
 
 impl<T> Eq for SharedArray<T> {}
+
+impl<T> Hash for SharedArray<T> {
+    /// Performs hashing of the array by reference.
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.as_ptr().hash(state)
+    }
+}
 
 impl<T> SharedArray<T> {
     pub fn new() -> Self {
