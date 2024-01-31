@@ -13,12 +13,15 @@ impl<'a> TypeSubstitution<'a> {
             return symbol.clone();
         } else if symbol.is_type() {
             if symbol.is_function_type() {
-                let result_type = self.execute(&symbol.result_type(), type_parameters, substitute_types);
+                let result_type = symbol.result_type().type_substitution(self.0, type_parameters, substitute_types);
                 let mut parameters: Vec<Rc<ParameterOfFunctionType>> = Vec::new();
                 for param in symbol.parameters().iter() {
                     parameters.push(Rc::new(param.type_substitution(self.0, type_parameters, substitute_types)));
                 }
                 return self.0.factory().create_function_type(parameters, result_type);
+            } else if symbol.is_nullable_type() {
+                let base = &symbol.base().type_substitution(self.0, type_parameters, substitute_types);
+                return self.0.factory().create_nullable_type(base);
             }
             return symbol.clone();
         } else if symbol.is_variable_property() {

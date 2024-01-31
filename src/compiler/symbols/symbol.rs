@@ -145,6 +145,12 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(_))
     }
 
+    /// Performs type substitution. Invoking this method is equivalent to
+    /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
+    pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
+        TypeSubstitution(host).execute(self, type_parameters, substitute_types)
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {

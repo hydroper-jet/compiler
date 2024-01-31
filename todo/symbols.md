@@ -49,7 +49,7 @@
   * [x] Unresolved
   * [x] Types
     * [x] Function type
-    * [ ] Nullable type
+    * [x] Nullable type
     * [ ] Tuple type
     * [ ] Type after explicit type substitution
     * [ ] Type parameter
