@@ -2852,8 +2852,11 @@ impl<'input> Parser<'input> {
 
         // Forbid destructuring bindings in enumerations.
         if !has_static && matches!(context, ParsingDirectiveContext::EnumBlock) {
+            if kind != VariableDefinitionKind::Const {
+                self.add_syntax_error(&kind_location, DiagnosticKind::EnumMembersMustBeConst, diagnostic_arguments![]);
+            }
             for binding in &bindings {
-                let malformed = matches!(binding.destructuring.destructuring.as_ref(), Expression::QualifiedIdentifier(_))
+                let malformed = !matches!(binding.destructuring.destructuring.as_ref(), Expression::QualifiedIdentifier(_))
                     || binding.destructuring.type_annotation.is_some();
                 if malformed {
                     self.add_syntax_error(&binding.location(), DiagnosticKind::MalformedEnumMember, diagnostic_arguments![]);

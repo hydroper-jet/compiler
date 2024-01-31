@@ -11,7 +11,7 @@ pub struct VariableDefinition {
     pub bindings: Vec<Rc<VariableBinding>>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum VariableDefinitionKind {
     Var,
     Const,

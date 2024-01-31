@@ -317,12 +317,8 @@ impl Symbol {
     pub fn extends_class(&self, host: &mut SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                data.extends_class.borrow().clone()
-            },
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                Some(host.object_type())
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.extends_class.borrow().clone(),
+            SymbolKind::Type(TypeKind::EnumType(_)) => Some(host.object_type()),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
                 if let Some(r) = data.extends_class.borrow().as_ref() {
                     return Some(r.clone());
@@ -859,6 +855,7 @@ impl Symbol {
         }
     }
 
+    /// Static type of a value or property. Possibly `Unresolved`.
     pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {

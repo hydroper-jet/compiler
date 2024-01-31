@@ -39,6 +39,7 @@ pub enum DiagnosticKind {
     FailedParsingJetDocTag = 1059,
     UnrecognizedJetDocTag = 1060,
     UnrecognizedProxy = 1061,
+    EnumMembersMustBeConst = 1062,
 }
 
 impl DiagnosticKind {
