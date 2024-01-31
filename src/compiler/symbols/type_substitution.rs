@@ -31,6 +31,17 @@ impl<'a> TypeSubstitution<'a> {
             } else if symbol.is_nullable_type() {
                 let base = &symbol.base().type_substitution(self.0, type_parameters, substitute_types);
                 return self.0.factory().create_nullable_type(base);
+            } else if symbol.is_tuple_type() {
+                let el: Vec<Symbol> = symbol.element_types().iter().map(|t| t.type_substitution(self.0, type_parameters, substitute_types)).collect();
+                return self.0.factory().create_tuple_type(el);
+            } else if symbol.is_type_after_explicit_type_substitution() {
+                let new_substitute_types: SharedArray<Symbol> = symbol.substitute_types().iter().map(|t| t.type_substitution(self.0, type_parameters, substitute_types)).collect();
+                return self.0.factory().create_type_after_explicit_type_substitution(&symbol.origin(), &new_substitute_types);
+            } else if symbol.is_type_parameter_type() {
+                let i = type_parameters.index_of(&symbol);
+                if let Some(i) = i {
+                    return substitute_types.get(i).unwrap();
+                }
             }
             return symbol.clone();
         } else if symbol.is_variable_property() {

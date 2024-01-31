@@ -55,11 +55,11 @@ impl<T> SharedArray<T> {
         self.0.borrow().contains(value)
     }
 
-    pub fn index_of(&self, value: T) -> Option<usize> where T: PartialEq {
+    pub fn index_of(&self, value: &T) -> Option<usize> where T: PartialEq {
         let this = self.0.borrow();
         for i in 0..self.length() {
             let value_2 = this.get(i).unwrap();
-            if &value == value_2 {
+            if value == value_2 {
                 return Some(i);
             }
         }

@@ -45,17 +45,6 @@
   * [x] Factory creation
 * [x] `FunctionAfterExplicitOrIndirectTypeSubstitution`
   * [x] Factory creation
-* [ ] Type substitution
-  * [x] Unresolved
-  * [x] Types
-    * [x] Function type
-    * [x] Nullable type
-    * [ ] Tuple type
-    * [ ] Type after explicit type substitution
-    * [ ] Type parameter
-  * [x] Variable property
-  * [x] Virtual property
-  * [x] Function
 * [ ] `Scope`
   * [ ] Factory creation
 * [ ] `Value`
@@ -66,3 +55,14 @@
   * [ ] Factory creation
 * [ ] `ImportMetaSymbol`
 * [ ] `ImportMetaEnvSymbol`
+
+## Covered (logic)
+
+* [x] Type substitution
+* Type relationship
+  * [ ] `is_subtype_of()`
+    * Class hierarchy
+    * Class implementors
+    * Interface hierarchy
+  * [ ] `is_ascending_type_of()`
+* [ ] Default value
