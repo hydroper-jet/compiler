@@ -60,9 +60,8 @@
   * [x] Factory creation
 * [x] `FunctionSymbol`
   * [x] Factory creation
-* [ ] `FunctionAfterExplicitOrIndirectTypeSubstitution`
-  * [ ] Static type, if unresolved, mutates on next retrieval.
-  * [ ] Factory creation
+* [x] `FunctionAfterExplicitOrIndirectTypeSubstitution`
+  * [x] Factory creation
 * [ ] `Scope`
   * [ ] Factory creation
 * [ ] `Value`
