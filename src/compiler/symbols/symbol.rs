@@ -747,11 +747,26 @@ impl Symbol {
         }
     }
 
+    /// Indicates whether a type includes the `undefined` value or not.
+    pub fn includes_undefined(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Type(TypeKind::AnyType) |
+            SymbolKind::Type(TypeKind::VoidType) => { return true; },
+            _ => {
+                if self.is_type() {
+                    return false;
+                }
+                panic!();
+            },
+        }
+    }
+
     /// Indicates whether a type includes the `null` value or not.
     pub fn includes_null(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::AnyType) => { return true; },
+            SymbolKind::Type(TypeKind::AnyType) |
             SymbolKind::Type(TypeKind::NullableType(_)) => { return true; },
             _ => {
                 if self.is_type() {
@@ -920,6 +935,16 @@ impl Symbol {
                 data.constant_initializer.replace(value.map(|v| v.clone()));
             },
             _ => panic!(),
+        }
+    }
+
+    /// Indicates whether a variable property is optional for an object initializer.
+    pub fn is_optional_variable(&self, host: &mut SymbolHost) -> Result<bool, DeferVerificationError> {
+        let st = self.static_type(host);
+        if st.is_unresolved() {
+            Err(DeferVerificationError)
+        } else {
+            Ok(st.includes_null() || st.includes_undefined())
         }
     }
 }
@@ -1154,6 +1179,7 @@ impl Deref for Unresolved {
 /// * `is_type()`
 /// * `is_any_type()`
 /// * `to_string()`
+/// * `includes_undefined()` — Returns `true`.
 /// * `includes_null()` — Returns `true`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct AnyType(pub Symbol);
@@ -1173,6 +1199,7 @@ impl Deref for AnyType {
 /// * `is_type()`
 /// * `is_void_type()`
 /// * `to_string()`
+/// * `includes_undefined()` — Returns `true`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct VoidType(pub Symbol);
@@ -1221,6 +1248,7 @@ impl Deref for VoidType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ClassType(pub Symbol);
@@ -1258,6 +1286,7 @@ impl Deref for ClassType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct EnumType(pub Symbol);
@@ -1291,6 +1320,7 @@ impl Deref for EnumType {
 /// * `set_visibility()`
 /// * `jetdoc()`
 /// * `set_jetdoc()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct InterfaceType(pub Symbol);
@@ -1312,6 +1342,7 @@ impl Deref for InterfaceType {
 /// * `to_string()`
 /// * `parameters()`
 /// * `result_type()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionType(pub Symbol);
@@ -1338,6 +1369,7 @@ pub struct FunctionTypeParameter {
 /// * `is_tuple_type()`
 /// * `to_string()`
 /// * `element_types()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TupleType(pub Symbol);
@@ -1358,6 +1390,7 @@ impl Deref for TupleType {
 /// * `is_nullable_type()`
 /// * `to_string()`
 /// * `base()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `true`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct NullableType(pub Symbol);
@@ -1378,6 +1411,7 @@ impl Deref for NullableType {
 /// * `is_type_parameter_type()`
 /// * `to_string()`
 /// * `name()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeParameterType(pub Symbol);
@@ -1419,6 +1453,7 @@ impl Deref for TypeParameterType {
 /// * `plain_metadata()`
 /// * `visibility()`
 /// * `jetdoc()`
+/// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeAfterExplicitTypeSubstitution(pub Symbol);

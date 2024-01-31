@@ -55,4 +55,7 @@
   * [ ] Constants
   * [ ] `ConversionValue`
   * [ ] Reference values mentioned in property resolution
+  * [ ] `ImportMetaOutputValue`
   * [ ] Factory creation
+* [ ] `ImportMetaSymbol`
+* [ ] `ImportMetaEnvSymbol`
