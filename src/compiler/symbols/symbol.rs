@@ -161,7 +161,7 @@ impl Symbol {
             SymbolKind::VirtualProperty(data) => data.name.clone(),
             SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.name(),
             SymbolKind::Function(data) => data.name.clone(),
-            SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.name(),
+            SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => data.origin.name(),
             _ => panic!(),
         }
     }
@@ -902,7 +902,7 @@ impl Symbol {
         }
     }
 
-    pub fn parameters(&self) -> SharedArray<Rc<FunctionTypeParameter>> {
+    pub fn parameters(&self) -> SharedArray<Rc<ParameterOfFunctionType>> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::FunctionType(data)) => {
@@ -1114,7 +1114,8 @@ impl Symbol {
                 let mut deduced_type: Option<Symbol> = None;
 
                 // Deduce [[Type]] from getter
-                let getter = data.getter.borrow().as_ref();
+                let getter = data.getter.borrow();
+                let getter = getter.as_ref();
                 if let Some(getter) = getter {
                     let signature: Symbol = getter.signature(host);
                     if !signature.is_unresolved() {
@@ -1123,11 +1124,12 @@ impl Symbol {
                 }
 
                 // Deduce [[Type]] from setter
-                let setter = data.setter.borrow().as_ref();
+                let setter = data.setter.borrow();
+                let setter = setter.as_ref();
                 if let Some(setter) = setter {
                     let signature: Symbol = setter.signature(host);
                     if !signature.is_unresolved() {
-                        deduced_type = Some(signature.parameters().get(0).unwrap().static_type);
+                        deduced_type = Some(signature.parameters().get(0).unwrap().static_type.clone());
                     }
                 }
 
@@ -1500,7 +1502,7 @@ pub(crate) struct InterfaceTypeData {
 }
 
 pub(crate) struct FunctionTypeData {
-    pub parameters: SharedArray<Rc<FunctionTypeParameter>>,
+    pub parameters: SharedArray<Rc<ParameterOfFunctionType>>,
     pub result_type: Symbol,
 }
 
@@ -1834,10 +1836,23 @@ impl Deref for FunctionType {
     }
 }
 
-pub struct FunctionTypeParameter {
+/// Parameter of a function type.
+pub struct ParameterOfFunctionType {
     pub kind: ParameterKind,
     pub name: String,
+    /// Static type of the parameter. It is never `Unresolved` as
+    /// function types are only created after all compound types are resolved.
     pub static_type: Symbol,
+}
+
+impl ParameterOfFunctionType {
+    pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
+        ParameterOfFunctionType {
+            kind: self.kind,
+            name: self.name.clone(),
+            static_type: TypeSubstitution(host).execute(&self.static_type, type_parameters, substitute_types),
+        }
+    }
 }
 
 /// Tuple type symbol.

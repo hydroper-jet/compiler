@@ -75,7 +75,7 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned function type.
-    pub fn create_function_type(&mut self, parameters: Vec<Rc<FunctionTypeParameter>>, result_type: Symbol) -> Symbol {
+    pub fn create_function_type(&mut self, parameters: Vec<Rc<ParameterOfFunctionType>>, result_type: Symbol) -> Symbol {
         let parameter_count = parameters.len();
         let mut collection = self.host.function_types.get_mut(&parameter_count);
         let mut empty_collection = vec![];
@@ -273,6 +273,7 @@ impl<'a> SymbolFactory<'a> {
         }))))
     }
 
+    /// Creates an interned variable property after indirect type substitution.
     pub fn create_variable_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
@@ -283,7 +284,7 @@ impl<'a> SymbolFactory<'a> {
             base_list = Some(&mut empty_base_list);
             self.host.vapaits.insert(origin.clone(), HashMap::new());
         }
-        let mut base_list = base_list.unwrap();
+        let base_list = base_list.unwrap();
 
         let mut list = base_list.get(indirect_type_parameters);
         let empty_list = vec![];
@@ -329,6 +330,7 @@ impl<'a> SymbolFactory<'a> {
         }))))
     }
 
+    /// Creates an interned virtual property after indirect type substitution.
     pub fn create_virtual_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
@@ -339,7 +341,7 @@ impl<'a> SymbolFactory<'a> {
             base_list = Some(&mut empty_base_list);
             self.host.vipaits.insert(origin.clone(), HashMap::new());
         }
-        let mut base_list = base_list.unwrap();
+        let base_list = base_list.unwrap();
 
         let mut list = base_list.get(indirect_type_parameters);
         let empty_list = vec![];
@@ -390,6 +392,7 @@ impl<'a> SymbolFactory<'a> {
         }))))
     }
 
+    /// Creates an interned function after explicit or indirect type substitution.
     pub fn create_function_after_explicit_or_indirect_type_substitution(&mut self, origin: &Symbol, explicit_or_indirect_type_parameters: &SharedArray<Symbol>, explicit_or_indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(explicit_or_indirect_type_parameters.length(), explicit_or_indirect_substitute_types.length());
@@ -400,7 +403,7 @@ impl<'a> SymbolFactory<'a> {
             base_list = Some(&mut empty_base_list);
             self.host.faeoits.insert(origin.clone(), HashMap::new());
         }
-        let mut base_list = base_list.unwrap();
+        let base_list = base_list.unwrap();
 
         let mut list = base_list.get(explicit_or_indirect_type_parameters);
         let empty_list = vec![];

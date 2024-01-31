@@ -38,23 +38,6 @@
 * [x] `VariablePropertyAfterIndirectTypeSubstitution`
   * [x] Factory creation
 * [x] `VirtualProperty`
-  * [x] `is_virtual_property()`
-  * [x] `name()`
-  * [x] `fully_qualified_name()`
-  * [x] `to_string()`
-  * [x] `parent_definition()`
-  * [x] `set_parent_definition()`
-  * [x] `visibility()`
-  * [x] `set_visibility()`
-  * [x] `static_type()`
-  * [x] `read_only()`
-  * [x] `write_only()`
-  * [x] `getter()`
-  * [x] `set_getter()`
-  * [x] `setter()`
-  * [x] `set_setter()`
-  * [x] `jetdoc()`
-  * [x] `set_jetdoc()`
   * [x] Factory creation
 * [x] `VirtualPropertyAfterIndirectTypeSubstitution`
   * [x] Factory creation
@@ -62,6 +45,17 @@
   * [x] Factory creation
 * [x] `FunctionAfterExplicitOrIndirectTypeSubstitution`
   * [x] Factory creation
+* [ ] Type substitution
+  * [x] Unresolved
+  * [x] Types
+    * [x] Function type
+    * [ ] Nullable type
+    * [ ] Tuple type
+    * [ ] Type after explicit type substitution
+    * [ ] Type parameter
+  * [x] Variable property
+  * [x] Virtual property
+  * [x] Function
 * [ ] `Scope`
   * [ ] Factory creation
 * [ ] `Value`
