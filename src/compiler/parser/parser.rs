@@ -1989,6 +1989,10 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_block(&mut self, context: ParsingDirectiveContext) -> Result<Block, ParsingFailure> {
+        self.parse_block_with_metadata(context, None)
+    }
+
+    fn parse_block_with_metadata(&mut self, context: ParsingDirectiveContext, metadata: Option<Vec<Attribute>>) -> Result<Block, ParsingFailure> {
         self.mark_location();
         self.expect(Token::LeftBrace)?;
         let mut directives = vec![];
@@ -2004,6 +2008,7 @@ impl<'input> Parser<'input> {
         self.expect(Token::RightBrace)?;
         Ok(Block { 
             location: self.pop_location(),
+            metadata,
             directives,
         })
     }
@@ -2639,6 +2644,17 @@ impl<'input> Parser<'input> {
                     };
                     self.parse_attribute_identifier_names(&mut context)?;
                     return self.parse_annotatable_directive(context);
+                }
+            }
+            // Block statement with meta-data
+            if self.peek(Token::LeftBrace) {
+                if let Some(metadata) = exp.to_metadata() {
+                    let context = context.override_control_context(true, ParsingControlContext {
+                        breakable: true,
+                        iteration: false,
+                    });
+                    let block = self.parse_block_with_metadata(context, Some(metadata))?;
+                    return Ok((Rc::new(Directive::Block(block)), true));
                 }
             }
             let semicolon = self.parse_semicolon()?;
