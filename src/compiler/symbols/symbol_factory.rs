@@ -1,5 +1,6 @@
 use crate::ns::*;
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct SymbolFactory<'a> {
@@ -275,37 +276,45 @@ impl<'a> SymbolFactory<'a> {
     pub fn create_variable_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
+        
+        let mut base_list = self.host.vapaits.get_mut(origin);
+        let mut empty_base_list = HashMap::<SharedArray<Symbol>, Vec<Symbol>>::new();
+        if base_list.is_none() {
+            base_list = Some(&mut empty_base_list);
+            self.host.vapaits.insert(origin.clone(), HashMap::new());
+        }
+        let mut base_list = base_list.unwrap();
 
-        let mut list = self.host.vpaits.get(indirect_type_parameters);
+        let mut list = base_list.get(indirect_type_parameters);
         let empty_list = vec![];
         if list.is_none() {
             list = Some(&empty_list);
-            self.host.vpaits.insert(indirect_type_parameters.clone(), vec![]);
+            base_list.insert(indirect_type_parameters.clone(), vec![]);
         }
-        'vpaits: for vpaits in list.unwrap() {
+        'vapaits: for vapaits in list.unwrap() {
             let mut substitute_types_1 = indirect_substitute_types.iter();
-            let substitute_types_2 = vpaits.indirect_substitute_types();
+            let substitute_types_2 = vapaits.indirect_substitute_types();
             let mut substitute_types_2 = substitute_types_2.iter();
             while let Some(substitute_type_1) = substitute_types_1.next() {
                 let substitute_type_2 = substitute_types_2.next().unwrap();
                 if substitute_type_1 != substitute_type_2 {
-                    continue 'vpaits;
+                    continue 'vapaits;
                 }
             }
-            return vpaits.clone();
+            return vapaits.clone();
         }
 
-        let vpaits = Symbol(self.host.arena.allocate(SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(Rc::new(VariablePropertyAfterIndirectTypeSubstitutionData {
+        let vapaits = Symbol(self.host.arena.allocate(SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(Rc::new(VariablePropertyAfterIndirectTypeSubstitutionData {
             origin: origin.clone(),
             indirect_type_parameters: indirect_type_parameters.clone(),
             indirect_substitute_types: indirect_substitute_types.clone(),
             static_type: RefCell::new(None),
         }))));
 
-        let list = self.host.vpaits.get_mut(&indirect_type_parameters).unwrap();
-        list.push(vpaits.clone());
+        let list = self.host.vapaits.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
+        list.push(vapaits.clone());
 
-        vpaits
+        vapaits
     }
 
     pub fn create_virtual_property(&self, name: String) -> Symbol {
@@ -317,6 +326,67 @@ impl<'a> SymbolFactory<'a> {
             setter: RefCell::new(None),
             parent_definition: RefCell::new(None),
             jetdoc: RefCell::new(None),
+        }))))
+    }
+
+    pub fn create_virtual_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
+        // Verify parameter count
+        assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
+
+        let mut base_list = self.host.vipaits.get_mut(origin);
+        let mut empty_base_list = HashMap::<SharedArray<Symbol>, Vec<Symbol>>::new();
+        if base_list.is_none() {
+            base_list = Some(&mut empty_base_list);
+            self.host.vipaits.insert(origin.clone(), HashMap::new());
+        }
+        let mut base_list = base_list.unwrap();
+
+        let mut list = base_list.get(indirect_type_parameters);
+        let empty_list = vec![];
+        if list.is_none() {
+            list = Some(&empty_list);
+            base_list.insert(indirect_type_parameters.clone(), vec![]);
+        }
+        'vipaits: for vipaits in list.unwrap() {
+            let mut substitute_types_1 = indirect_substitute_types.iter();
+            let substitute_types_2 = vipaits.indirect_substitute_types();
+            let mut substitute_types_2 = substitute_types_2.iter();
+            while let Some(substitute_type_1) = substitute_types_1.next() {
+                let substitute_type_2 = substitute_types_2.next().unwrap();
+                if substitute_type_1 != substitute_type_2 {
+                    continue 'vipaits;
+                }
+            }
+            return vipaits.clone();
+        }
+
+        let vipaits = Symbol(self.host.arena.allocate(SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(Rc::new(VirtualPropertyAfterIndirectTypeSubstitutionData {
+            origin: origin.clone(),
+            indirect_type_parameters: indirect_type_parameters.clone(),
+            indirect_substitute_types: indirect_substitute_types.clone(),
+            static_type: RefCell::new(None),
+            getter: RefCell::new(None),
+            setter: RefCell::new(None),
+        }))));
+
+        let list = self.host.vipaits.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
+        list.push(vipaits.clone());
+
+        vipaits
+    }
+
+    pub fn create_function(&self, name: String, signature: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Function(Rc::new(FunctionSymbolData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            parent_definition: RefCell::new(None),
+            plain_metadata: SharedArray::new(),
+            jetdoc: RefCell::new(None),
+            flags: RefCell::new(FunctionSymbolFlags::empty()),
+            signature: RefCell::new(signature.clone()),
+            type_parameters: RefCell::new(None),
+            of_virtual_property: RefCell::new(None),
+            overriden_by: SharedArray::new(),
         }))))
     }
 }

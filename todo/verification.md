@@ -1,5 +1,10 @@
 # Verification
 
+## Function definitions
+
+* [ ] Invoke `symbol.set_is_constructor(true)` for constructor definitions.
+* [ ] Invoke `symbol.set_of_virtual_property(p)` appropriately for getters and setters.
+
 ## Enumeration definitions
 
 * [ ] Lazily initialize special methods (normal and set enumerations)

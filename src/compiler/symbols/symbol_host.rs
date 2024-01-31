@@ -16,7 +16,9 @@ pub struct SymbolHost {
     /// Types after explicit type substitution.
     pub(crate) taets: HashMap<Symbol, Vec<Symbol>>,
     /// Variable properties after indirect type substitution.
-    pub(crate) vpaits: HashMap<SharedArray<Symbol>, Vec<Symbol>>,
+    pub(crate) vapaits: HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>,
+    /// Virtual properties after indirect type substitution.
+    pub(crate) vipaits: HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>,
 
     pub(crate) top_level_package: Symbol,
     pub(crate) jet_lang_package: RefCell<Option<Symbol>>,
@@ -35,7 +37,8 @@ impl SymbolHost {
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
             taets: HashMap::new(),
-            vpaits: HashMap::new(),
+            vapaits: HashMap::new(),
+            vipaits: HashMap::new(),
             top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
                 name: String::new(),
                 parent_definition: RefCell::new(None),

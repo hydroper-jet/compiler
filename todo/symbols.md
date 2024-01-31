@@ -56,12 +56,10 @@
   * [x] `jetdoc()`
   * [x] `set_jetdoc()`
   * [x] Factory creation
-* [ ] `VirtualPropertyAfterIndirectTypeSubstitution`
-  * [ ] Static type, if unresolved, mutates on next retrieval.
-  * [ ] Factory creation
-* [ ] `FunctionSymbol`
-  * [ ] JetDoc
-  * [ ] Factory creation
+* [x] `VirtualPropertyAfterIndirectTypeSubstitution`
+  * [x] Factory creation
+* [x] `FunctionSymbol`
+  * [x] Factory creation
 * [ ] `FunctionAfterExplicitOrIndirectTypeSubstitution`
   * [ ] Static type, if unresolved, mutates on next retrieval.
   * [ ] Factory creation
