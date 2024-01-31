@@ -47,7 +47,6 @@ impl<'a> SymbolFactory<'a> {
             name,
             visibility: Cell::new(Visibility::Internal),
             parent_definition: RefCell::new(None),
-            extends_class: RefCell::new(None),
             representation_type: RefCell::new(None),
             is_set_enumeration,
             static_properties: SharedMap::new(),
@@ -256,6 +255,19 @@ impl<'a> SymbolFactory<'a> {
             parent_definition: RefCell::new(None),
             packages,
             visibility: Cell::new(Visibility::Internal),
+            jetdoc: RefCell::new(None),
+        }))))
+    }
+
+    pub fn create_variable_property(&self, name: String, read_only: bool, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::VariableProperty(Rc::new(VariablePropertyData {
+            name,
+            visibility: Cell::new(Visibility::Internal),
+            read_only: Cell::new(read_only),
+            static_type: RefCell::new(static_type.clone()),
+            constant_initializer: RefCell::new(None),
+            parent_definition: RefCell::new(None),
+            plain_metadata: SharedArray::new(),
             jetdoc: RefCell::new(None),
         }))))
     }

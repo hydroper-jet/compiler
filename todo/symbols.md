@@ -34,8 +34,24 @@
 * [x] `PackageSet`
   * [x] Factory creation
 * [ ] `VariableProperty`
-  * [ ] JetDoc
-  * [ ] Factory creation
+  * [x] `is_variable_property()`
+  * [x] `name()`
+  * [x] `fully_qualified_name()`
+  * [x] `to_string()`
+  * [x] `parent_definition()`
+  * [x] `set_parent_definition()`
+  * [x] `visibility()`
+  * [x] `set_visibility()`
+  * [x] `static_type()`
+  * [x] `set_static_type()`
+  * [x] `read_only()`
+  * [x] `set_read_only()`
+  * [x] `constant_initializer()`
+  * [x] `set_constant_initializer()`
+  * [x] `plain_metadata()`
+  * [x] `jetdoc()`
+  * [x] `set_jetdoc()`
+  * [x] Factory creation
 * [ ] `VariablePropertyAfterIndirectTypeSubstitution`
   * [ ] Static type, if unresolved, mutates on next retrieval.
   * [ ] JetDoc

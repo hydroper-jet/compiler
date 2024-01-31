@@ -100,6 +100,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::PackageSet(_))
     }
 
+    pub fn is_variable_property(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::VariableProperty(_))
+    }
+
     pub fn name(&self) -> String {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -111,6 +115,7 @@ impl Symbol {
             SymbolKind::Alias(data) => data.name.clone(),
             SymbolKind::Package(data) => data.name.clone(),
             SymbolKind::PackageSet(data) => data.name.clone(),
+            SymbolKind::VariableProperty(data) => data.name.clone(),
             _ => panic!(),
         }
     }
@@ -265,30 +270,34 @@ impl Symbol {
             SymbolKind::Alias(data) => data.parent_definition.borrow().clone(),
             SymbolKind::Package(data) => data.parent_definition.borrow().clone(),
             SymbolKind::PackageSet(data) => data.parent_definition.borrow().clone(),
+            SymbolKind::VariableProperty(data) => data.parent_definition.borrow().clone(),
             _ => panic!(),
         }
     }
 
-    pub fn set_parent_definition(&self, value: Option<Symbol>) {
+    pub fn set_parent_definition(&self, value: Option<&Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             SymbolKind::Alias(data) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             SymbolKind::Package(data) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             SymbolKind::PackageSet(data) => {
-                data.parent_definition.replace(value);
+                data.parent_definition.replace(value.map(|v| v.clone()));
+            },
+            SymbolKind::VariableProperty(data) => {
+                data.parent_definition.replace(value.map(|v| v.clone()));
             },
             _ => panic!(),
         }
@@ -300,12 +309,10 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref extends_class, .. } = data.as_ref();
-                extends_class.borrow().clone()
+                data.extends_class.borrow().clone()
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref extends_class, .. } = data.as_ref();
-                extends_class.borrow().clone()
+                Some(host.object_type())
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => {
                 if let Some(r) = data.extends_class.borrow().as_ref() {
@@ -327,16 +334,11 @@ impl Symbol {
         }
     }
 
-    pub fn set_extends_class(&self, value: Option<Symbol>) {
+    pub fn set_extends_class(&self, value: Option<&Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref extends_class, .. } = data.as_ref();
-                extends_class.replace(value);
-            },
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref extends_class, .. } = data.as_ref();
-                extends_class.replace(value);
+                data.extends_class.replace(value.map(|c| c.clone()));
             },
             _ => panic!(),
         }
@@ -359,12 +361,12 @@ impl Symbol {
     /// Enumeration representation type. It may be `Unresolved` in certain occasions.
     ///
     /// **Default**: `None`.
-    pub fn set_enumeration_representation_type(&self, value: Option<Symbol>) {
+    pub fn set_enumeration_representation_type(&self, value: Option<&Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::EnumType(data)) => {
                 let EnumTypeData { ref representation_type, .. } = data.as_ref();
-                representation_type.replace(value);
+                representation_type.replace(value.map(|t| t.clone()));
             },
             _ => panic!(),
         }
@@ -373,28 +375,22 @@ impl Symbol {
     pub fn type_parameters(&self) -> Option<SharedArray<Symbol>> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref type_parameters, .. } = data.as_ref();
-                type_parameters.borrow().clone()
-            },
-            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref type_parameters, .. } = data.as_ref();
-                type_parameters.borrow().clone()
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.type_parameters.borrow().clone(),
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => data.type_parameters.borrow().clone(),
             _ => panic!(),
         }
     }
 
-    pub fn set_type_parameters(&self, value: Option<SharedArray<Symbol>>) {
+    pub fn set_type_parameters(&self, value: Option<&SharedArray<Symbol>>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref type_parameters, .. } = data.as_ref();
-                type_parameters.replace(value);
+                type_parameters.replace(value.map(|p| p.clone()));
             },
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
                 let InterfaceTypeData { ref type_parameters, .. } = data.as_ref();
-                type_parameters.replace(value);
+                type_parameters.replace(value.map(|p| p.clone()));
             },
             _ => panic!(),
         }
@@ -416,7 +412,7 @@ impl Symbol {
                 if let Some(r) = static_properties.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<String, Symbol> = data.origin.static_properties(host).entries().iter().map(|(name, p)| {
+                let r: SharedMap<String, Symbol> = data.origin.static_properties(host).borrow().iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (name.clone(), p)
                 }).collect();
@@ -447,7 +443,7 @@ impl Symbol {
                 if let Some(r) = prototype.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<String, Symbol> = data.origin.prototype(host).entries().iter().map(|(name, p)| {
+                let r: SharedMap<String, Symbol> = data.origin.prototype(host).borrow().iter().map(|(name, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (name.clone(), p)
                 }).collect();
@@ -474,7 +470,7 @@ impl Symbol {
                 if let Some(r) = proxies.borrow().as_ref() {
                     return r.clone();
                 }
-                let r: SharedMap<ProxyKind, Symbol> = data.origin.proxies(host).entries().iter().map(|(kind, p)| {
+                let r: SharedMap<ProxyKind, Symbol> = data.origin.proxies(host).borrow().iter().map(|(kind, p)| {
                     let p = TypeSubstitution(host).execute(&p, &data.origin.type_parameters().unwrap(), &data.substitute_types);
                     (*kind, p)
                 }).collect();
@@ -502,9 +498,9 @@ impl Symbol {
                     return r.clone();
                 }
                 let type_parameters = data.origin.type_parameters().unwrap();
-                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).entries().iter().map(|(result_type, proxy_function)| {
-                    let result_type = TypeSubstitution(host).execute(&result_type, &type_parameters, &data.substitute_types);
-                    let proxy_function = TypeSubstitution(host).execute(&proxy_function, &type_parameters, &data.substitute_types);
+                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).borrow().iter().map(|(result_type, proxy_function)| {
+                    let result_type = TypeSubstitution(host).execute(result_type, &type_parameters, &data.substitute_types);
+                    let proxy_function = TypeSubstitution(host).execute(proxy_function, &type_parameters, &data.substitute_types);
                     (result_type, proxy_function)
                 }).collect();
                 list_of_to_proxies.replace(Some(r.clone()));
@@ -550,12 +546,12 @@ impl Symbol {
         }
     }
 
-    pub fn set_constructor_function(&self, value: Option<Symbol>) {
+    pub fn set_constructor_function(&self, value: Option<&Symbol>) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
                 let ClassTypeData { ref constructor_function, .. } = data.as_ref();
-                constructor_function.replace(value);
+                constructor_function.replace(value.map(|f| f.clone()));
             },
             _ => panic!(),
         }
@@ -600,6 +596,7 @@ impl Symbol {
             },
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.plain_metadata(),
             SymbolKind::Alias(data) => data.plain_metadata.clone(),
+            SymbolKind::VariableProperty(data) => data.plain_metadata.clone(),
             _ => panic!(),
         }
     }
@@ -607,21 +604,13 @@ impl Symbol {
     pub fn visibility(&self) -> Visibility {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref visibility, .. } = data.as_ref();
-                visibility.get()
-            },
-            SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref visibility, .. } = data.as_ref();
-                visibility.get()
-            },
-            SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref visibility, .. } = data.as_ref();
-                visibility.get()
-            },
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.visibility.get(),
+            SymbolKind::Type(TypeKind::EnumType(data)) => data.visibility.get(),
+            SymbolKind::Type(TypeKind::InterfaceType(data)) => data.visibility.get(),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.visibility(),
             SymbolKind::Alias(data) => data.visibility.get(),
             SymbolKind::PackageSet(data) => data.visibility.get(),
+            SymbolKind::VariableProperty(data) => data.visibility.get(),
             _ => panic!(),
         }
     }
@@ -630,21 +619,21 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
-                let ClassTypeData { ref visibility, .. } = data.as_ref();
-                visibility.set(value);
+                data.visibility.set(value);
             },
             SymbolKind::Type(TypeKind::EnumType(data)) => {
-                let EnumTypeData { ref visibility, .. } = data.as_ref();
-                visibility.set(value);
+                data.visibility.set(value);
             },
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
-                let InterfaceTypeData { ref visibility, .. } = data.as_ref();
-                visibility.set(value);
+                data.visibility.set(value);
             },
             SymbolKind::Alias(data) => {
                 data.visibility.set(value);
             },
             SymbolKind::PackageSet(data) => {
+                data.visibility.set(value);
+            },
+            SymbolKind::VariableProperty(data) => {
                 data.visibility.set(value);
             },
             _ => panic!(),
@@ -670,6 +659,7 @@ impl Symbol {
             SymbolKind::Alias(data) => data.jetdoc.borrow().clone(),
             SymbolKind::Package(data) => data.jetdoc.borrow().clone(),
             SymbolKind::PackageSet(data) => data.jetdoc.borrow().clone(),
+            SymbolKind::VariableProperty(data) => data.jetdoc.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -696,6 +686,9 @@ impl Symbol {
                 data.jetdoc.replace(value);
             },
             SymbolKind::PackageSet(data) => {
+                data.jetdoc.replace(value);
+            },
+            SymbolKind::VariableProperty(data) => {
                 data.jetdoc.replace(value);
             },
             _ => panic!(),
@@ -786,11 +779,11 @@ impl Symbol {
         }
     }
 
-    pub fn set_alias_of(&self, alias_of: Symbol) {
+    pub fn set_alias_of(&self, alias_of: &Symbol) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Alias(data) => {
-                data.alias_of.replace(alias_of);
+                data.alias_of.replace(alias_of.clone());
             },
             _ => panic!(),
         }
@@ -833,6 +826,60 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::PackageSet(data) => data.packages.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn static_type(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => data.static_type.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_static_type(&self, value: &Symbol) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => {
+                data.static_type.replace(value.clone());
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn read_only(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => data.read_only.get(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_read_only(&self, value: bool) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => {
+                data.read_only.set(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn constant_initializer(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => data.constant_initializer.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_constant_initializer(&self, value: Option<&Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableProperty(data) => {
+                data.constant_initializer.replace(value.map(|v| v.clone()));
+            },
             _ => panic!(),
         }
     }
@@ -889,7 +936,8 @@ impl ToString for Symbol {
             },
             SymbolKind::Alias(_) |
             SymbolKind::Package(_) |
-            SymbolKind::PackageSet(_) => self.fully_qualified_name(),
+            SymbolKind::PackageSet(_) |
+            SymbolKind::VariableProperty(_) => self.fully_qualified_name(),
             _ => panic!(),
         }
     }
@@ -901,6 +949,7 @@ pub(crate) enum SymbolKind {
     Alias(Rc<AliasData>),
     Package(Rc<PackageData>),
     PackageSet(Rc<PackageSetData>),
+    VariableProperty(Rc<VariablePropertyData>),
 }
 
 pub(crate) enum TypeKind {
@@ -938,7 +987,6 @@ pub(crate) struct EnumTypeData {
     pub name: String,
     pub visibility: Cell<Visibility>,
     pub parent_definition: RefCell<Option<Symbol>>,
-    pub extends_class: RefCell<Option<Symbol>>,
     pub representation_type: RefCell<Option<Symbol>>,
     pub is_set_enumeration: bool,
     pub static_properties: SharedMap<String, Symbol>,
@@ -1022,6 +1070,17 @@ pub(crate) struct PackageSetData {
     pub visibility: Cell<Visibility>,
     pub packages: SharedArray<Symbol>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
+}
+
+pub(crate) struct VariablePropertyData {
+    pub name: String,
+    pub parent_definition: RefCell<Option<Symbol>>,
+    pub visibility: Cell<Visibility>,
+    pub static_type: RefCell<Symbol>,
+    pub read_only: Cell<bool>,
+    pub constant_initializer: RefCell<Option<Symbol>>,
+    pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
 }
 
 /// Unresolved symbol.
@@ -1141,7 +1200,6 @@ impl Deref for ClassType {
 /// * `parent_definition()`
 /// * `set_parent_definition()`
 /// * `extends_class()`
-/// * `set_extends_class()`
 /// * `static_properties()``
 /// * `prototype()`
 /// * `enumeration_members()`
@@ -1401,6 +1459,38 @@ impl Deref for PackageSet {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_package_set());
+        &self.0
+    }
+}
+
+/// Variable property symbol.
+///
+/// # Supported methods
+///
+/// * `is_variable_property()`
+/// * `name()`
+/// * `fully_qualified_name()`
+/// * `to_string()`
+/// * `parent_definition()`
+/// * `set_parent_definition()`
+/// * `visibility()`
+/// * `set_visibility()`
+/// * `static_type()`
+/// * `set_static_type()`
+/// * `read_only()`
+/// * `set_read_only()`
+/// * `constant_initializer()`
+/// * `set_constant_initializer()`
+/// * `plain_metadata()`
+/// * `jetdoc()`
+/// * `set_jetdoc()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct VariableProperty(pub Symbol);
+
+impl Deref for VariableProperty {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_variable_property());
         &self.0
     }
 }

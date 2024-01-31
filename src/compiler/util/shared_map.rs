@@ -13,6 +13,18 @@ use std::rc::Rc;
 /// # Equality
 /// 
 /// The `PartialEq` trait performs reference comparison of two maps.
+/// 
+/// # Iteration
+/// 
+/// To iterate a `SharedMap`, it is required to invoke the `borrow()` method,
+/// as in the following snippet:
+/// 
+/// ```ignore
+/// map_object.borrow().iter(|(k, v)| {
+///     // k: &K
+///     // v: &V
+/// });
+/// ```
 #[derive(Clone)]
 pub struct SharedMap<K, V>(Rc<RefCell<HashMap<K, V>>>);
 
@@ -49,24 +61,16 @@ impl<K, V> SharedMap<K, V> {
         self.0.borrow().len()
     }
 
-    pub fn entries(&self) -> Vec<(K, V)> where K: Clone, V: Clone {
-        self.0.borrow().iter().map(|(k, v)| (k.clone(), v.clone())).collect::<Vec<_>>()
-    }
-
-    pub fn keys(&self) -> Vec<K> where K: Clone {
-        self.0.borrow().iter().map(|(k, _)| k.clone()).collect::<Vec<_>>()
-    }
-
-    pub fn values(&self) -> Vec<V> where V: Clone {
-        self.0.borrow().iter().map(|(_, v)| v.clone()).collect::<Vec<_>>()
-    }
-
     pub fn clone_content(&self) -> Self where K: Clone + Eq + Hash, V: Clone {
         let mut r = Self::new();
-        for (k, v) in self.entries() {
+        for (k, v) in self.borrow().iter() {
             r.set(k.clone(), v.clone());
         }
         r
+    }
+
+    pub fn borrow(&self) -> std::cell::Ref<HashMap<K, V>> {
+        self.0.borrow()
     }
 }
 
