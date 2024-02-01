@@ -25,6 +25,8 @@ pub struct SymbolHost {
     pub(crate) top_level_package: Symbol,
     pub(crate) jet_lang_package: RefCell<Option<Symbol>>,
     pub(crate) object_type: RefCell<Option<Symbol>>,
+
+    pub(crate) root_scope: RefCell<Option<Symbol>>,
 }
 
 impl SymbolHost {
@@ -52,6 +54,7 @@ impl SymbolHost {
             })))),
             jet_lang_package: RefCell::new(None),
             object_type: RefCell::new(None),
+            root_scope: RefCell::new(None),
         }
     }
 
@@ -98,5 +101,16 @@ impl SymbolHost {
         } else {
             self.unresolved()
         }
+    }
+
+    /// The root scope that imports the top-level package and `jet.lang.*`.
+    pub fn root_scope(&mut self) -> Symbol {
+        if let Some(r) = self.root_scope.borrow().as_ref() {
+            return r.clone();
+        }
+        let r = self.factory().create_scope();
+        r.open_packages().push(self.top_level_package());
+        r.open_packages().push(self.jet_lang_package());
+        r
     }
 }

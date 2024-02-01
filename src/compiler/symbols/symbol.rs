@@ -145,6 +145,38 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(_))
     }
 
+    pub fn is_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, _))
+    }
+
+    pub fn is_with_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::With { .. })))
+    }
+
+    pub fn is_filter_operator_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::FilterOperator { .. })))
+    }
+
+    pub fn is_activation_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Activation(_))))
+    }
+
+    pub fn is_class_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Class { .. })))
+    }
+
+    pub fn is_enum_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Enum { .. })))
+    }
+
+    pub fn is_interface_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Interface { .. })))
+    }
+
+    pub fn is_package_scope(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Package { .. })))
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -945,9 +977,8 @@ impl Symbol {
     pub fn base(&self) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::NullableType(ref base)) => {
-                base.clone()
-            },
+            SymbolKind::Type(TypeKind::NullableType(ref base)) => base.clone(),
+            SymbolKind::Scope(_, Some(ScopeKind::FilterOperator { base, .. })) => base.clone(),
             _ => panic!(),
         }
     }
@@ -1065,6 +1096,7 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Package(data) => data.properties.clone(),
+            SymbolKind::Scope(data, _) => data.properties.clone(),
             _ => panic!(),
         }
     }
@@ -1370,6 +1402,125 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn parent_scope(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => data.parent_scope.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_parent_scope(&self, value: Option<&Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => {
+                data.parent_scope.replace(value.map(|v| v.clone()));
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn imports(&self) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => data.imports.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn open_packages(&self) -> SharedArray<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => data.open_packages.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn package_aliases(&self) -> SharedMap<String, Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => data.package_aliases.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn local_variable_scope_count(&self) -> usize {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => data.local_variable_scope_count.get(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_local_variable_scope_count(&self, value: usize) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(data, _) => {
+                data.local_variable_scope_count.set(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn object(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::With { object, .. })) => object.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn function(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => data.function.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn this(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => data.this.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_this(&self, value: Option<&Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => {
+                data.this.replace(value.map(|v| v.clone()));
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn class(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Class { class, .. })) => class.clone(),
+            SymbolKind::Scope(_, Some(ScopeKind::Enum { class, .. })) => class.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn interface(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Interface { interface, .. })) => interface.clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn package(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Package { package, .. })) => package.clone(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -1447,6 +1598,7 @@ pub(crate) enum SymbolKind {
     VirtualPropertyAfterIndirectTypeSubstitution(Rc<VirtualPropertyAfterIndirectTypeSubstitutionData>),
     Function(Rc<FunctionSymbolData>),
     FunctionAfterExplicitOrIndirectTypeSubstitution(Rc<FunctionAfterExplicitOrIndirectTypeSubstitutionData>),
+    Scope(Rc<ScopeData>, Option<ScopeKind>),
 }
 
 pub(crate) enum TypeKind {
@@ -1641,6 +1793,42 @@ pub(crate) struct FunctionAfterExplicitOrIndirectTypeSubstitutionData {
     pub of_virtual_property: RefCell<Option<Symbol>>,
     pub overriden_by: RefCell<Option<SharedArray<Symbol>>>,
     pub is_overriding: Cell<bool>,
+}
+
+pub(crate) struct ScopeData {
+    pub parent_scope: RefCell<Option<Symbol>>,
+    pub properties: SharedMap<String, Symbol>,
+    pub imports: SharedMap<String, Symbol>,
+    pub open_packages: SharedArray<Symbol>,
+    pub package_aliases: SharedMap<String, Symbol>,
+    pub local_variable_scope_count: Cell<usize>,
+}
+
+pub(crate) struct ActivationScopeData {
+    pub function: Symbol,
+    pub this: RefCell<Option<Symbol>>,
+}
+
+pub(crate) enum ScopeKind {
+    With {
+        object: Symbol,
+    },
+    FilterOperator {
+        base: Symbol,
+    },
+    Activation(Rc<ActivationScopeData>),
+    Class {
+        class: Symbol,
+    },
+    Enum {
+        class: Symbol,
+    },
+    Interface {
+        interface: Symbol,
+    },
+    Package {
+        package: Symbol,
+    },
 }
 
 /// Unresolved symbol.
@@ -2244,7 +2432,6 @@ impl Deref for FunctionSymbol {
 }
 
 /// Function symbol after explicit or indirect type substitution.
-/// 
 ///
 /// # Supported methods
 ///
@@ -2280,6 +2467,221 @@ impl Deref for FunctionAfterExplicitOrIndirectTypeSubstitution {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_function_after_explicit_or_indirect_type_substitution());
+        &self.0
+    }
+}
+
+/// Scope symbol.
+///
+/// # Supported methods
+///
+/// * `is_scope()`
+/// * `parent_scope()`
+/// * `set_parent_scope()`
+/// * `properties()`
+/// * `imports()`
+/// * `open_packages()`
+/// * `package_aliases()`
+/// * `local_variable_scope_count()`
+/// * `set_local_variable_scope_count()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Scope(pub Symbol);
+
+impl Deref for Scope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_scope());
+        &self.0
+    }
+}
+
+/// `with` scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_with_scope()`
+/// * `object()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct WithScope(pub Symbol);
+
+impl Deref for WithScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_with_scope());
+        &self.0
+    }
+}
+
+/// Filter operator scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_filter_operator_scope()`
+/// * `base()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct FilterOperatorScope(pub Symbol);
+
+impl Deref for FilterOperatorScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_filter_operator_scope());
+        &self.0
+    }
+}
+
+/// Activation scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_activation_scope()`
+/// * `function()`
+/// * `this()`
+/// * `set_this()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct ActivationScope(pub Symbol);
+
+impl Deref for ActivationScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_activation_scope());
+        &self.0
+    }
+}
+
+/// `class` scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_class_scope()`
+/// * `class()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct ClassScope(pub Symbol);
+
+impl Deref for ClassScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_class_scope());
+        &self.0
+    }
+}
+
+/// `enum` scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_enum_scope()`
+/// * `class()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct EnumScope(pub Symbol);
+
+impl Deref for EnumScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_enum_scope());
+        &self.0
+    }
+}
+
+/// Interface scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_interface_scope()`
+/// * `interface()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct InterfaceScope(pub Symbol);
+
+impl Deref for InterfaceScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_interface_scope());
+        &self.0
+    }
+}
+
+/// Package scope symbol.
+///
+/// # Supported methods
+///
+/// * `Scope` inherited methods
+///   * `is_scope()`
+///   * `parent_scope()`
+///   * `set_parent_scope()`
+///   * `properties()`
+///   * `imports()`
+///   * `open_packages()`
+///   * `package_aliases()`
+///   * `local_variable_scope_count()`
+///   * `set_local_variable_scope_count()`
+/// * `is_package_scope()`
+/// * `package()`
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct PackageScope(pub Symbol);
+
+impl Deref for PackageScope {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_package_scope());
         &self.0
     }
 }

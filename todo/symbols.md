@@ -45,16 +45,33 @@
   * [x] Factory creation
 * [x] `FunctionAfterExplicitOrIndirectTypeSubstitution`
   * [x] Factory creation
-* [ ] `Scope`
-  * [ ] Factory creation
+* [x] `Scope`
+  * [x] Factory creation
+* [x] Miscellaneous scopes
+  * [x] With scope
+    * [x] `object()`
+  * [x] Filter operator scope
+    * [x] `base()`
+  * [x] Activation scope
+    * [x] `function()`
+    * [x] `this()`
+    * [x] `set_this()`
+  * [x] Class scope
+    * [x] `class()`
+  * [x] Enum scope
+    * [x] `class()`
+  * [x] Interface scope
+    * [x] `interface()`
+  * [x] Package scope
+    * [x] `package()`
+* [ ] `ImportMetaSymbol`
+* [ ] `ImportMetaEnvSymbol`
 * [ ] `Value`
   * [ ] Constants
   * [ ] `ConversionValue`
   * [ ] Reference values mentioned in property resolution
   * [ ] `ImportMetaOutputValue`
   * [ ] Factory creation
-* [ ] `ImportMetaSymbol`
-* [ ] `ImportMetaEnvSymbol`
 
 ## Covered (logic)
 
@@ -66,3 +83,5 @@
     * Interface hierarchy
   * [ ] `is_ascending_type_of()`
 * [ ] Default value
+* [ ] Property resolution
+* [ ] `property_is_visible(&scope)`

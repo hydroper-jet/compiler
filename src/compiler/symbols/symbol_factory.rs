@@ -439,4 +439,107 @@ impl<'a> SymbolFactory<'a> {
 
         faeoits
     }
+
+    pub fn create_scope(&self) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), None)))
+    }
+
+    pub fn create_with_scope(&self, object: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::With {
+            object: object.clone(),
+        }))))
+    }
+
+    pub fn create_filter_operator_scope(&self, base: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::FilterOperator {
+            base: base.clone(),
+        }))))
+    }
+
+    pub fn create_activation_scope(&self, function: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::Activation(Rc::new(ActivationScopeData {
+            function: function.clone(),
+            this: RefCell::new(None),
+        }))))))
+    }
+
+    pub fn create_class_scope(&self, class: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::Class {
+            class: class.clone(),
+        }))))
+    }
+
+    pub fn create_enum_scope(&self, class: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::Enum {
+            class: class.clone(),
+        }))))
+    }
+
+    pub fn create_interface_scope(&self, interface: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::Interface {
+            interface: interface.clone(),
+        }))))
+    }
+
+    pub fn create_package_scope(&self, package: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Scope(Rc::new(ScopeData {
+            parent_scope: RefCell::new(None),
+            properties: SharedMap::new(),
+            imports: SharedMap::new(),
+            open_packages: SharedArray::new(),
+            package_aliases: SharedMap::new(),
+            local_variable_scope_count: Cell::new(0),
+        }), Some(ScopeKind::Package {
+            package: package.clone(),
+        }))))
+    }
 }
