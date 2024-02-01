@@ -213,18 +213,23 @@ impl Symbol {
     }
 
     pub fn fully_qualified_name(&self) -> String {
+        self.fully_qualified_name_list().join(".")
+    }
+
+    pub fn fully_qualified_name_list(&self) -> Vec<String> {
         if let SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(ref t)) = self.0.upgrade().unwrap().as_ref() {
-            return t.origin.fully_qualified_name();
+            return t.origin.fully_qualified_name_list();
         }
-        let p: Option<Symbol> = self.parent_definition();
-        (if let Some(p) = p {
-            let pn = p.fully_qualified_name();
-            if pn.is_empty() {
-                "".to_owned()
-            } else {
-                pn + "."
+        let mut r: Vec<String> = vec![];
+        let mut p = Some(self.clone());
+        while let Some(p1) = p {
+            let name = p1.name();
+            if !name.is_empty() {
+                r.insert(0, name);
             }
-        } else { "".to_owned() }) + &self.name()
+            p = p1.parent_definition();
+        }
+        r
     }
 
     pub fn is_set_enumeration(&self) -> bool {

@@ -84,4 +84,5 @@
   * [ ] `is_ascending_type_of()`
 * [ ] Default value
 * [ ] Property resolution
+  * Take care with unresolved parts (consult symbol-operations.md for cases)
 * [ ] `property_is_visible(&scope)`
