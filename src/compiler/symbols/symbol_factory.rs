@@ -574,7 +574,7 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::Constant(ConstantKind::Char(value)))))))
     }
 
-    pub fn create_char_index_constant(&self, value: (String, u32), static_type: &Symbol) -> Symbol {
+    pub fn create_char_index_constant(&self, value: (String, f64), static_type: &Symbol) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(static_type.clone()),
         }, Some(Rc::new(ValueKind::Constant(ConstantKind::CharIndex(value.0, value.1)))))))

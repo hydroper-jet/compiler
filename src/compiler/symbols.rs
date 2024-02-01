@@ -14,5 +14,7 @@ mod type_substitution;
 pub use type_substitution::*;
 mod type_conversion;
 pub use type_conversion::*;
+mod property_resolution;
+pub use property_resolution::*;
 mod errors;
 pub use errors::*;

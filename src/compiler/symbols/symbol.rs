@@ -1821,7 +1821,7 @@ impl Symbol {
         }
     }
 
-    pub fn char_index_value(&self) -> (String, u32) {
+    pub fn char_index_value(&self) -> (String, f64) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Value(_, Some(data)) => {
@@ -2158,7 +2158,7 @@ impl Symbol {
         } else if self == &host.char_type() {
             Some(host.factory().create_char_constant('\x00', self))
         } else if self == &host.char_index_type() {
-            Some(host.factory().create_char_index_constant((String::new(), 0), self))
+            Some(host.factory().create_char_index_constant((String::new(), 0.0), self))
         } else if self.is_enum_type() && self.is_set_enumeration() {
             let v = AbstractRangeNumber::zero(&self.enumeration_representation_type().unwrap(), host);
             Some(host.factory().create_enum_constant(v, self))
@@ -2508,7 +2508,7 @@ pub(crate) enum ConstantKind {
     Null,
     String(String),
     Char(char),
-    CharIndex(String, u32),
+    CharIndex(String, f64),
     Boolean(bool),
     Number(AbstractRangeNumber),
     Enum(AbstractRangeNumber),
