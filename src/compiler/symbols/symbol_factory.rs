@@ -140,7 +140,8 @@ impl<'a> SymbolFactory<'a> {
         tt
     }
 
-    /// Creates an interned nullable type.
+    /// Creates an interned nullable type. Returns `base` back
+    /// if it already includes `null`.
     pub fn create_nullable_type(&mut self, base: &Symbol) -> Symbol {
         if base.includes_null() {
             return base.clone();
@@ -601,5 +602,22 @@ impl<'a> SymbolFactory<'a> {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(static_type.clone()),
         }, Some(Rc::new(ValueKind::This)))))
+    }
+
+    pub fn create_conversion_value(&self, base: &Symbol, relationship: TypeConversionRelationship, optional: bool, target: &Symbol, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Conversion(Rc::new(ConversionValueData {
+            base: base.clone(),
+            relationship,
+            optional,
+            target: target.clone(),
+        })))))))
+    }
+
+    pub fn create_import_meta_output_value(&self, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::ImportMetaOutput)))))
     }
 }

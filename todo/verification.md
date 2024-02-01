@@ -30,7 +30,8 @@ Verification must be deferred in cases where the semantic model produces the `Un
 
 * Structural types such as function types and these after type substitution must not be constructed containing any `Unresolved` compound.
 * Extends list and implements list must not contain `Unresolved` compound.
-* There are miscellaneous other cases not written here yet.
+* Compounds in expressions and statements may cause deferred verification of the respective syntax constructs.
+* There are miscellaneous other cases not written here yet, so be ultra careful with compounds in syntax constructs and certain contexts involving `Unresolved` including when using standard objects such as `jet.lang.Array` and `jet.lang.String`.
 
 ## Parent definitions
 

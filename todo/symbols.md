@@ -90,16 +90,10 @@
     * [x] Factory creation
   * [x] `ThisValue`
     * [x] Factory creation
-  * [ ] `ConversionValue`
-    * [ ] `is_conversion_value()`
-    * [ ] `base()`
-    * [ ] `conversion_relationship()`
-    * [ ] `conversion_is_optional()`
-    * [ ] `conversion_target()` — Conversion target type, without being nullified in the case of the `as` operator.
-    * [ ] Factory creation
-  * [ ] `ImportMetaOutputValue`
-    * [ ] `is_import_meta_output_value()`
-    * [ ] Factory creation
+  * [x] `ConversionValue`
+    * [x] Factory creation
+  * [x] `ImportMetaOutputValue`
+    * [x] Factory creation
   * [ ] `XMLReferenceValue
     * [ ] `is_reference_value()`
     * [ ] `is_xml_reference_value()`

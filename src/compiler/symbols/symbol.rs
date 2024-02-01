@@ -269,6 +269,22 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::This)
     }
 
+    pub fn is_conversion_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Conversion(_))
+    }
+
+    pub fn is_import_meta_output_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::ImportMetaOutput)
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -1076,6 +1092,12 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::NullableType(ref base)) => base.clone(),
             SymbolKind::Scope(_, Some(ScopeKind::FilterOperator { base, .. })) => base.clone(),
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Conversion(data) => data.base.clone(),
+                    _ => panic!(),
+                }
+            },
             _ => panic!(),
         }
     }
@@ -1688,6 +1710,45 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn conversion_relationship(&self) -> TypeConversionRelationship {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Conversion(data) => data.relationship.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn conversion_is_optional(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Conversion(data) => data.optional.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn conversion_target(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Conversion(data) => data.target.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -2008,6 +2069,8 @@ pub(crate) struct ValueData {
 pub(crate) enum ValueKind {
     Constant(ConstantKind),
     This,
+    Conversion(Rc<ConversionValueData>),
+    ImportMetaOutput,
 }
 
 pub(crate) enum ConstantKind {
@@ -2019,6 +2082,13 @@ pub(crate) enum ConstantKind {
     Boolean(bool),
     Number(AbstractRangeNumber),
     Enum(AbstractRangeNumber),
+}
+
+pub(crate) struct ConversionValueData {
+    pub base: Symbol,
+    pub relationship: TypeConversionRelationship,
+    pub optional: bool,
+    pub target: Symbol,
 }
 
 /// Unresolved symbol.
@@ -3081,6 +3151,44 @@ impl Deref for ThisValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_this_value());
+        &self.0
+    }
+}
+
+/// Conversion value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_conversion_value()`
+/// * `base()` — Original value.
+/// * `conversion_relationship()`
+/// * `conversion_is_optional()` — Indicates whether the conversion is optional (`v as T` versus `T(v)`)
+///   and whether the static type of the `ConversionValue` has been nullified.
+/// * `conversion_target()` — Conversion target type, without being nullified in the case of the `as` operator.
+pub struct ConversionValue(pub Symbol);
+
+impl Deref for ConversionValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_conversion_value());
+        &self.0
+    }
+}
+
+/// `import.meta.output` value symbol. This value should be explicitly assigned
+/// with a static type of `jet.lang.String` by a verifier (possibly `Unresolved`).
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_import_meta_output_value()`
+pub struct ImportMetaOutputValue(pub Symbol);
+
+impl Deref for ImportMetaOutputValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta_output_value());
         &self.0
     }
 }
