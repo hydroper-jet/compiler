@@ -1224,7 +1224,7 @@ impl Symbol {
             SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(),
             SymbolKind::VirtualProperty(data) => data.setter.borrow().is_none(),
             SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(),
-            _ => panic!(),
+            _ => true,
         }
     }
 
@@ -1243,7 +1243,7 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::VirtualProperty(data) => data.getter.borrow().is_none(),
             SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.write_only(),
-            _ => panic!(),
+            _ => false,
         }
     }
 

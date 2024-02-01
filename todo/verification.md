@@ -31,3 +31,7 @@ Verification must be deferred in cases where the semantic model produces the `Un
 * Structural types such as function types and these after type substitution must not be constructed containing any `Unresolved` compound.
 * Extends list and implements list must not contain `Unresolved` compound.
 * There are miscellaneous other cases not written here yet.
+
+## Parent definitions
+
+Set parent definitions of all properties properly, including for these that belong to scopes.

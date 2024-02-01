@@ -67,11 +67,146 @@
 * [x] `ImportMetaSymbol`
 * [x] `ImportMetaEnvSymbol`
 * [ ] `Value`
-  * [ ] Constants
-  * [ ] `ConversionValue`
-  * [ ] Reference values mentioned in property resolution
-  * [ ] `ImportMetaOutputValue`
+  * [ ] `is_value()`
+  * [ ] `static_type()`
+  * [ ] `set_static_type()`
   * [ ] Factory creation
+* [ ] Miscellaneous values
+  * [ ] `UndefinedConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_undefined_constant()`
+    * [ ] Factory creation
+  * [ ] `NullConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_null_constant()`
+    * [ ] Factory creation
+  * [ ] `StringConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_string_constant()`
+    * [ ] `string_value()`
+    * [ ] Factory creation
+  * [ ] `CharConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_char_constant()`
+    * [ ] `char_value()`
+    * [ ] Factory creation
+  * [ ] `CharIndexConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_char_index_constant()`
+    * [ ] `char_index_value()` — Returns (*string*, *index*).
+    * [ ] Factory creation
+  * [ ] `BooleanConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_boolean_constant()`
+    * [ ] `boolean_value()`
+    * [ ] Factory creation
+  * [ ] `NumberConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_number_constant()`
+    * [ ] `number_value()` — `AbstractRangeNumber`
+    * [ ] Factory creation
+  * [ ] `EnumConstant`
+    * [ ] `is_constant_value()`
+    * [ ] `is_enum_constant()`
+    * [ ] `number_value()` — `AbstractRangeNumber`
+    * [ ] Factory creation
+  * [ ] `ThisValue`
+    * [ ] `is_this_value()`
+    * [ ] Factory creation
+  * [ ] `ConversionValue`
+    * [ ] `is_conversion_value()`
+    * [ ] `base()`
+    * [ ] `conversion_relationship()`
+    * [ ] `conversion_is_optional()`
+    * [ ] `conversion_target()` — Conversion target type, without being nullified in the case of the `as` operator.
+    * [ ] Factory creation
+  * [ ] `ImportMetaOutputValue`
+    * [ ] `is_import_meta_output_value()`
+    * [ ] Factory creation
+  * [ ] `XMLReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_xml_reference_value()`
+    * [ ] `base()`
+    * [ ] `qualifier()`
+    * [ ] `key_name()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `DynamicReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_dynamic_reference_value()`
+    * [ ] `base()`
+    * [ ] `qualifier()`
+    * [ ] `key_name()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `StaticReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_static_reference_value()`
+    * [ ] `base()`
+    * [ ] `property()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `InstanceReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_instance_reference_value()`
+    * [ ] `base()`
+    * [ ] `property()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `ProxyReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_proxy_reference_value()`
+    * [ ] `base()`
+    * [ ] `proxy()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `TupleReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_tuple_reference_value()`
+    * [ ] `base()`
+    * [ ] `tuple_index()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `ScopeReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_scope_reference_value()`
+    * [ ] `base()`
+    * [ ] `property()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `DynamicScopeReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_dynamic_scope_reference_value()`
+    * [ ] `base()`
+    * [ ] `qualifier()`
+    * [ ] `key_name()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
+  * [ ] `PackageReferenceValue
+    * [ ] `is_reference_value()`
+    * [ ] `is_package_reference_value()`
+    * [ ] `base()`
+    * [ ] `property()`
+    * [ ] `read_only()`
+    * [ ] `write_only()`
+    * [ ] `property_is_visible()`
+    * [ ] Factory creation
 
 ## Covered (logic)
 
@@ -85,4 +220,5 @@
 * [ ] Default value
 * [ ] Property resolution
   * Take care with unresolved parts (consult symbol-operations.md for cases)
+  * Return a `Result` that throws `PropertyResolutionError::AmbiguousReference` and `PropertyResolutionError::DeferVerification` variants.
 * [ ] `property_is_visible(&scope)`
