@@ -8,4 +8,6 @@ pub struct ExpectedTypeError;
 pub enum PropertyResolutionError {
     AmbiguousReference,
     DeferVerification,
+    VoidBase,
+    NullableBase,
 }

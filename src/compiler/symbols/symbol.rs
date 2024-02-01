@@ -1920,16 +1920,16 @@ impl Symbol {
         }
     }
 
-    pub fn key_name(&self) -> String {
+    pub fn key(&self) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Value(_, Some(data)) => {
                 match data.as_ref() {
                     ValueKind::Reference(data) => {
                         match data.as_ref() {
-                            ReferenceValueKind::Xml { key_name, .. } => key_name.clone(),
-                            ReferenceValueKind::Dynamic { key_name, .. } => key_name.clone(),
-                            ReferenceValueKind::DynamicScope { key_name, .. } => key_name.clone(),
+                            ReferenceValueKind::Xml { key, .. } => key.clone(),
+                            ReferenceValueKind::Dynamic { key, .. } => key.clone(),
+                            ReferenceValueKind::DynamicScope { key, .. } => key.clone(),
                             _ => panic!(),
                         }
                     },
@@ -2177,6 +2177,15 @@ impl Symbol {
         }
         assert!(self.is_type());
         return host.class_type();
+    }
+
+    /// Throws `DeferVerificationError` error if the symbol is `Unresolved`.
+    pub fn throw_if_unresolved(&self) -> Result<(), DeferVerificationError> {
+        if self.is_unresolved() {
+            Err(DeferVerificationError)
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -2525,12 +2534,12 @@ pub(crate) enum ReferenceValueKind {
     Xml {
         base: Symbol,
         qualifier: Option<Symbol>,
-        key_name: String,
+        key: Symbol,
     },
     Dynamic {
         base: Symbol,
         qualifier: Option<Symbol>,
-        key_name: String,
+        key: Symbol,
     },
     Static {
         base: Symbol,
@@ -2555,7 +2564,7 @@ pub(crate) enum ReferenceValueKind {
     DynamicScope {
         base: Symbol,
         qualifier: Option<Symbol>,
-        key_name: String,
+        key: Symbol,
     },
     Package {
         base: Symbol,
@@ -3685,7 +3694,7 @@ impl Deref for ImportMetaOutputValue {
 /// * `is_xml_reference_value()`
 /// * `base()`
 /// * `qualifier()`
-/// * `key_name()`
+/// * `key()`
 pub struct XMLReferenceValue(pub Symbol);
 
 impl Deref for XMLReferenceValue {
@@ -3705,7 +3714,7 @@ impl Deref for XMLReferenceValue {
 /// * `is_dynamic_reference_value()`
 /// * `base()`
 /// * `qualifier()`
-/// * `key_name()`
+/// * `key()`
 pub struct DynamicReferenceValue(pub Symbol);
 
 impl Deref for DynamicReferenceValue {
@@ -3820,7 +3829,7 @@ impl Deref for ScopeReferenceValue {
 /// * `is_dynamic_scope_reference_value()`
 /// * `base()`
 /// * `qualifier()`
-/// * `key_name()`
+/// * `key()`
 pub struct DynamicScopeReferenceValue(pub Symbol);
 
 impl Deref for DynamicScopeReferenceValue {

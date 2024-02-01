@@ -622,23 +622,23 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::ImportMetaOutput)))))
     }
 
-    pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+    pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Xml {
             base: base.clone(),
             qualifier,
-            key_name,
+            key: key.clone(),
         })))))))
     }
 
-    pub fn create_dynamic_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+    pub fn create_dynamic_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Dynamic {
             base: base.clone(),
             qualifier,
-            key_name,
+            key: key.clone(),
         })))))))
     }
 
@@ -692,13 +692,13 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_dynamic_scope_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+    pub fn create_dynamic_scope_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::DynamicScope {
             base: base.clone(),
             qualifier,
-            key_name,
+            key: key.clone(),
         })))))))
     }
 
