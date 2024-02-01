@@ -1486,20 +1486,25 @@ impl Symbol {
         }
     }
 
-    /// Indicates whether a `class` or `enum` defines the `setProperty()` proxy.
-    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> bool {
+    /// Finds proxy in the class inheritance.
+    pub fn find_proxy(&self, kind: ProxyKind, host: &mut SymbolHost) -> Option<Symbol> {
         if self.is_unresolved() {
-            return false;
+            return None;
         }
         let mut class = Some(self.non_null_type());
         while let Some(class_w) = class.clone() {
-            let proxy = class_w.proxies(host).get(&ProxyKind::SetProperty);
+            let proxy = class_w.proxies(host).get(&kind);
             if proxy.is_some() {
-                return true;
+                return proxy;
             }
             class = class_w.extends_class(host);
         }
-        false
+        None
+    }
+
+    /// Indicates whether a `class` or `enum` defines the `setProperty()` proxy.
+    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> bool {
+        self.find_proxy(ProxyKind::SetProperty, host).is_some()
     }
 
     pub fn constant_initializer(&self) -> Option<Symbol> {
@@ -2160,6 +2165,18 @@ impl Symbol {
         } else {
             None
         }
+    }
+
+    /// The internal *PropertyStaticType*() function.
+    pub fn property_static_type(&self, host: &mut SymbolHost) -> Symbol {
+        if self.is_variable_property() || self.is_virtual_property() {
+            return self.static_type(host);
+        }
+        if self.is_function() {
+            return self.signature(host);
+        }
+        assert!(self.is_type());
+        return host.class_type();
     }
 }
 
@@ -3655,6 +3672,180 @@ impl Deref for ImportMetaOutputValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_import_meta_output_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_xml_reference_value()`
+/// * `base()`
+/// * `qualifier()`
+/// * `key_name()`
+pub struct XMLReferenceValue(pub Symbol);
+
+impl Deref for XMLReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_xml_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_dynamic_reference_value()`
+/// * `base()`
+/// * `qualifier()`
+/// * `key_name()`
+pub struct DynamicReferenceValue(pub Symbol);
+
+impl Deref for DynamicReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_dynamic_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_static_reference_value()`
+/// * `base()`
+/// * `property()`
+pub struct StaticReferenceValue(pub Symbol);
+
+impl Deref for StaticReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_static_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_instance_reference_value()`
+/// * `base()`
+/// * `property()`
+pub struct InstanceReferenceValue(pub Symbol);
+
+impl Deref for InstanceReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_instance_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_proxy_reference_value()`
+/// * `base()`
+/// * `proxy()`
+pub struct ProxyReferenceValue(pub Symbol);
+
+impl Deref for ProxyReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_proxy_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_tuple_reference_value()`
+/// * `base()`
+/// * `tuple_index()`
+pub struct TupleReferenceValue(pub Symbol);
+
+impl Deref for TupleReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_tuple_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_scope_reference_value()`
+/// * `base()`
+/// * `property()`
+pub struct ScopeReferenceValue(pub Symbol);
+
+impl Deref for ScopeReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_scope_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_dynamic_scope_reference_value()`
+/// * `base()`
+/// * `qualifier()`
+/// * `key_name()`
+pub struct DynamicScopeReferenceValue(pub Symbol);
+
+impl Deref for DynamicScopeReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_dynamic_scope_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
+/// * `is_package_reference_value()`
+/// * `base()`
+/// * `property()`
+pub struct PackageReferenceValue(pub Symbol);
+
+impl Deref for PackageReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_package_reference_reference_value());
         &self.0
     }
 }

@@ -43,6 +43,7 @@ pub struct SymbolHost {
     pub(crate) unsigned_long_type: RefCell<Option<Symbol>>,
     pub(crate) big_int_type: RefCell<Option<Symbol>>,
     pub(crate) function_type: RefCell<Option<Symbol>>,
+    pub(crate) class_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -96,6 +97,7 @@ impl SymbolHost {
             unsigned_long_type: RefCell::new(None),
             big_int_type: RefCell::new(None),
             function_type: RefCell::new(None),
+            class_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -360,6 +362,19 @@ impl SymbolHost {
         }
         if let Some(r) = self.lookup_at_jet_lang("Function") {
             self.function_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Class` class, possibly `Unresolved`.
+    pub fn class_type(&mut self) -> Symbol {
+        if let Some(r) = self.class_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Class") {
+            self.class_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()

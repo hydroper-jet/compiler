@@ -604,9 +604,10 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::This)))))
     }
 
-    pub fn create_conversion_value(&self, base: &Symbol, relationship: TypeConversionRelationship, optional: bool, target: &Symbol, static_type: &Symbol) -> Symbol {
+    pub fn create_conversion_value(&mut self, base: &Symbol, relationship: TypeConversionRelationship, optional: bool, target: &Symbol) -> Symbol {
+        let st = if optional { self.create_nullable_type(target) } else { target.clone() };
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
-            static_type: RefCell::new(static_type.clone()),
+            static_type: RefCell::new(st),
         }, Some(Rc::new(ValueKind::Conversion(Rc::new(ConversionValueData {
             base: base.clone(),
             relationship,
@@ -619,5 +620,95 @@ impl<'a> SymbolFactory<'a> {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(static_type.clone()),
         }, Some(Rc::new(ValueKind::ImportMetaOutput)))))
+    }
+
+    pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(self.host.any_type()),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Xml {
+            base: base.clone(),
+            qualifier,
+            key_name,
+        })))))))
+    }
+
+    pub fn create_dynamic_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(self.host.any_type()),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Dynamic {
+            base: base.clone(),
+            qualifier,
+            key_name,
+        })))))))
+    }
+
+    pub fn create_static_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+        let st = property.property_static_type(self.host);
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Static {
+            base: base.clone(),
+            property: property.clone(),
+        })))))))
+    }
+
+    pub fn create_instance_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+        let st = property.property_static_type(self.host);
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Instance {
+            base: base.clone(),
+            property: property.clone(),
+        })))))))
+    }
+
+    pub fn create_proxy_reference_value(&mut self, base: &Symbol, proxy: &Symbol) -> Symbol {
+        let st = proxy.signature(self.host).result_type();
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Proxy {
+            base: base.clone(),
+            proxy: proxy.clone(),
+        })))))))
+    }
+
+    pub fn create_tuple_reference_value(&mut self, base: &Symbol, index: usize) -> Symbol {
+        let st = base.static_type(self.host).non_null_type().element_types().get(index).unwrap();
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Tuple {
+            base: base.clone(),
+            index,
+        })))))))
+    }
+
+    pub fn create_scope_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+        let st = property.property_static_type(self.host);
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Scope {
+            base: base.clone(),
+            property: property.clone(),
+        })))))))
+    }
+
+    pub fn create_dynamic_scope_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key_name: String) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(self.host.any_type()),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::DynamicScope {
+            base: base.clone(),
+            qualifier,
+            key_name,
+        })))))))
+    }
+
+    pub fn create_package_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+        let st = property.property_static_type(self.host);
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(st),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Package {
+            base: base.clone(),
+            property: property.clone(),
+        })))))))
     }
 }
