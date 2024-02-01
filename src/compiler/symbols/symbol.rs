@@ -2094,9 +2094,11 @@ impl Symbol {
         let mut r = vec![];
         let mut r2 = vec![];
         for type_symbol in self.direct_ascending_types(host) {
-            for type_symbol in type_symbol.all_ascending_types(host) {
-                if !r.contains(&type_symbol) {
-                    r.push(type_symbol.clone());
+            if !type_symbol.is_unresolved() {
+                for type_symbol in type_symbol.all_ascending_types(host) {
+                    if !r.contains(&type_symbol) {
+                        r.push(type_symbol.clone());
+                    }
                 }
             }
             if !r.contains(&type_symbol) {
