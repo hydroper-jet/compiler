@@ -8,6 +8,8 @@ pub struct SymbolHost {
     pub(crate) unresolved: Symbol,
     pub(crate) any_type: Symbol,
     pub(crate) void_type: Symbol,
+    pub(crate) import_meta: Symbol,
+    pub(crate) import_meta_env: Symbol,
 
     pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
@@ -37,6 +39,8 @@ impl SymbolHost {
             unresolved: Symbol(arena.allocate(SymbolKind::Unresolved)),
             any_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType))),
             void_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
+            import_meta: Symbol(arena.allocate(SymbolKind::ImportMeta)),
+            import_meta_env: Symbol(arena.allocate(SymbolKind::ImportMetaEnv)),
             function_types: HashMap::new(),
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
@@ -73,6 +77,16 @@ impl SymbolHost {
 
     pub fn void_type(&self) -> Symbol {
         (self.void_type).clone()
+    }
+
+    /// The `import.meta` symbol.
+    pub fn import_meta(&self) -> Symbol {
+        (self.import_meta).clone()
+    }
+
+    /// The `import.meta.env` symbol.
+    pub fn import_meta_env(&self) -> Symbol {
+        (self.import_meta_env).clone()
     }
 
     pub fn top_level_package(&self) -> Symbol {

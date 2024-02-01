@@ -64,8 +64,8 @@
     * [x] `interface()`
   * [x] Package scope
     * [x] `package()`
-* [ ] `ImportMetaSymbol`
-* [ ] `ImportMetaEnvSymbol`
+* [x] `ImportMetaSymbol`
+* [x] `ImportMetaEnvSymbol`
 * [ ] `Value`
   * [ ] Constants
   * [ ] `ConversionValue`

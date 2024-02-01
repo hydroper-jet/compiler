@@ -177,6 +177,14 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Package { .. })))
     }
 
+    pub fn is_import_meta(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::ImportMeta)
+    }
+
+    pub fn is_import_meta_env(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::ImportMetaEnv)
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -1599,6 +1607,8 @@ pub(crate) enum SymbolKind {
     Function(Rc<FunctionSymbolData>),
     FunctionAfterExplicitOrIndirectTypeSubstitution(Rc<FunctionAfterExplicitOrIndirectTypeSubstitutionData>),
     Scope(Rc<ScopeData>, Option<ScopeKind>),
+    ImportMeta,
+    ImportMetaEnv,
 }
 
 pub(crate) enum TypeKind {
@@ -2682,6 +2692,36 @@ impl Deref for PackageScope {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_package_scope());
+        &self.0
+    }
+}
+
+/// `import.meta` symbol.
+///
+/// # Supported methods
+///
+/// * `is_import_meta()`
+pub struct ImportMetaSymbol(pub Symbol);
+
+impl Deref for ImportMetaSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta());
+        &self.0
+    }
+}
+
+/// `import.meta.env` symbol.
+///
+/// # Supported methods
+///
+/// * `is_import_meta_env()`
+pub struct ImportMetaEnvSymbol(pub Symbol);
+
+impl Deref for ImportMetaEnvSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta_env());
         &self.0
     }
 }
