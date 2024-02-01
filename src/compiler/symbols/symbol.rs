@@ -3845,7 +3845,7 @@ pub struct PackageReferenceValue(pub Symbol);
 impl Deref for PackageReferenceValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_package_reference_reference_value());
+        assert!(self.0.is_package_reference_value());
         &self.0
     }
 }
