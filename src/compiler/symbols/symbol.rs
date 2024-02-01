@@ -285,6 +285,77 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::ImportMetaOutput)
     }
 
+    pub fn is_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Reference(_))
+    }
+
+    pub fn is_xml_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Xml { .. })
+    }
+
+    pub fn is_dynamic_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Dynamic { .. })
+    }
+
+    pub fn is_static_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Static { .. })
+    }
+
+    pub fn is_instance_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Instance { .. })
+    }
+
+    pub fn is_proxy_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Proxy { .. })
+    }
+
+    pub fn is_tuple_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Tuple { .. })
+    }
+
+    pub fn is_scope_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Scope { .. })
+    }
+
+    pub fn is_dynamic_scope_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::DynamicScope { .. })
+    }
+
+    pub fn is_package_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Package { .. })
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -1095,6 +1166,19 @@ impl Symbol {
             SymbolKind::Value(_, Some(data)) => {
                 match data.as_ref() {
                     ValueKind::Conversion(data) => data.base.clone(),
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { base, .. } => base.clone(),
+                            ReferenceValueKind::Dynamic { base, .. } => base.clone(),
+                            ReferenceValueKind::Static { base, .. } => base.clone(),
+                            ReferenceValueKind::Instance { base, .. } => base.clone(),
+                            ReferenceValueKind::Proxy { base, .. } => base.clone(),
+                            ReferenceValueKind::Tuple { base, .. } => base.clone(),
+                            ReferenceValueKind::Scope { base, .. } => base.clone(),
+                            ReferenceValueKind::DynamicScope { base, .. } => base.clone(),
+                            ReferenceValueKind::Package { base, .. } => base.clone(),
+                        }
+                    },
                     _ => panic!(),
                 }
             },
@@ -1749,6 +1833,273 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn qualifier(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { qualifier, .. } => qualifier.clone(),
+                            ReferenceValueKind::Dynamic { qualifier, .. } => qualifier.clone(),
+                            ReferenceValueKind::DynamicScope { qualifier, .. } => qualifier.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn key_name(&self) -> String {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { key_name, .. } => key_name.clone(),
+                            ReferenceValueKind::Dynamic { key_name, .. } => key_name.clone(),
+                            ReferenceValueKind::DynamicScope { key_name, .. } => key_name.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn property(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Static { property, .. } => property.clone(),
+                            ReferenceValueKind::Instance { property, .. } => property.clone(),
+                            ReferenceValueKind::Scope { property, .. } => property.clone(),
+                            ReferenceValueKind::Package { property, .. } => property.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn proxy(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Proxy { proxy, .. } => proxy.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn tuple_index(&self) -> usize {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Tuple { index, .. } => index.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn property_is_visible(&self, scope: &Symbol, host: &mut SymbolHost) -> bool {
+        let mut prop = self.clone();
+        if prop.is_reference_value() {
+            if prop.is_static_reference_value() {
+                prop = prop.property();
+            } else if prop.is_instance_reference_value() {
+                prop = prop.property();
+            } else if prop.is_package_reference_value() {
+                prop = prop.property();
+            } else {
+                return true;
+            }
+        }
+
+        match prop.visibility() {
+            Visibility::Public => true,
+            Visibility::Internal => {
+                let mut p: Option<Symbol> = None;
+                let mut p1 = prop.parent_definition();
+                while let Some(p1_w) = p1.clone() {
+                    if p1_w.is_package() {
+                        p = p1;
+                        break;
+                    }
+                    p1 = p1_w.parent_definition();
+                }
+                if p.is_none() {
+                    return true;
+                }
+                let p = p.unwrap();
+                let mut scope = Some(scope.clone());
+                while let Some(scope_w) = scope {
+                    if scope_w.is_package_scope() && scope_w.package() == p {
+                        return true;
+                    }
+                    scope = scope_w.parent_scope();
+                }
+                return false;
+            },
+            Visibility::Private => {
+                let mut t: Option<Symbol> = None;
+                let mut p = prop.parent_definition();
+                while let Some(p_w) = p.clone() {
+                    if p_w.is_class_type() || p_w.is_enum_type() {
+                        t = p;
+                        break;
+                    }
+                    p = p_w.parent_definition();
+                }
+                if t.is_none() {
+                    return false;
+                }
+                let t = t.unwrap();
+                let mut scope = Some(scope.clone());
+                while let Some(scope_w) = scope {
+                    if (scope_w.is_class_scope() || scope_w.is_enum_scope()) && scope_w.class() == t {
+                        return true;
+                    }
+                    scope = scope_w.parent_scope();
+                }
+                return false;
+            },
+            Visibility::Protected => {
+                let mut t: Option<Symbol> = None;
+                let mut p = prop.parent_definition();
+                while let Some(p_w) = p.clone() {
+                    if p_w.is_class_type() || p_w.is_enum_type() {
+                        t = p;
+                        break;
+                    }
+                    p = p_w.parent_definition();
+                }
+                if t.is_none() {
+                    return false;
+                }
+                let t = t.unwrap();
+                let mut scope = Some(scope.clone());
+                while let Some(scope_w) = scope {
+                    if (scope_w.is_class_scope() || scope_w.is_enum_scope()) && scope_w.class().is_equals_or_subtype_of(&t, host) {
+                        return true;
+                    }
+                    scope = scope_w.parent_scope();
+                }
+                return false;
+            },
+        }
+    }
+
+    pub fn is_ascending_type_of(&self, possibly_subtype: &Symbol, host: &mut SymbolHost) -> bool {
+        possibly_subtype.is_subtype_of(self, host)
+    }
+
+    pub fn is_subtype_of(&self, possibly_ascending_type: &Symbol, host: &mut SymbolHost) -> bool {
+        self.all_ascending_types(host).contains(possibly_ascending_type)
+    }
+
+    pub fn is_equals_or_subtype_of(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+        self == other || self.is_subtype_of(other, host)
+    }
+
+    pub fn all_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
+        let mut r = vec![];
+        for type_symbol in self.direct_ascending_types(host) {
+            if !r.contains(&type_symbol) {
+                r.push(type_symbol.clone());
+            }
+            for type_symbol in type_symbol.all_ascending_types(host) {
+                if !r.contains(&type_symbol) {
+                    r.push(type_symbol.clone());
+                }
+            }
+        }
+        r
+    }
+
+    pub fn direct_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
+        if self.is_class_type() {
+            let mut r: Vec<Symbol> = self.implements(host).iter().collect();
+            if let Some(ascending_class) = self.extends_class(host) {
+                r.push(ascending_class);
+            }
+            return r;
+        } else if self.is_enum_type() {
+            return vec![self.extends_class(host).unwrap()];
+        } else if self.is_interface_type() {
+            return self.extends_interfaces(host).iter().collect();
+        } else if self.is_function_type() {
+            return vec![host.function_type()];
+        } else if self.is_tuple_type() {
+            return vec![host.object_type()];
+        }
+        return vec![];
+    }
+
+    pub fn expect_type(&self) -> Result<Symbol, ExpectedTypeError> {
+        if self.is_package_reference_value() || self.is_scope_reference_value() {
+            return self.property().expect_type();
+        }
+        if self.is_type() {
+            Ok(self.clone())
+        } else {
+            Err(ExpectedTypeError)
+        }
+    }
+
+    /// Given a type base, returns its default value.
+    pub fn type_default_value(&self, host: &mut SymbolHost) -> Option<Symbol> {
+        if self.is_void_type() {
+            Some(host.factory().create_undefined_constant(self))
+        } else if self.is_nullable_type() {
+            Some(host.factory().create_null_constant(self))
+        } else if host.is_numeric_type(self) {
+            let v = AbstractRangeNumber::zero(self, host);
+            Some(host.factory().create_number_constant(v, self))
+        } else if self == &host.boolean_type() {
+            Some(host.factory().create_boolean_constant(false, self))
+        } else if self == &host.string_type() {
+            Some(host.factory().create_string_constant(String::new(), self))
+        } else if self == &host.char_type() {
+            Some(host.factory().create_char_constant('\x00', self))
+        } else if self == &host.char_index_type() {
+            Some(host.factory().create_char_index_constant((String::new(), 0), self))
+        } else if self.is_enum_type() && self.is_set_enumeration() {
+            let v = AbstractRangeNumber::zero(&self.enumeration_representation_type().unwrap(), host);
+            Some(host.factory().create_enum_constant(v, self))
+        } else {
+            None
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -2071,6 +2422,7 @@ pub(crate) enum ValueKind {
     This,
     Conversion(Rc<ConversionValueData>),
     ImportMetaOutput,
+    Reference(Rc<ReferenceValueKind>),
 }
 
 pub(crate) enum ConstantKind {
@@ -2089,6 +2441,48 @@ pub(crate) struct ConversionValueData {
     pub relationship: TypeConversionRelationship,
     pub optional: bool,
     pub target: Symbol,
+}
+
+pub(crate) enum ReferenceValueKind {
+    Xml {
+        base: Symbol,
+        qualifier: Option<Symbol>,
+        key_name: String,
+    },
+    Dynamic {
+        base: Symbol,
+        qualifier: Option<Symbol>,
+        key_name: String,
+    },
+    Static {
+        base: Symbol,
+        property: Symbol,
+    },
+    Instance {
+        base: Symbol,
+        property: Symbol,
+    },
+    Proxy {
+        base: Symbol,
+        proxy: Symbol,
+    },
+    Tuple {
+        base: Symbol,
+        index: usize,
+    },
+    Scope {
+        base: Symbol,
+        property: Symbol,
+    },
+    DynamicScope {
+        base: Symbol,
+        qualifier: Option<Symbol>,
+        key_name: String,
+    },
+    Package {
+        base: Symbol,
+        property: Symbol,
+    },
 }
 
 /// Unresolved symbol.
@@ -2115,6 +2509,7 @@ impl Deref for Unresolved {
 /// * `to_string()`
 /// * `includes_undefined()`
 /// * `includes_null()`
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct Type(pub Symbol);
 
@@ -2135,6 +2530,7 @@ impl Deref for Type {
 /// * `to_string()`
 /// * `includes_undefined()` — Returns `true`.
 /// * `includes_null()` — Returns `true`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct AnyType(pub Symbol);
 
@@ -2155,6 +2551,7 @@ impl Deref for AnyType {
 /// * `to_string()`
 /// * `includes_undefined()` — Returns `true`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct VoidType(pub Symbol);
 
@@ -2204,6 +2601,7 @@ impl Deref for VoidType {
 /// * `set_jetdoc()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ClassType(pub Symbol);
 
@@ -2242,6 +2640,7 @@ impl Deref for ClassType {
 /// * `set_jetdoc()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct EnumType(pub Symbol);
 
@@ -2276,6 +2675,7 @@ impl Deref for EnumType {
 /// * `set_jetdoc()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct InterfaceType(pub Symbol);
 
@@ -2298,6 +2698,7 @@ impl Deref for InterfaceType {
 /// * `result_type()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionType(pub Symbol);
 
@@ -2338,6 +2739,7 @@ impl ParameterOfFunctionType {
 /// * `element_types()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TupleType(pub Symbol);
 
@@ -2359,6 +2761,7 @@ impl Deref for TupleType {
 /// * `base()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `true`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct NullableType(pub Symbol);
 
@@ -2380,6 +2783,7 @@ impl Deref for NullableType {
 /// * `name()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeParameterType(pub Symbol);
 
@@ -2422,6 +2826,7 @@ impl Deref for TypeParameterType {
 /// * `jetdoc()`
 /// * `includes_undefined()` — Returns `false`.
 /// * `includes_null()` — Returns `false`.
+/// * `property_is_visible()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TypeAfterExplicitTypeSubstitution(pub Symbol);
 

@@ -27,6 +27,25 @@ pub struct SymbolHost {
     pub(crate) top_level_package: Symbol,
     pub(crate) jet_lang_package: RefCell<Option<Symbol>>,
     pub(crate) object_type: RefCell<Option<Symbol>>,
+    pub(crate) boolean_type: RefCell<Option<Symbol>>,
+    pub(crate) string_type: RefCell<Option<Symbol>>,
+    pub(crate) char_type: RefCell<Option<Symbol>>,
+    pub(crate) char_index_type: RefCell<Option<Symbol>>,
+    pub(crate) number_type: RefCell<Option<Symbol>>,
+    pub(crate) single_type: RefCell<Option<Symbol>>,
+    pub(crate) byte_type: RefCell<Option<Symbol>>,
+    pub(crate) short_type: RefCell<Option<Symbol>>,
+    pub(crate) int_type: RefCell<Option<Symbol>>,
+    pub(crate) long_type: RefCell<Option<Symbol>>,
+    pub(crate) unsigned_byte_type: RefCell<Option<Symbol>>,
+    pub(crate) unsigned_short_type: RefCell<Option<Symbol>>,
+    pub(crate) unsigned_int_type: RefCell<Option<Symbol>>,
+    pub(crate) unsigned_long_type: RefCell<Option<Symbol>>,
+    pub(crate) big_int_type: RefCell<Option<Symbol>>,
+    pub(crate) function_type: RefCell<Option<Symbol>>,
+
+    pub(crate) infinity_constant: RefCell<Option<Symbol>>,
+    pub(crate) nan_constant: RefCell<Option<Symbol>>,
 
     pub(crate) root_scope: RefCell<Option<Symbol>>,
 }
@@ -48,6 +67,7 @@ impl SymbolHost {
             vapaits: HashMap::new(),
             vipaits: HashMap::new(),
             faeoits: HashMap::new(),
+
             top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
                 name: String::new(),
                 parent_definition: RefCell::new(None),
@@ -56,8 +76,30 @@ impl SymbolHost {
                 subpackages: SharedMap::new(),
                 jetdoc: RefCell::new(None),
             })))),
+
             jet_lang_package: RefCell::new(None),
+
             object_type: RefCell::new(None),
+            boolean_type: RefCell::new(None),
+            string_type: RefCell::new(None),
+            char_type: RefCell::new(None),
+            char_index_type: RefCell::new(None),
+            number_type: RefCell::new(None),
+            single_type: RefCell::new(None),
+            byte_type: RefCell::new(None),
+            short_type: RefCell::new(None),
+            int_type: RefCell::new(None),
+            long_type: RefCell::new(None),
+            unsigned_byte_type: RefCell::new(None),
+            unsigned_short_type: RefCell::new(None),
+            unsigned_int_type: RefCell::new(None),
+            unsigned_long_type: RefCell::new(None),
+            big_int_type: RefCell::new(None),
+            function_type: RefCell::new(None),
+
+            infinity_constant: RefCell::new(None),
+            nan_constant: RefCell::new(None),
+
             root_scope: RefCell::new(None),
         }
     }
@@ -108,13 +150,280 @@ impl SymbolHost {
         if let Some(r) = self.object_type.borrow().as_ref() {
             return r.clone();
         }
-        let pckg = self.jet_lang_package();
-        if let Some(r) = pckg.properties(self).get(&"Object".to_owned()) {
+        if let Some(r) = self.lookup_at_jet_lang("Object") {
             self.object_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
         }
+    }
+
+    /// The `jet.lang.Boolean` class, possibly `Unresolved`.
+    pub fn boolean_type(&mut self) -> Symbol {
+        if let Some(r) = self.boolean_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Boolean") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.String` class, possibly `Unresolved`.
+    pub fn string_type(&mut self) -> Symbol {
+        if let Some(r) = self.string_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("String") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Char` class, possibly `Unresolved`.
+    pub fn char_type(&mut self) -> Symbol {
+        if let Some(r) = self.char_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Char") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.CharIndex` class, possibly `Unresolved`.
+    pub fn char_index_type(&mut self) -> Symbol {
+        if let Some(r) = self.char_index_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("CharIndex") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Number` class, possibly `Unresolved`.
+    pub fn number_type(&mut self) -> Symbol {
+        if let Some(r) = self.number_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Number") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Single` class, possibly `Unresolved`.
+    pub fn single_type(&mut self) -> Symbol {
+        if let Some(r) = self.single_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Single") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Byte` class, possibly `Unresolved`.
+    pub fn byte_type(&mut self) -> Symbol {
+        if let Some(r) = self.byte_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Byte") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Short` class, possibly `Unresolved`.
+    pub fn short_type(&mut self) -> Symbol {
+        if let Some(r) = self.short_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Short") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Int` class, possibly `Unresolved`.
+    pub fn int_type(&mut self) -> Symbol {
+        if let Some(r) = self.int_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Int") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Long` class, possibly `Unresolved`.
+    pub fn long_type(&mut self) -> Symbol {
+        if let Some(r) = self.long_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Long") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.UnsignedByte` class, possibly `Unresolved`.
+    pub fn unsigned_byte_type(&mut self) -> Symbol {
+        if let Some(r) = self.unsigned_byte_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("UnsignedByte") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.UnsignedShort` class, possibly `Unresolved`.
+    pub fn unsigned_short_type(&mut self) -> Symbol {
+        if let Some(r) = self.unsigned_short_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("UnsignedShort") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.UnsignedInt` class, possibly `Unresolved`.
+    pub fn unsigned_int_type(&mut self) -> Symbol {
+        if let Some(r) = self.unsigned_int_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("UnsignedInt") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.UnsignedLong` class, possibly `Unresolved`.
+    pub fn unsigned_long_type(&mut self) -> Symbol {
+        if let Some(r) = self.unsigned_long_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("UnsignedLong") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.BigInt` class, possibly `Unresolved`.
+    pub fn big_int_type(&mut self) -> Symbol {
+        if let Some(r) = self.big_int_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("BigInt") {
+            self.object_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Function` class, possibly `Unresolved`.
+    pub fn function_type(&mut self) -> Symbol {
+        if let Some(r) = self.function_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Function") {
+            self.function_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Infinity` constant, possibly `Unresolved`.
+    pub fn infinity_constant(&mut self) -> Symbol {
+        if let Some(r) = self.infinity_constant.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Infinity") {
+            self.infinity_constant.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.NaN` constant, possibly `Unresolved`.
+    pub fn nan_constant(&mut self) -> Symbol {
+        if let Some(r) = self.nan_constant.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("NaN") {
+            self.nan_constant.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    fn lookup_at_jet_lang(&mut self, name: &str) -> Option<Symbol> {
+        self.jet_lang_package().properties(self).get(&name.to_owned())
+    }
+
+    pub fn is_numeric_type(&mut self, symbol: &Symbol) -> bool {
+        [
+            self.number_type(),
+            self.int_type(),
+            self.unsigned_int_type(),
+            self.single_type(),
+            self.byte_type(),
+            self.unsigned_byte_type(),
+            self.short_type(),
+            self.unsigned_short_type(),
+            self.long_type(),
+            self.unsigned_long_type(),
+            self.big_int_type(),
+        ].contains(symbol)
+    }
+
+    pub fn is_integer_type(&mut self, symbol: &Symbol) -> bool {
+        [
+            self.int_type(),
+            self.unsigned_int_type(),
+            self.byte_type(),
+            self.unsigned_byte_type(),
+            self.short_type(),
+            self.unsigned_short_type(),
+            self.long_type(),
+            self.unsigned_long_type(),
+            self.big_int_type(),
+        ].contains(symbol)
     }
 
     /// The root scope that imports the top-level package and `jet.lang.*`.

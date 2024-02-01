@@ -1,3 +1,4 @@
+use crate::ns::*;
 use num_traits::{FromPrimitive, One, Zero};
 use num_bigint::BigInt;
 use std::ops::BitOr;
@@ -70,6 +71,62 @@ impl BitOr for AbstractRangeNumber {
 }
 
 impl AbstractRangeNumber {
+    pub fn zero(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+        if type_symbol == &host.number_type() {
+            Self::Number(0.0)
+        } else if type_symbol == &host.int_type() {
+            Self::Int(0)
+        } else if type_symbol == &host.unsigned_int_type() {
+            Self::UnsignedInt(0)
+        } else if type_symbol == &host.byte_type() {
+            Self::Byte(0)
+        } else if type_symbol == &host.unsigned_byte_type() {
+            Self::UnsignedByte(0)
+        } else if type_symbol == &host.short_type() {
+            Self::Short(0)
+        } else if type_symbol == &host.unsigned_short_type() {
+            Self::UnsignedShort(0)
+        } else if type_symbol == &host.long_type() {
+            Self::Long(0)
+        } else if type_symbol == &host.unsigned_long_type() {
+            Self::UnsignedLong(0)
+        } else if type_symbol == &host.big_int_type() {
+            Self::BigInt(BigInt::zero())
+        } else if type_symbol == &host.single_type() {
+            Self::Single(0.0)
+        } else {
+            panic!()
+        }
+    }
+
+    pub fn one(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+        if type_symbol == &host.number_type() {
+            Self::Number(1.0)
+        } else if type_symbol == &host.int_type() {
+            Self::Int(1)
+        } else if type_symbol == &host.unsigned_int_type() {
+            Self::UnsignedInt(1)
+        } else if type_symbol == &host.byte_type() {
+            Self::Byte(1)
+        } else if type_symbol == &host.unsigned_byte_type() {
+            Self::UnsignedByte(1)
+        } else if type_symbol == &host.short_type() {
+            Self::Short(1)
+        } else if type_symbol == &host.unsigned_short_type() {
+            Self::UnsignedShort(1)
+        } else if type_symbol == &host.long_type() {
+            Self::Long(1)
+        } else if type_symbol == &host.unsigned_long_type() {
+            Self::UnsignedLong(1)
+        } else if type_symbol == &host.big_int_type() {
+            Self::BigInt(BigInt::one())
+        } else if type_symbol == &host.single_type() {
+            Self::Single(1.0)
+        } else {
+            panic!()
+        }
+    }
+
     pub fn is_zero(&self) -> bool {
         match self {
             Self::Single(v) => v == &0.0,

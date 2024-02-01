@@ -36,3 +36,14 @@ Verification must be deferred in cases where the semantic model produces the `Un
 ## Parent definitions
 
 Set parent definitions of all properties properly, including for these that belong to scopes.
+
+## Infinity and NaN
+
+* [ ] The `jet.lang.Infinity` and `jet.lang.NaN` constants are processed in a special way such that they contain their respective values. Although they are assigned zero in the following example, they must be assigned a different IEEE 754 constant initializer.
+
+```
+package jet.lang {
+    public const Infinity = 0
+    public const NaN = 0
+}
+```

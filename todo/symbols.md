@@ -95,102 +95,97 @@
   * [x] `ImportMetaOutputValue`
     * [x] Factory creation
   * [ ] `XMLReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_xml_reference_value()`
-    * [ ] `base()`
-    * [ ] `qualifier()`
-    * [ ] `key_name()`
+    * [x] `is_reference_value()`
+    * [x] `is_xml_reference_value()`
+    * [x] `base()`
+    * [x] `qualifier()`
+    * [x] `key_name()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `DynamicReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_dynamic_reference_value()`
-    * [ ] `base()`
-    * [ ] `qualifier()`
-    * [ ] `key_name()`
+    * [x] `is_reference_value()`
+    * [x] `is_dynamic_reference_value()`
+    * [x] `base()`
+    * [x] `qualifier()`
+    * [x] `key_name()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `StaticReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_static_reference_value()`
-    * [ ] `base()`
-    * [ ] `property()`
+    * [x] `is_reference_value()`
+    * [x] `is_static_reference_value()`
+    * [x] `base()`
+    * [x] `property()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `InstanceReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_instance_reference_value()`
-    * [ ] `base()`
-    * [ ] `property()`
+    * [x] `is_reference_value()`
+    * [x] `is_instance_reference_value()`
+    * [x] `base()`
+    * [x] `property()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `ProxyReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_proxy_reference_value()`
-    * [ ] `base()`
-    * [ ] `proxy()`
+    * [x] `is_reference_value()`
+    * [x] `is_proxy_reference_value()`
+    * [x] `base()`
+    * [x] `proxy()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `TupleReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_tuple_reference_value()`
-    * [ ] `base()`
-    * [ ] `tuple_index()`
+    * [x] `is_reference_value()`
+    * [x] `is_tuple_reference_value()`
+    * [x] `base()`
+    * [x] `tuple_index()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `ScopeReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_scope_reference_value()`
-    * [ ] `base()`
-    * [ ] `property()`
+    * [x] `is_reference_value()`
+    * [x] `is_scope_reference_value()`
+    * [x] `base()`
+    * [x] `property()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `DynamicScopeReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_dynamic_scope_reference_value()`
-    * [ ] `base()`
-    * [ ] `qualifier()`
-    * [ ] `key_name()`
+    * [x] `is_reference_value()`
+    * [x] `is_dynamic_scope_reference_value()`
+    * [x] `base()`
+    * [x] `qualifier()`
+    * [x] `key_name()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `PackageReferenceValue
-    * [ ] `is_reference_value()`
-    * [ ] `is_package_reference_value()`
-    * [ ] `base()`
-    * [ ] `property()`
+    * [x] `is_reference_value()`
+    * [x] `is_package_reference_value()`
+    * [x] `base()`
+    * [x] `property()`
     * [ ] `read_only()`
     * [ ] `write_only()`
-    * [ ] `property_is_visible()`
+    * [x] `property_is_visible()`
     * [ ] Factory creation
 
 ## Covered (logic)
 
 * [x] Type substitution
-* Type relationship
-  * [ ] `is_subtype_of()`
-    * Class hierarchy
-    * Class implementors
-    * Interface hierarchy
-  * [ ] `is_ascending_type_of()`
-* [ ] Default value
+* [x] Type relationship
+* [x] Default value
 * [ ] Property resolution
   * Take care with unresolved parts (consult symbol-operations.md for cases)
   * Return a `Result` that throws `PropertyResolutionError::AmbiguousReference` and `PropertyResolutionError::DeferVerification` variants.
-* [ ] `property_is_visible(&scope)`
+* [x] `property_is_visible(&scope)`
 * [ ] Type conversions
