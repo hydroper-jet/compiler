@@ -83,15 +83,67 @@ impl<'a> PropertyResolution<'a> {
                 return Ok(None);
             }
             let key = key.unwrap();
-            let mut base = Some(base.clone());
-            while let Some(base_1) = base.clone() {
-                let r = base_1.static_properties(self.0).get(&key);
+            for class in base.descending_class_hierarchy(self.0) {
+                // Throw if unresolved
+                class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                let r = class.static_properties(self.0).get(&key);
                 if let Some(r) = r {
-                    return Ok(Some(self.0.factory().create_static_reference_value(&base_1, &r)));
+                    // Throw if unresolved
+                    r.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                    return Ok(Some(self.0.factory().create_static_reference_value(&class, &r)));
                 }
-                base = base_1.extends_class(self.0);
             }
             return Ok(None);
+        }
+
+        // 6. If base is a value
+        if base.is_value() {
+            let base_type = base.static_type(self.0);
+
+            // 1. Return undefined if the type of base is void or a nullable type.
+            if base_type == self.0.void_type() {
+                return Err(PropertyResolutionError::VoidBase);
+            }
+            if base_type.is_nullable_type() {
+                return Err(PropertyResolutionError::NullableBase);
+            }
+
+            // 2. If key is a String value
+            let string_key = key.string_value();
+            if let Some(key) = string_key {
+                if base_type.is_class_type() || base_type.is_enum_type() {
+                    for class in base_type.descending_class_hierarchy(self.0) {
+                        // Throw if unresolved
+                        class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                        let prop = class.prototype(self.0).get(&key);
+                        if let Some(prop) = prop {
+                            // Throw if unresolved
+                            prop.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                            return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                        }
+                    }
+                } else if base_type.is_interface_type() {
+                    for itrfc in base_type.all_ascending_types(self.0).iter().rev() {
+                        // Throw if unresolved
+                        itrfc.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                        let prop = itrfc.prototype(self.0).get(&key);
+                        if let Some(prop) = prop {
+                            // Throw if unresolved
+                            prop.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                            return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                        }
+                    }
+                }
+            }
+
+            // 3. For each descending type in the type hierarchy of base
+            zxc_zxc_zxc;
         }
 
         ()

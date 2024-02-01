@@ -1491,13 +1491,11 @@ impl Symbol {
         if self.is_unresolved() {
             return None;
         }
-        let mut class = Some(self.non_null_type());
-        while let Some(class_w) = class.clone() {
-            let proxy = class_w.proxies(host).get(&kind);
+        for class in self.non_null_type().descending_class_hierarchy(host) {
+            let proxy = class.proxies(host).get(&kind);
             if proxy.is_some() {
                 return proxy;
             }
-            class = class_w.extends_class(host);
         }
         None
     }
@@ -2015,70 +2013,64 @@ impl Symbol {
             Visibility::Public => true,
             Visibility::Internal => {
                 let mut p: Option<Symbol> = None;
-                let mut p1 = prop.parent_definition();
-                while let Some(p1_w) = p1.clone() {
-                    if p1_w.is_package() {
-                        p = p1;
-                        break;
+                if let Some(p1) = prop.parent_definition() {
+                    for p1 in p1.descending_definition_hierarchy() {
+                        if p1.is_package() {
+                            p = Some(p1);
+                            break;
+                        }
                     }
-                    p1 = p1_w.parent_definition();
                 }
                 if p.is_none() {
                     return true;
                 }
                 let p = p.unwrap();
-                let mut scope = Some(scope.clone());
-                while let Some(scope_w) = scope {
-                    if scope_w.is_package_scope() && scope_w.package() == p {
+                for scope in scope.descending_scope_hierarchy() {
+                    if scope.is_package_scope() && scope.package() == p {
                         return true;
                     }
-                    scope = scope_w.parent_scope();
                 }
                 return false;
             },
             Visibility::Private => {
                 let mut t: Option<Symbol> = None;
-                let mut p = prop.parent_definition();
-                while let Some(p_w) = p.clone() {
-                    if p_w.is_class_type() || p_w.is_enum_type() {
-                        t = p;
-                        break;
+                if let Some(p) = prop.parent_definition() {
+                    for p in p.descending_definition_hierarchy() {
+                        if p.is_class_type() || p.is_enum_type() {
+                            t = Some(p);
+                            break;
+                        }
                     }
-                    p = p_w.parent_definition();
                 }
                 if t.is_none() {
                     return false;
                 }
                 let t = t.unwrap();
-                let mut scope = Some(scope.clone());
-                while let Some(scope_w) = scope {
-                    if (scope_w.is_class_scope() || scope_w.is_enum_scope()) && scope_w.class() == t {
+                for scope in scope.descending_scope_hierarchy() {
+                    if (scope.is_class_scope() || scope.is_enum_scope()) && scope.class() == t {
                         return true;
                     }
-                    scope = scope_w.parent_scope();
                 }
                 return false;
             },
             Visibility::Protected => {
                 let mut t: Option<Symbol> = None;
-                let mut p = prop.parent_definition();
-                while let Some(p_w) = p.clone() {
-                    if p_w.is_class_type() || p_w.is_enum_type() {
-                        t = p;
-                        break;
+                if let Some(p) = prop.parent_definition() {
+                    for p in p.descending_definition_hierarchy() {
+                        if p.is_class_type() || p.is_enum_type() {
+                            t = Some(p);
+                            break;
+                        }
                     }
-                    p = p_w.parent_definition();
                 }
                 if t.is_none() {
                     return false;
                 }
                 let t = t.unwrap();
-                let mut scope = Some(scope.clone());
-                while let Some(scope_w) = scope {
-                    if (scope_w.is_class_scope() || scope_w.is_enum_scope()) && scope_w.class().is_equals_or_subtype_of(&t, host) {
+                for scope in scope.descending_scope_hierarchy() {
+                    if (scope.is_class_scope() || scope.is_enum_scope()) && scope.class().is_equals_or_subtype_of(&t, host) {
                         return true;
                     }
-                    scope = scope_w.parent_scope();
                 }
                 return false;
             },
@@ -2097,21 +2089,25 @@ impl Symbol {
         self == other || self.is_subtype_of(other, host)
     }
 
+    /// Returns all ascending types of a type in ascending type order.
     pub fn all_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
         let mut r = vec![];
+        let mut r2 = vec![];
         for type_symbol in self.direct_ascending_types(host) {
-            if !r.contains(&type_symbol) {
-                r.push(type_symbol.clone());
-            }
             for type_symbol in type_symbol.all_ascending_types(host) {
                 if !r.contains(&type_symbol) {
                     r.push(type_symbol.clone());
                 }
             }
+            if !r.contains(&type_symbol) {
+                r2.push(type_symbol.clone());
+            }
         }
+        r.extend(r2);
         r
     }
 
+    /// Returns direct ascending types of a type.
     pub fn direct_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
         if self.is_class_type() {
             let mut r: Vec<Symbol> = self.implements(host).iter().collect();
@@ -2187,6 +2183,21 @@ impl Symbol {
             Ok(())
         }
     }
+
+    /// Iterator over a descending class hierarchy.
+    pub fn descending_class_hierarchy(&self, host: &mut SymbolHost) -> DescendingClassHierarchy {
+        DescendingClassHierarchy(Some(self.clone()), host)
+    }
+
+    /// Iterator over a descending scope hierarchy.
+    pub fn descending_scope_hierarchy(&self) -> DescendingScopeHierarchy {
+        DescendingScopeHierarchy(Some(self.clone()))
+    }
+
+    /// Iterator over a descending definition hierarchy.
+    pub fn descending_definition_hierarchy(&self) -> DescendingDefinitionHierarchy {
+        DescendingDefinitionHierarchy(Some(self.clone()))
+    }
 }
 
 impl ToString for Symbol {
@@ -2248,6 +2259,52 @@ impl ToString for Symbol {
             SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.fully_qualified_name(),
             SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => data.origin.fully_qualified_name(),
             _ => panic!(),
+        }
+    }
+}
+
+pub struct DescendingClassHierarchy<'a>(Option<Symbol>, &'a mut SymbolHost);
+
+impl<'a> Iterator for DescendingClassHierarchy<'a> {
+    type Item = Symbol;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(r) = self.0 {
+            if r.is_unresolved() {
+                self.0 = None;
+            } else {
+                self.0 = r.extends_class(self.1);
+            }
+            Some(r)
+        } else {
+            None
+        }
+    }
+}
+
+pub struct DescendingScopeHierarchy(Option<Symbol>);
+
+impl Iterator for DescendingScopeHierarchy {
+    type Item = Symbol;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(r) = self.0 {
+            self.0 = r.parent_scope();
+            Some(r)
+        } else {
+            None
+        }
+    }
+}
+
+pub struct DescendingDefinitionHierarchy(Option<Symbol>);
+
+impl Iterator for DescendingDefinitionHierarchy {
+    type Item = Symbol;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(r) = self.0 {
+            self.0 = r.parent_definition();
+            Some(r)
+        } else {
+            None
         }
     }
 }
