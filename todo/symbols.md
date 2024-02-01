@@ -66,53 +66,30 @@
     * [x] `package()`
 * [x] `ImportMetaSymbol`
 * [x] `ImportMetaEnvSymbol`
-* [ ] `Value`
-  * [ ] `is_value()`
-  * [ ] `static_type()`
-  * [ ] `set_static_type()`
-  * [ ] Factory creation
+* [x] `Value`
+  * [x] `is_value()`
+  * [x] `static_type()`
+  * [x] `set_static_type()`
+  * [x] Factory creation
 * [ ] Miscellaneous values
-  * [ ] `UndefinedConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_undefined_constant()`
-    * [ ] Factory creation
-  * [ ] `NullConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_null_constant()`
-    * [ ] Factory creation
-  * [ ] `StringConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_string_constant()`
-    * [ ] `string_value()`
-    * [ ] Factory creation
-  * [ ] `CharConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_char_constant()`
-    * [ ] `char_value()`
-    * [ ] Factory creation
-  * [ ] `CharIndexConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_char_index_constant()`
-    * [ ] `char_index_value()` — Returns (*string*, *index*).
-    * [ ] Factory creation
-  * [ ] `BooleanConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_boolean_constant()`
-    * [ ] `boolean_value()`
-    * [ ] Factory creation
-  * [ ] `NumberConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_number_constant()`
-    * [ ] `number_value()` — `AbstractRangeNumber`
-    * [ ] Factory creation
-  * [ ] `EnumConstant`
-    * [ ] `is_constant_value()`
-    * [ ] `is_enum_constant()`
-    * [ ] `number_value()` — `AbstractRangeNumber`
-    * [ ] Factory creation
-  * [ ] `ThisValue`
-    * [ ] `is_this_value()`
-    * [ ] Factory creation
+  * [x] `UndefinedConstant`
+    * [x] Factory creation
+  * [x] `NullConstant`
+    * [x] Factory creation
+  * [x] `StringConstant`
+    * [x] Factory creation
+  * [x] `CharConstant`
+    * [x] Factory creation
+  * [x] `CharIndexConstant`
+    * [x] Factory creation
+  * [x] `BooleanConstant`
+    * [x] Factory creation
+  * [x] `NumberConstant`
+    * [x] Factory creation
+  * [x] `EnumConstant`
+    * [x] Factory creation
+  * [x] `ThisValue`
+    * [x] Factory creation
   * [ ] `ConversionValue`
     * [ ] `is_conversion_value()`
     * [ ] `base()`
@@ -222,3 +199,4 @@
   * Take care with unresolved parts (consult symbol-operations.md for cases)
   * Return a `Result` that throws `PropertyResolutionError::AmbiguousReference` and `PropertyResolutionError::DeferVerification` variants.
 * [ ] `property_is_visible(&scope)`
+* [ ] Type conversions

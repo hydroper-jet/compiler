@@ -542,4 +542,64 @@ impl<'a> SymbolFactory<'a> {
             package: package.clone(),
         }))))
     }
+
+    pub fn create_value(&self, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, None)))
+    }
+
+    pub fn create_undefined_constant(&self, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Undefined))))))
+    }
+
+    pub fn create_null_constant(&self, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Null))))))
+    }
+
+    pub fn create_string_constant(&self, value: String, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::String(value)))))))
+    }
+
+    pub fn create_char_constant(&self, value: char, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Char(value)))))))
+    }
+
+    pub fn create_char_index_constant(&self, value: (String, u32), static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::CharIndex(value.0, value.1)))))))
+    }
+
+    pub fn create_boolean_constant(&self, value: bool, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Boolean(value)))))))
+    }
+
+    pub fn create_number_constant(&self, value: AbstractRangeNumber, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Number(value)))))))
+    }
+
+    pub fn create_enum_constant(&self, value: AbstractRangeNumber, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::Constant(ConstantKind::Enum(value)))))))
+    }
+
+    pub fn create_this_value(&self, static_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(static_type.clone()),
+        }, Some(Rc::new(ValueKind::This)))))
+    }
 }

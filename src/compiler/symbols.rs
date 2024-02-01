@@ -12,5 +12,7 @@ mod abstract_range_number;
 pub use abstract_range_number::*;
 mod type_substitution;
 pub use type_substitution::*;
+mod type_conversion;
+pub use type_conversion::*;
 mod errors;
 pub use errors::*;

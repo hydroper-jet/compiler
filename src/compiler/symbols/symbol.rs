@@ -185,6 +185,90 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::ImportMetaEnv)
     }
 
+    pub fn is_value(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Value(_, _))
+    }
+
+    pub fn is_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(_))
+    }
+
+    pub fn is_undefined_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Undefined))
+    }
+
+    pub fn is_null_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Null))
+    }
+
+    pub fn is_string_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::String(_)))
+    }
+
+    pub fn is_char_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Char(_)))
+    }
+
+    pub fn is_char_index_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::CharIndex(_, _)))
+    }
+
+    pub fn is_boolean_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Boolean(_)))
+    }
+
+    pub fn is_number_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Number(_)))
+    }
+
+    pub fn is_enum_constant(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Enum(_)))
+    }
+
+    pub fn is_this_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::This)
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -1203,6 +1287,7 @@ impl Symbol {
                 data.static_type.replace(Some(r.clone()));
                 r
             },
+            SymbolKind::Value(data, _) => data.static_type.borrow().clone(),
             _ => panic!(),
         }
     }
@@ -1211,6 +1296,9 @@ impl Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => {
+                data.static_type.replace(value.clone());
+            },
+            SymbolKind::Value(data, _) => {
                 data.static_type.replace(value.clone());
             },
             _ => panic!(),
@@ -1534,6 +1622,72 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    pub fn string_value(&self) -> String {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Constant(ConstantKind::String(v)) => v.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn char_value(&self) -> char {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Constant(ConstantKind::Char(v)) => v.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn char_index_value(&self) -> (String, u32) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Constant(ConstantKind::CharIndex(s, i)) => (s.clone(), i.clone()),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn boolean_value(&self) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Constant(ConstantKind::Boolean(v)) => v.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn number_value(&self) -> AbstractRangeNumber {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Constant(ConstantKind::Number(v)) => v.clone(),
+                    ValueKind::Constant(ConstantKind::Enum(v)) => v.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -1614,6 +1768,7 @@ pub(crate) enum SymbolKind {
     Scope(Rc<ScopeData>, Option<ScopeKind>),
     ImportMeta,
     ImportMetaEnv,
+    Value(ValueData, Option<Rc<ValueKind>>),
 }
 
 pub(crate) enum TypeKind {
@@ -1844,6 +1999,26 @@ pub(crate) enum ScopeKind {
     Package {
         package: Symbol,
     },
+}
+
+pub(crate) struct ValueData {
+    pub static_type: RefCell<Symbol>,
+}
+
+pub(crate) enum ValueKind {
+    Constant(ConstantKind),
+    This,
+}
+
+pub(crate) enum ConstantKind {
+    Undefined,
+    Null,
+    String(String),
+    Char(char),
+    CharIndex(String, u32),
+    Boolean(bool),
+    Number(AbstractRangeNumber),
+    Enum(AbstractRangeNumber),
 }
 
 /// Unresolved symbol.
@@ -2727,6 +2902,185 @@ impl Deref for ImportMetaEnvSymbol {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_import_meta_env());
+        &self.0
+    }
+}
+
+/// Value symbol.
+///
+/// # Supported methods
+///
+/// * `is_value()`
+/// * `static_type()`
+/// * `set_static_type()`
+/// * `read_only()`
+/// * `write_only()`
+/// * `property_is_visible()`
+pub struct Value(pub Symbol);
+
+impl Deref for Value {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_value());
+        &self.0
+    }
+}
+
+/// Undefined constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_undefined_constant()`
+pub struct UndefinedConstant(pub Symbol);
+
+impl Deref for UndefinedConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_undefined_constant());
+        &self.0
+    }
+}
+
+/// Null constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_null_constant()`
+pub struct NullConstant(pub Symbol);
+
+impl Deref for NullConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_null_constant());
+        &self.0
+    }
+}
+
+/// String constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_string_constant()`
+/// * `string_value()`
+pub struct StringConstant(pub Symbol);
+
+impl Deref for StringConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_string_constant());
+        &self.0
+    }
+}
+
+/// `Char` constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_char_constant()`
+/// * `char_value()`
+pub struct CharConstant(pub Symbol);
+
+impl Deref for CharConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_char_constant());
+        &self.0
+    }
+}
+
+/// `CharIndex` constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_char_index_constant()`
+/// * `char_index_value()` — Returns (*string*, *index*).
+pub struct CharIndexConstant(pub Symbol);
+
+impl Deref for CharIndexConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_char_index_constant());
+        &self.0
+    }
+}
+
+/// `Boolean` constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_boolean_constant()`
+/// * `boolean_value()`
+pub struct BooleanConstant(pub Symbol);
+
+impl Deref for BooleanConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_boolean_constant());
+        &self.0
+    }
+}
+
+/// Numeric constant value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_number_constant()`
+/// * `number_value()` — The `AbstractRangeNumber` representing the numeric value.
+pub struct NumberConstant(pub Symbol);
+
+impl Deref for NumberConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_number_constant());
+        &self.0
+    }
+}
+
+/// `enum` constant value symbol. The static type of this constant
+/// is either `T` or `T?` where `T` is an `enum`.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_constant()`
+/// * `is_enum_constant()`
+/// * `number_value()` — The `AbstractRangeNumber` representing the `enum` value.
+pub struct EnumConstant(pub Symbol);
+
+impl Deref for EnumConstant {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_enum_constant());
+        &self.0
+    }
+}
+
+/// `this` value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_this_value()`
+pub struct ThisValue(pub Symbol);
+
+impl Deref for ThisValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_this_value());
         &self.0
     }
 }
