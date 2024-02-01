@@ -100,9 +100,6 @@
     * [x] `base()`
     * [x] `qualifier()`
     * [x] `key_name()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `DynamicReferenceValue
     * [x] `is_reference_value()`
@@ -110,54 +107,36 @@
     * [x] `base()`
     * [x] `qualifier()`
     * [x] `key_name()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `StaticReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_static_reference_value()`
     * [x] `base()`
     * [x] `property()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `InstanceReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_instance_reference_value()`
     * [x] `base()`
     * [x] `property()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `ProxyReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_proxy_reference_value()`
     * [x] `base()`
     * [x] `proxy()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `TupleReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_tuple_reference_value()`
     * [x] `base()`
-    * [x] `tuple_index()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
+    * [x] `tuple_index()
     * [ ] Factory creation
   * [ ] `ScopeReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_scope_reference_value()`
     * [x] `base()`
     * [x] `property()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `DynamicScopeReferenceValue
     * [x] `is_reference_value()`
@@ -165,18 +144,12 @@
     * [x] `base()`
     * [x] `qualifier()`
     * [x] `key_name()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
   * [ ] `PackageReferenceValue
     * [x] `is_reference_value()`
     * [x] `is_package_reference_value()`
     * [x] `base()`
     * [x] `property()`
-    * [ ] `read_only()`
-    * [ ] `write_only()`
-    * [x] `property_is_visible()`
     * [ ] Factory creation
 
 ## Covered (logic)

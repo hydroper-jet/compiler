@@ -1411,13 +1411,31 @@ impl Symbol {
         }
     }
 
-    pub fn read_only(&self) -> bool {
+    pub fn read_only(&self, host: &mut SymbolHost) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => data.read_only.get(),
-            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(),
+            SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(host),
             SymbolKind::VirtualProperty(data) => data.setter.borrow().is_none(),
-            SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(),
+            SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.read_only(host),
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { .. } => false,
+                            ReferenceValueKind::Dynamic { .. } => false,
+                            ReferenceValueKind::Static { property, .. } => property.read_only(host),
+                            ReferenceValueKind::Instance { property, .. } => property.read_only(host),
+                            ReferenceValueKind::Proxy { base, .. } => base.static_type(host).has_set_property_proxy(host),
+                            ReferenceValueKind::Tuple { .. } => true,
+                            ReferenceValueKind::Scope { property, .. } => property.read_only(host),
+                            ReferenceValueKind::DynamicScope { .. } => false,
+                            ReferenceValueKind::Package { property, .. } => property.read_only(host),
+                        }
+                    }
+                    _ => true,
+                }
+            },
             _ => true,
         }
     }
@@ -1432,13 +1450,56 @@ impl Symbol {
         }
     }
 
-    pub fn write_only(&self) -> bool {
+    pub fn write_only(&self, host: &mut SymbolHost) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VirtualProperty(data) => data.getter.borrow().is_none(),
-            SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.write_only(),
+            SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.write_only(host),
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { .. } => false,
+                            ReferenceValueKind::Dynamic { .. } => false,
+                            ReferenceValueKind::Static { property, .. } => property.write_only(host),
+                            ReferenceValueKind::Instance { property, .. } => property.write_only(host),
+                            ReferenceValueKind::Proxy { .. } => false,
+                            ReferenceValueKind::Tuple { .. } => false,
+                            ReferenceValueKind::Scope { property, .. } => property.write_only(host),
+                            ReferenceValueKind::DynamicScope { .. } => false,
+                            ReferenceValueKind::Package { property, .. } => property.write_only(host),
+                        }
+                    }
+                    _ => true,
+                }
+            },
             _ => false,
         }
+    }
+
+    /// If a type is a nullable type, return it as a non nullable type.
+    pub fn non_null_type(&self) -> Symbol {
+        if self.is_nullable_type() {
+            self.base()
+        } else {
+            self.clone()
+        }
+    }
+
+    /// Indicates whether a `class` or `enum` defines the `setProperty()` proxy.
+    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> bool {
+        if self.is_unresolved() {
+            return false;
+        }
+        let mut class = Some(self.non_null_type());
+        while let Some(class_w) = class.clone() {
+            let proxy = class_w.proxies(host).get(&ProxyKind::SetProperty);
+            if proxy.is_some() {
+                return true;
+            }
+            class = class_w.extends_class(host);
+        }
+        false
     }
 
     pub fn constant_initializer(&self) -> Option<Symbol> {
