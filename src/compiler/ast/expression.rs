@@ -90,8 +90,8 @@ impl Expression {
 
     pub(crate) fn to_metadata(&self) -> Option<Vec<Attribute>> {
         match self {
-            Self::ArrayLiteral(ArrayLiteral { elements, .. }) => {
-                if elements.len() != 1 {
+            Self::ArrayLiteral(ArrayLiteral { elements, type_annotation, .. }) => {
+                if elements.len() != 1 || type_annotation.is_some() {
                     return None;
                 }
                 if let Element::Expression(ref exp) = elements[0] {

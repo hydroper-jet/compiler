@@ -6,6 +6,7 @@ use std::rc::Rc;
 pub struct ArrayLiteral {
     pub location: Location,
     pub elements: Vec<Element>,
+    pub type_annotation: Option<Rc<Expression>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

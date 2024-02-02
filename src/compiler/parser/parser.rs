@@ -909,9 +909,16 @@ impl<'input> Parser<'input> {
         }
         self.expect(Token::RightBrace)?;
 
+        let type_annotation: Option<Rc<Expression>> = if self.consume(Token::Colon)? {
+            Some(self.parse_type_expression()?)
+        } else {
+            None
+        };
+
         Ok(Rc::new(Expression::ObjectInitializer(ObjectInitializer {
             location: self.pop_location(),
             fields,
+            type_annotation,
         })))
     }
 
@@ -1249,9 +1256,15 @@ impl<'input> Parser<'input> {
             }
         }
         self.expect(Token::RightBracket)?;
+        let type_annotation: Option<Rc<Expression>> = if self.consume(Token::Colon)? {
+            Some(self.parse_type_expression()?)
+        } else {
+            None
+        };
         Ok(Rc::new(Expression::ArrayLiteral(ArrayLiteral {
             location: self.pop_location(),
             elements,
+            type_annotation,
         })))
     }
 

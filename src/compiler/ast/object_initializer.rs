@@ -6,6 +6,7 @@ use std::rc::Rc;
 pub struct ObjectInitializer {
     pub location: Location,
     pub fields: Vec<Rc<InitializerField>>,
+    pub type_annotation: Option<Rc<Expression>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
