@@ -1,12 +1,19 @@
 # Verification
 
+## Duplicate errors
+
+* [ ] Variable bindings report duplicate error
+* [ ] Functions report duplicate error
+* [ ] Constructors report duplicate error
+* [ ] Proxies report duplicate error
+* [ ] Getter reports duplicate error if not overriding
+* [ ] Setter reports duplicate error if not overriding
+
 ## Function definitions
 
 * [ ] Invoke `symbol.set_is_constructor(true)` for constructor definitions.
 * [ ] Invoke `symbol.set_of_virtual_property(p)` appropriately for getters and setters.
 * [ ] Invoke `symbol.set_name(name)` for getters and setters (required).
-* [ ] Getter reports duplicate error if not overriding
-* [ ] Setter reports duplicate error if not overriding
 
 ## Enumeration definitions
 
