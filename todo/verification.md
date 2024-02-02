@@ -47,3 +47,12 @@ package jet.lang {
     public const NaN = 0
 }
 ```
+
+## Overriding
+
+* [ ] Use `MethodOverriding::abstract_methods_not_overriden()` to verify not overriden abstract methods in a class.
+* [ ] Use `MethodOverriding::override_method()` to override a method.
+
+## Interface implementation
+
+* [ ] Use `InterfaceImplementation::verify()` to verify interface implementations of a class.
