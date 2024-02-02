@@ -11,6 +11,8 @@ pub struct SymbolHost {
     pub(crate) import_meta: Symbol,
     pub(crate) import_meta_env: Symbol,
 
+    pub(crate) env_cache: RefCell<Option<Rc<HashMap<String, String>>>>,
+
     pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
     pub(crate) nullable_types: HashMap<Symbol, Symbol>,
@@ -63,6 +65,9 @@ impl SymbolHost {
             void_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
             import_meta: Symbol(arena.allocate(SymbolKind::ImportMeta)),
             import_meta_env: Symbol(arena.allocate(SymbolKind::ImportMetaEnv)),
+
+            env_cache: RefCell::new(None),
+
             function_types: HashMap::new(),
             tuple_types: HashMap::new(),
             nullable_types: HashMap::new(),
@@ -479,6 +484,23 @@ impl SymbolHost {
         let r = self.factory().create_scope();
         r.open_packages().push(self.top_level_package());
         r.open_packages().push(self.jet_lang_package());
+        r
+    }
+
+    pub(crate) fn preload_environment_variables(&mut self) -> Rc<HashMap<String, String>> {
+        if let Some(env) = self.env_cache.borrow().as_ref() {
+            return env.clone();
+        }
+        let mut r = HashMap::<String, String>::new();
+        if let Ok(iterator) = dotenvy::dotenv_iter() {
+            for item in iterator {
+                if let Ok((key, value)) = item {
+                    r.insert(key, value);
+                }
+            }
+        }
+        let r = Rc::new(r);
+        self.env_cache.replace(Some(r.clone()));
         r
     }
 }

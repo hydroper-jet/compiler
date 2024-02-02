@@ -2004,7 +2004,7 @@ impl Symbol {
 
     pub fn property_is_visible(&self, scope: &Symbol, host: &mut SymbolHost) -> bool {
         let mut prop = self.clone();
-        if prop.is_reference_value() {
+        if prop.is_value() {
             if prop.is_static_reference_value() {
                 prop = prop.property();
             } else if prop.is_instance_reference_value() {

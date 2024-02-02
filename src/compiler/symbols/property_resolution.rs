@@ -103,7 +103,7 @@ impl<'a> PropertyResolution<'a> {
                 let r = class.static_properties(self.0).get(&key);
                 if let Some(r) = r {
                     // Throw if unresolved
-                    r.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+                    r.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
                     return Ok(Some(self.0.factory().create_static_reference_value(&class, &r)));
                 }
@@ -133,7 +133,7 @@ impl<'a> PropertyResolution<'a> {
                         let prop = class.prototype(self.0).get(&key);
                         if let Some(prop) = prop {
                             // Throw if unresolved
-                            prop.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+                            prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
                             return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
                         }
@@ -146,7 +146,7 @@ impl<'a> PropertyResolution<'a> {
                         let prop = itrfc.prototype(self.0).get(&key);
                         if let Some(prop) = prop {
                             // Throw if unresolved
-                            prop.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+                            prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
                             return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
                         }
@@ -159,7 +159,12 @@ impl<'a> PropertyResolution<'a> {
                 let proxy = base_type.find_proxy(ProxyKind::GetProperty, self.0)?;
                 if let Some(proxy) = proxy {
                     let key_type = key.static_type(self.0);
-                    let proxy_key_type = proxy.signature(self.0).parameters().get(0).unwrap().static_type.clone();
+                    let proxy_signature = proxy.signature(self.0);
+
+                    // Throw if proxy signature is unresolved
+                    proxy_signature.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                    let proxy_key_type = proxy_signature.parameters().get(0).unwrap().static_type.clone();
                     if key_type.is_equals_or_subtype_of(&proxy_key_type, self.0) {
                         return Ok(Some(self.0.factory().create_proxy_reference_value(&base, &proxy)));
                     }
@@ -189,6 +194,9 @@ impl<'a> PropertyResolution<'a> {
 
             let r = base.properties(self.0).get(&key);
             if let Some(r) = r {
+                // Throw if unresolved
+                r.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
                 return Ok(Some(r.resolve_alias().wrap_property_reference(self.0)));
             }
             for p in base.redirect_packages().iter() {
@@ -226,6 +234,7 @@ impl<'a> PropertyResolution<'a> {
                 return Ok(None);
             }
             let key: &str = key.unwrap().as_ref();
+
             match key {
                 "env" => {
                     return Ok(Some(self.0.import_meta_env()));
@@ -241,10 +250,26 @@ impl<'a> PropertyResolution<'a> {
 
         // 10. If base is the import.meta.env symbol
         if base.is_import_meta_env() {
-            zxc_zxc_zxc;
+            // Key must be a String constant
+            let key = string_key;
+            if key.is_none() {
+                return Ok(None);
+            }
+            let key = key.unwrap();
+
+            let ev_dict = self.0.preload_environment_variables();
+            if let Some(ev) = ev_dict.get(&key) {
+                return Ok(Some(self.0.factory().create_string_constant(ev.clone(), &self.0.string_type())));
+            } else {
+                return Ok(None);
+            }
         }
 
-        // 11.
+        // 11. Return undefined
         return Ok(None);
+    }
+
+    pub fn resolve_scope_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey) -> Result<Option<Symbol>, PropertyResolutionError> {
+        zxc_zxc_zxc;
     }
 }
