@@ -4,6 +4,7 @@
 
 * [ ] Invoke `symbol.set_is_constructor(true)` for constructor definitions.
 * [ ] Invoke `symbol.set_of_virtual_property(p)` appropriately for getters and setters.
+* [ ] Invoke `symbol.set_name(name)` for getters and setters (required).
 
 ## Enumeration definitions
 

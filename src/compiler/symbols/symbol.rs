@@ -2265,6 +2265,24 @@ impl Symbol {
     pub fn type_after_substitution_has_origin(&self, origin: &Symbol) -> bool {
         self.is_type_after_explicit_type_substitution() && &self.origin() == origin
     }
+
+    pub(crate) fn not_overriden_abstract_getter(&self, getter_from_base_class: &Symbol, subclass: &Symbol, host: &mut SymbolHost) -> bool {
+        if getter_from_base_class.is_abstract() {
+            let prop2 = subclass.prototype(host).get(&getter_from_base_class.name());
+            prop2.is_none() || !prop2.clone().unwrap().is_virtual_property() || prop2.unwrap().getter(host).is_none()
+        } else {
+            false
+        }
+    }
+
+    pub(crate) fn not_overriden_abstract_setter(&self, setter_from_base_class: &Symbol, subclass: &Symbol, host: &mut SymbolHost) -> bool {
+        if setter_from_base_class.is_abstract() {
+            let prop2 = subclass.prototype(host).get(&setter_from_base_class.name());
+            prop2.is_none() || !prop2.clone().unwrap().is_virtual_property() || prop2.unwrap().setter(host).is_none()
+        } else {
+            false
+        }
+    }
 }
 
 impl ToString for Symbol {
