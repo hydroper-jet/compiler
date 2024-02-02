@@ -1426,7 +1426,13 @@ impl Symbol {
                             ReferenceValueKind::Dynamic { .. } => false,
                             ReferenceValueKind::Static { property, .. } => property.read_only(host),
                             ReferenceValueKind::Instance { property, .. } => property.read_only(host),
-                            ReferenceValueKind::Proxy { base, .. } => base.static_type(host).has_set_property_proxy(host),
+                            ReferenceValueKind::Proxy { base, .. } => {
+                                let r = base.static_type(host).has_set_property_proxy(host);
+                                if r.is_err() {
+                                    return true;
+                                }
+                                r.unwrap()
+                            },
                             ReferenceValueKind::Tuple { .. } => true,
                             ReferenceValueKind::Scope { property, .. } => property.read_only(host),
                             ReferenceValueKind::DynamicScope { .. } => false,
@@ -1487,22 +1493,23 @@ impl Symbol {
     }
 
     /// Finds proxy in the class inheritance.
-    pub fn find_proxy(&self, kind: ProxyKind, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn find_proxy(&self, kind: ProxyKind, host: &mut SymbolHost) -> Result<Option<Symbol>, DeferVerificationError> {
         if self.is_unresolved() {
-            return None;
+            return Ok(None);
         }
         for class in self.non_null_type().descending_class_hierarchy(host) {
+            class.throw_if_unresolved()?;
             let proxy = class.proxies(host).get(&kind);
             if proxy.is_some() {
-                return proxy;
+                return Ok(proxy);
             }
         }
-        None
+        Ok(None)
     }
 
     /// Indicates whether a `class` or `enum` defines the `setProperty()` proxy.
-    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> bool {
-        self.find_proxy(ProxyKind::SetProperty, host).is_some()
+    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> Result<bool, DeferVerificationError> {
+        Ok(self.find_proxy(ProxyKind::SetProperty, host)?.is_some())
     }
 
     pub fn constant_initializer(&self) -> Option<Symbol> {
@@ -2199,6 +2206,19 @@ impl Symbol {
     /// Iterator over a descending definition hierarchy.
     pub fn descending_definition_hierarchy(&self) -> DescendingDefinitionHierarchy {
         DescendingDefinitionHierarchy(Some(self.clone()))
+    }
+
+    /// The internal *WrapPropertyReference*() function.
+    pub fn wrap_property_reference(&self, host: &mut SymbolHost) -> Symbol {
+        let parent = self.parent_definition().unwrap();
+        if parent.is_class_type() || parent.is_enum_type() {
+            return host.factory().create_static_reference_value(&parent, &self);
+        }
+        if parent.is_package() {
+            return host.factory().create_package_reference_value(&parent, &self);
+        }
+        assert!(self.is_scope());
+        return host.factory().create_scope_reference_value(&parent, &self);
     }
 }
 
@@ -3727,8 +3747,7 @@ impl Deref for ConversionValue {
     }
 }
 
-/// `import.meta.output` value symbol. This value should be explicitly assigned
-/// with a static type of `jet.lang.String` by a verifier (possibly `Unresolved`).
+/// `import.meta.output` value symbol.
 ///
 /// # Supported methods
 ///
@@ -3830,7 +3849,7 @@ impl Deref for InstanceReferenceValue {
 /// * `is_reference_value()`
 /// * `is_proxy_reference_value()`
 /// * `base()`
-/// * `proxy()`
+/// * `proxy()` — The `getProperty` proxy.
 pub struct ProxyReferenceValue(pub Symbol);
 
 impl Deref for ProxyReferenceValue {

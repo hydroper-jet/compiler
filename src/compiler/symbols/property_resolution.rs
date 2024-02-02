@@ -19,6 +19,14 @@ impl SemanticPropertyKey {
         }
     }
 
+    pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
+        match self {
+            Self::String(s) => host.string_type(),
+            Self::Number(d) => host.number_type(),
+            Self::Value(s) => s.static_type(host),
+        }
+    }
+
     pub fn string_value(&self) -> Option<String> {
         match self {
             Self::String(s) => Some(s.clone()),
@@ -64,9 +72,12 @@ impl<'a> PropertyResolution<'a> {
             return self.resolve_scope_property(base, qual, key);
         }
 
-        // 3. If base is a value whose type is *
+        let string_key = key.string_value();
+        let number_key = key.number_value();
+
+        // 3. If base is a value whose type is * or if key is not a String or Number constant
         //     1. Return DynamicReferenceValue(base, qual, key)
-        if base.is_value() && base.static_type(self.0) == self.0.any_type() {
+        if (base.is_value() && base.static_type(self.0) == self.0.any_type()) || !(string_key.is_some() || number_key.is_some()) {
             let k = key.symbol(self.0);
             return Ok(Some(self.0.factory().create_dynamic_reference_value(base, qual, &k)));
         }
@@ -78,11 +89,13 @@ impl<'a> PropertyResolution<'a> {
 
         // 5. If base is a class or enum
         if base.is_class_type() || base.is_enum_type() {
-            let key = key.string_value();
+            // Key must be a String constant
+            let key = string_key;
             if key.is_none() {
                 return Ok(None);
             }
             let key = key.unwrap();
+
             for class in base.descending_class_hierarchy(self.0) {
                 // Throw if unresolved
                 class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
@@ -102,7 +115,7 @@ impl<'a> PropertyResolution<'a> {
         if base.is_value() {
             let base_type = base.static_type(self.0);
 
-            // 1. Return undefined if the type of base is void or a nullable type.
+            // 6.1. Return undefined if the type of base is void or a nullable type.
             if base_type == self.0.void_type() {
                 return Err(PropertyResolutionError::VoidBase);
             }
@@ -110,8 +123,7 @@ impl<'a> PropertyResolution<'a> {
                 return Err(PropertyResolutionError::NullableBase);
             }
 
-            // 2. If key is a String value
-            let string_key = key.string_value();
+            // 6.2. If key is a String constant
             if let Some(key) = string_key {
                 if base_type.is_class_type() || base_type.is_enum_type() {
                     for class in base_type.descending_class_hierarchy(self.0) {
@@ -142,10 +154,97 @@ impl<'a> PropertyResolution<'a> {
                 }
             }
 
-            // 3. For each descending type in the type hierarchy of base
+            // 6.3. For each descending type in the type hierarchy of base
+            if base_type.is_class_type() || base_type.is_enum_type() {
+                let proxy = base_type.find_proxy(ProxyKind::GetProperty, self.0)?;
+                if let Some(proxy) = proxy {
+                    let key_type = key.static_type(self.0);
+                    let proxy_key_type = proxy.signature(self.0).parameters().get(0).unwrap().static_type.clone();
+                    if key_type.is_equals_or_subtype_of(&proxy_key_type, self.0) {
+                        return Ok(Some(self.0.factory().create_proxy_reference_value(&base, &proxy)));
+                    }
+                }
+            }
+
+            // 6.4. If key is a Number constant value and base is of a tuple type
+            if number_key.is_some() && base_type.is_tuple_type() {
+                let index: usize = unsafe { number_key.unwrap().to_int_unchecked() };
+                if index >= base_type.element_types().length() {
+                    return Ok(None);
+                }
+                return Ok(Some(self.0.factory().create_tuple_reference_value(&base, index)));
+            }
+
+            return Ok(None);
+        }
+
+        // 7. If base is a package
+        if base.is_package() {
+            // Key must be a String constant
+            let key = string_key;
+            if key.is_none() {
+                return Ok(None);
+            }
+            let key = key.unwrap();
+
+            let r = base.properties(self.0).get(&key);
+            if let Some(r) = r {
+                return Ok(Some(r.resolve_alias().wrap_property_reference(self.0)));
+            }
+            for p in base.redirect_packages().iter() {
+                let r = self.resolve_property(&p, qual.clone(), SemanticPropertyKey::String(key.clone()))?;
+                if r.is_some() {
+                    return Ok(r);
+                }
+            }
+            return Ok(None);
+        }
+
+        // 8. If base is a package set
+        if base.is_package_set() {
+            // Key must be a String constant
+            let key = string_key;
+            if key.is_none() {
+                return Ok(None);
+            }
+            let key = key.unwrap();
+
+            for p in base.packages().iter() {
+                let r = self.resolve_property(&p, qual.clone(), SemanticPropertyKey::String(key.clone()))?;
+                if r.is_some() {
+                    return Ok(r);
+                }
+            }
+            return Ok(None);
+        }
+
+        // 9. If base is the import.meta symbol
+        if base.is_import_meta() {
+            // Key must be a String constant
+            let key = string_key;
+            if key.is_none() {
+                return Ok(None);
+            }
+            let key: &str = key.unwrap().as_ref();
+            match key {
+                "env" => {
+                    return Ok(Some(self.0.import_meta_env()));
+                },
+                "output" => {
+                    return Ok(Some(self.0.factory().create_import_meta_output_value()));
+                },
+                _ => {
+                    return Ok(None);
+                },
+            }
+        }
+
+        // 10. If base is the import.meta.env symbol
+        if base.is_import_meta_env() {
             zxc_zxc_zxc;
         }
 
-        ()
+        // 11.
+        return Ok(None);
     }
 }
