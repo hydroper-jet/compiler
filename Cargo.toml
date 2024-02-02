@@ -1,6 +1,6 @@
 [workspace]
 members = [
     "src/compiler",
-    "src/parser_player",
+    "src/parser_tester",
 ]
 resolver = "2"
