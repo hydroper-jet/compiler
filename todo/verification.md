@@ -8,6 +8,10 @@
 * [ ] Proxies report duplicate error
 * [ ] Getter reports duplicate error if not overriding
 * [ ] Setter reports duplicate error if not overriding
+* [ ] Classes report duplicate error
+* [ ] Enumerations report duplicate error
+* [ ] Interfaces report duplicate error
+* [ ] `type` definitions report duplicate error
 
 ## Function definitions
 
