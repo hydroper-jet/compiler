@@ -44,4 +44,12 @@
 * [x] Property resolution
 * [x] Type conversions
 * [ ] Method overriding
+  * [ ] `abstract_methods_not_overriden()`
+    * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (an inherited class)
+  * [ ] `override_method()`
+    * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited class)
+    * [ ] Throws `DeferVerificationError` when an involved signature is unresolved
 * [ ] Interface implementation
+  * [ ] `verify(): Result<InterfaceImplementationVerification, DeferVerificationError>`
+    * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited interface or inherited class)
+    * [ ] Throws `DeferVerificationError` when an involved signature is unresolved

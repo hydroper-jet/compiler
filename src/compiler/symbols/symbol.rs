@@ -1293,6 +1293,10 @@ impl Symbol {
         return self.clone();
     }
 
+    pub fn resolve_property(&self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, host: &mut SymbolHost) -> Result<Option<Symbol>, PropertyResolutionError> {
+        PropertyResolution(host).resolve_property(base, qual, key)
+    }
+
     pub fn properties(&self, _host: &mut SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {

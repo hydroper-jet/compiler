@@ -16,5 +16,7 @@ mod type_conversion;
 pub use type_conversion::*;
 mod property_resolution;
 pub use property_resolution::*;
+mod method_overriding;
+pub use method_overriding::*;
 mod errors;
 pub use errors::*;
