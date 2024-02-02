@@ -127,6 +127,62 @@ impl AbstractRangeNumber {
         }
     }
 
+    pub fn minimum_value(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+        if type_symbol == &host.number_type() {
+            Self::Number(f64::NEG_INFINITY)
+        } else if type_symbol == &host.int_type() {
+            Self::Int(i32::MIN)
+        } else if type_symbol == &host.unsigned_int_type() {
+            Self::UnsignedInt(u32::MIN)
+        } else if type_symbol == &host.byte_type() {
+            Self::Byte(i8::MIN)
+        } else if type_symbol == &host.unsigned_byte_type() {
+            Self::UnsignedByte(u8::MIN)
+        } else if type_symbol == &host.short_type() {
+            Self::Short(i16::MIN)
+        } else if type_symbol == &host.unsigned_short_type() {
+            Self::UnsignedShort(u16::MIN)
+        } else if type_symbol == &host.long_type() {
+            Self::Long(i64::MIN)
+        } else if type_symbol == &host.unsigned_long_type() {
+            Self::UnsignedLong(u64::MIN)
+        } else if type_symbol == &host.big_int_type() {
+            panic!("BigInt has no minimum value")
+        } else if type_symbol == &host.single_type() {
+            Self::Single(f32::NEG_INFINITY)
+        } else {
+            panic!()
+        }
+    }
+
+    pub fn maximum_value(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+        if type_symbol == &host.number_type() {
+            Self::Number(f64::INFINITY)
+        } else if type_symbol == &host.int_type() {
+            Self::Int(i32::MAX)
+        } else if type_symbol == &host.unsigned_int_type() {
+            Self::UnsignedInt(u32::MAX)
+        } else if type_symbol == &host.byte_type() {
+            Self::Byte(i8::MAX)
+        } else if type_symbol == &host.unsigned_byte_type() {
+            Self::UnsignedByte(u8::MAX)
+        } else if type_symbol == &host.short_type() {
+            Self::Short(i16::MAX)
+        } else if type_symbol == &host.unsigned_short_type() {
+            Self::UnsignedShort(u16::MAX)
+        } else if type_symbol == &host.long_type() {
+            Self::Long(i64::MAX)
+        } else if type_symbol == &host.unsigned_long_type() {
+            Self::UnsignedLong(u64::MAX)
+        } else if type_symbol == &host.big_int_type() {
+            panic!("BigInt has no maximum value")
+        } else if type_symbol == &host.single_type() {
+            Self::Single(f32::INFINITY)
+        } else {
+            panic!()
+        }
+    }
+
     pub fn is_zero(&self) -> bool {
         match self {
             Self::Single(v) => v == &0.0,
@@ -262,6 +318,226 @@ impl AbstractRangeNumber {
             Self::UnsignedShort(v) => (v != &0) && ((v & (v - 1)) == 0),
             Self::UnsignedInt(v) => (v != &0) && ((v & (v - 1)) == 0),
             Self::UnsignedLong(v) => (v != &0) && ((v & (v - 1)) == 0),
+        }
+    }
+
+    pub fn convert_type(&self, target_type: &Symbol, host: &mut SymbolHost) -> Self {
+        let number_type = host.number_type();
+        let single_type = host.single_type();
+        let byte_type = host.byte_type();
+        let short_type = host.short_type();
+        let int_type = host.int_type();
+        let long_type = host.long_type();
+        let unsigned_byte_type = host.unsigned_byte_type();
+        let unsigned_short_type = host.unsigned_short_type();
+        let unsigned_int_type = host.unsigned_int_type();
+        let unsigned_long_type = host.unsigned_long_type();
+        let big_int_type = host.big_int_type();
+
+        if target_type == &number_type {
+            match self {
+                Self::Single(v) => Self::Number(*v as f64),
+                Self::Number(v) => Self::Number(*v),
+                Self::BigInt(v) => {
+                    let v: Result<u32, _> = v.try_into();
+                    Self::Number(v.map(|v| v as f64).unwrap_or(f64::NAN))
+                },
+                Self::Byte(v) => Self::Number(*v as f64),
+                Self::Short(v) => Self::Number(*v as f64),
+                Self::Int(v) => Self::Number(*v as f64),
+                Self::Long(v) => {
+                    let v: Result<i32, _> = (*v).try_into();
+                    Self::Number(v.map(|v| v as f64).unwrap_or(f64::NAN))
+                },
+                Self::UnsignedByte(v) => Self::Number(*v as f64),
+                Self::UnsignedShort(v) => Self::Number(*v as f64),
+                Self::UnsignedInt(v) => Self::Number(*v as f64),
+                Self::UnsignedLong(v) => {
+                    let v: Result<u32, _> = (*v).try_into();
+                    Self::Number(v.map(|v| v as f64).unwrap_or(f64::NAN))
+                },
+            }
+        } else if target_type == &single_type {
+            match self {
+                Self::Single(v) => Self::Single(*v),
+                Self::Number(v) => Self::Single(*v as f32),
+                Self::BigInt(v) => {
+                    let v: Result<u32, _> = v.try_into();
+                    Self::Single(v.map(|v| v as f32).unwrap_or(f32::NAN))
+                },
+                Self::Byte(v) => Self::Single(*v as f32),
+                Self::Short(v) => Self::Single(*v as f32),
+                Self::Int(v) => {
+                    let v: Result<i32, _> = (*v).try_into();
+                    Self::Single(v.map(|v| v as f32).unwrap_or(f32::NAN))
+                },
+                Self::Long(v) => {
+                    let v: Result<u32, _> = (*v).try_into();
+                    Self::Single(v.map(|v| v as f32).unwrap_or(f32::NAN))
+                },
+                Self::UnsignedByte(v) => Self::Single(*v as f32),
+                Self::UnsignedShort(v) => Self::Single(*v as f32),
+                Self::UnsignedInt(v) => {
+                    let v: Result<u32, _> = (*v).try_into();
+                    Self::Single(v.map(|v| v as f32).unwrap_or(f32::NAN))
+                },
+                Self::UnsignedLong(v) => {
+                    let v: Result<u32, _> = (*v).try_into();
+                    Self::Single(v.map(|v| v as f32).unwrap_or(f32::NAN))
+                },
+            }
+        } else if target_type == &byte_type {
+            match self {
+                Self::Single(v) => Self::Byte(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::Byte(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::Byte(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::Byte(*v),
+                Self::Short(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::Int(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedShort(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedInt(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::Byte((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &short_type {
+            match self {
+                Self::Single(v) => Self::Short(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::Short(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::Short(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::Short(*v as i16),
+                Self::Short(v) => Self::Short(*v),
+                Self::Int(v) => Self::Short((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::Short((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::Short(*v as i16),
+                Self::UnsignedShort(v) => Self::Short((*v).try_into().unwrap_or(0)),
+                Self::UnsignedInt(v) => Self::Short((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::Short((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &int_type {
+            match self {
+                Self::Single(v) => Self::Int(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::Int(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::Int(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::Int(*v as i32),
+                Self::Short(v) => Self::Int(*v as i32),
+                Self::Int(v) => Self::Int((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::Int((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::Int(*v as i32),
+                Self::UnsignedShort(v) => Self::Int(*v as i32),
+                Self::UnsignedInt(v) => Self::Int((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::Int((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &long_type {
+            match self {
+                Self::Single(v) => Self::Long(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::Long(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::Long(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::Long(*v as i64),
+                Self::Short(v) => Self::Long(*v as i64),
+                Self::Int(v) => Self::Long(*v as i64),
+                Self::Long(v) => Self::Long((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::Long(*v as i64),
+                Self::UnsignedShort(v) => Self::Long(*v as i64),
+                Self::UnsignedInt(v) => Self::Long(*v as i64),
+                Self::UnsignedLong(v) => Self::Long((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &unsigned_byte_type {
+            match self {
+                Self::Single(v) => Self::UnsignedByte(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::UnsignedByte(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::UnsignedByte(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::Short(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::Int(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::UnsignedByte(*v),
+                Self::UnsignedShort(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedInt(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::UnsignedByte((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &unsigned_short_type {
+            match self {
+                Self::Single(v) => Self::UnsignedShort(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::UnsignedShort(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::UnsignedShort(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+                Self::Short(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+                Self::Int(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::UnsignedShort(*v as u16),
+                Self::UnsignedShort(v) => Self::UnsignedShort(*v),
+                Self::UnsignedInt(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::UnsignedShort((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &unsigned_int_type {
+            match self {
+                Self::Single(v) => Self::UnsignedInt(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::UnsignedInt(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::UnsignedInt(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+                Self::Short(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+                Self::Int(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::UnsignedInt(*v as u32),
+                Self::UnsignedShort(v) => Self::UnsignedInt(*v as u32),
+                Self::UnsignedInt(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+                Self::UnsignedLong(v) => Self::UnsignedInt((*v).try_into().unwrap_or(0)),
+            }
+        } else if target_type == &unsigned_long_type {
+            match self {
+                Self::Single(v) => Self::UnsignedLong(unsafe { v.to_int_unchecked() }),
+                Self::Number(v) => Self::UnsignedLong(unsafe { v.to_int_unchecked() }),
+                Self::BigInt(v) => Self::UnsignedLong(v.try_into().unwrap_or(0)),
+                Self::Byte(v) => Self::UnsignedLong((*v).try_into().unwrap_or(0)),
+                Self::Short(v) => Self::UnsignedLong((*v).try_into().unwrap_or(0)),
+                Self::Int(v) => Self::UnsignedLong((*v).try_into().unwrap_or(0)),
+                Self::Long(v) => Self::UnsignedLong((*v).try_into().unwrap_or(0)),
+                Self::UnsignedByte(v) => Self::UnsignedLong(*v as u64),
+                Self::UnsignedShort(v) => Self::UnsignedLong(*v as u64),
+                Self::UnsignedInt(v) => Self::UnsignedLong(*v as u64),
+                Self::UnsignedLong(v) => Self::UnsignedLong(*v),
+            }
+        } else if target_type == &big_int_type {
+            match self {
+                Self::Single(v) => Self::BigInt(BigInt::from_f32(*v).unwrap_or(BigInt::zero())),
+                Self::Number(v) => Self::BigInt(BigInt::from_f64(*v).unwrap_or(BigInt::zero())),
+                Self::BigInt(v) => Self::BigInt(v.clone()),
+                Self::Byte(v) => Self::BigInt((*v).into()),
+                Self::Short(v) => Self::BigInt((*v).into()),
+                Self::Int(v) => Self::BigInt((*v).into()),
+                Self::Long(v) => Self::BigInt((*v).into()),
+                Self::UnsignedByte(v) => Self::BigInt((*v).into()),
+                Self::UnsignedShort(v) => Self::BigInt((*v).into()),
+                Self::UnsignedInt(v) => Self::BigInt((*v).into()),
+                Self::UnsignedLong(v) => Self::BigInt((*v).into()),
+            }
+        } else {
+            panic!()
+        }
+    }
+
+    pub fn is_nan(&self) -> bool {
+        match self {
+            Self::Number(f) => f.is_nan(),
+            Self::Single(f) => f.is_nan(),
+            _ => false,
+        }
+    }
+
+    pub fn is_negative_infinity(&self) -> bool {
+        match self {
+            Self::Number(f) => f == &f64::NEG_INFINITY,
+            Self::Single(f) => f == &f32::NEG_INFINITY,
+            _ => false,
+        }
+    }
+
+    pub fn is_positive_infinity(&self) -> bool {
+        match self {
+            Self::Number(f) => f == &f64::INFINITY,
+            Self::Single(f) => f == &f32::INFINITY,
+            _ => false,
         }
     }
 }

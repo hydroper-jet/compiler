@@ -2220,6 +2220,45 @@ impl Symbol {
         assert!(self.is_scope());
         return host.factory().create_scope_reference_value(&parent, &self);
     }
+
+    pub fn is_floating_point_type_of_wider_range_than(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+        let number_type = host.number_type();
+        let single_type = host.single_type();
+
+        if self == &number_type {
+            other == &single_type
+        } else if self == &single_type {
+            false
+        } else {
+            false
+        }
+    }
+
+    pub fn is_integer_type_of_wider_range_than(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+        let byte_type = host.byte_type();
+        let short_type = host.short_type();
+        let int_type = host.int_type();
+        let long_type = host.long_type();
+        let unsigned_byte_type = host.unsigned_byte_type();
+        let unsigned_short_type = host.unsigned_short_type();
+        let unsigned_int_type = host.unsigned_int_type();
+        let unsigned_long_type = host.unsigned_long_type();
+        let big_int_type = host.big_int_type();
+
+        if self == &byte_type {
+            false
+        } else if self == &short_type || self == &unsigned_short_type {
+            [byte_type, unsigned_byte_type].contains(other)
+        } else if self == &int_type || self == &unsigned_int_type {
+            [byte_type, unsigned_byte_type, short_type, unsigned_short_type].contains(other)
+        } else if self == &long_type || self == &unsigned_long_type {
+            [byte_type, unsigned_byte_type, short_type, unsigned_short_type, int_type, unsigned_int_type].contains(other)
+        } else if self == &big_int_type {
+            [byte_type, unsigned_byte_type, short_type, unsigned_short_type, int_type, unsigned_int_type, long_type, unsigned_long_type].contains(other)
+        } else {
+            false
+        }
+    }
 }
 
 impl ToString for Symbol {
