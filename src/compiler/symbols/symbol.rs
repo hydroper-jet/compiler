@@ -885,7 +885,7 @@ impl Symbol {
         }
     }
 
-    pub fn list_of_to_proxies(&self, host: &mut SymbolHost) -> SharedMap<Symbol, Symbol> {
+    pub fn list_of_to_proxies(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -902,10 +902,8 @@ impl Symbol {
                     return r.clone();
                 }
                 let type_parameters = data.origin.type_parameters().unwrap();
-                let r: SharedMap<Symbol, Symbol> = data.origin.list_of_to_proxies(host).borrow().iter().map(|(result_type, proxy_function)| {
-                    let result_type = TypeSubstitution(host).execute(result_type, &type_parameters, &data.substitute_types);
-                    let proxy_function = TypeSubstitution(host).execute(proxy_function, &type_parameters, &data.substitute_types);
-                    (result_type, proxy_function)
+                let r: SharedArray<Symbol> = data.origin.list_of_to_proxies(host).iter().map(|proxy_function| {
+                    TypeSubstitution(host).execute(&proxy_function, &type_parameters, &data.substitute_types)
                 }).collect();
                 list_of_to_proxies.replace(Some(r.clone()));
                 r
@@ -2259,6 +2257,10 @@ impl Symbol {
             false
         }
     }
+
+    pub fn type_after_substitution_has_origin(&self, origin: &Symbol) -> bool {
+        self.is_type_after_explicit_type_substitution() && &self.origin() == origin
+    }
 }
 
 impl ToString for Symbol {
@@ -2413,7 +2415,7 @@ pub(crate) struct ClassTypeData {
     pub constructor_function: RefCell<Option<Symbol>>,
     pub prototype: SharedMap<String, Symbol>,
     pub proxies: SharedMap<ProxyKind, Symbol>,
-    pub list_of_to_proxies: SharedMap<Symbol, Symbol>,
+    pub list_of_to_proxies: SharedArray<Symbol>,
     pub limited_subclasses: SharedArray<Symbol>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
@@ -2428,7 +2430,7 @@ pub(crate) struct EnumTypeData {
     pub static_properties: SharedMap<String, Symbol>,
     pub prototype: SharedMap<String, Symbol>,
     pub proxies: SharedMap<ProxyKind, Symbol>,
-    pub list_of_to_proxies: SharedMap<Symbol, Symbol>,
+    pub list_of_to_proxies: SharedArray<Symbol>,
     pub enumeration_members: SharedMap<String, AbstractRangeNumber>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
@@ -2469,7 +2471,7 @@ pub(crate) struct TypeAfterExplicitTypeSubstitutionData {
     pub constructor_function: RefCell<Option<Symbol>>,
     pub prototype: RefCell<Option<SharedMap<String, Symbol>>>,
     pub proxies: RefCell<Option<SharedMap<ProxyKind, Symbol>>>,
-    pub list_of_to_proxies: RefCell<Option<SharedMap<Symbol, Symbol>>>,
+    pub list_of_to_proxies: RefCell<Option<SharedArray<Symbol>>>,
 }
 
 bitflags! {

@@ -42,4 +42,6 @@
 * [x] Default value
 * [x] `property_is_visible(&scope)`
 * [x] Property resolution
-* [ ] Type conversions
+* [x] Type conversions
+* [ ] Method overriding
+* [ ] Interface implementation

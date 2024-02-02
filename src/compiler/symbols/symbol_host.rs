@@ -48,6 +48,7 @@ pub struct SymbolHost {
     pub(crate) xml_type: RefCell<Option<Symbol>>,
     pub(crate) xml_list_type: RefCell<Option<Symbol>>,
     pub(crate) class_type: RefCell<Option<Symbol>>,
+    pub(crate) array_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -107,6 +108,7 @@ impl SymbolHost {
             xml_type: RefCell::new(None),
             xml_list_type: RefCell::new(None),
             class_type: RefCell::new(None),
+            array_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -416,6 +418,19 @@ impl SymbolHost {
         }
     }
 
+    /// The `jet.lang.Array` class, possibly `Unresolved`.
+    pub fn array_type(&mut self) -> Symbol {
+        if let Some(r) = self.array_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Array") {
+            self.array_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
     /// The `jet.lang.Infinity` constant, possibly `Unresolved`.
     pub fn infinity_constant(&mut self) -> Symbol {
         if let Some(r) = self.infinity_constant.borrow().as_ref() {
@@ -473,6 +488,13 @@ impl SymbolHost {
             self.long_type(),
             self.unsigned_long_type(),
             self.big_int_type(),
+        ].contains(symbol)
+    }
+
+    pub fn is_floating_point_type(&mut self, symbol: &Symbol) -> bool {
+        [
+            self.number_type(),
+            self.single_type(),
         ].contains(symbol)
     }
 
