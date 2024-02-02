@@ -616,9 +616,10 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_import_meta_output_value(&self) -> Symbol {
+    pub fn create_import_meta_output_value(&mut self) -> Symbol {
+        let string_type = self.host.string_type();
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
-            static_type: RefCell::new(self.host.string_type()),
+            static_type: RefCell::new(string_type),
         }, Some(Rc::new(ValueKind::ImportMetaOutput)))))
     }
 

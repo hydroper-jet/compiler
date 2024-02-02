@@ -1497,7 +1497,7 @@ impl Symbol {
         if self.is_unresolved() {
             return Ok(None);
         }
-        for class in self.non_null_type().descending_class_hierarchy(host) {
+        for class in self.non_null_type().descending_class_hierarchy(host).collect::<Vec<_>>() {
             class.throw_if_unresolved()?;
             let proxy = class.proxies(host).get(&kind);
             if proxy.is_some() {
@@ -2194,7 +2194,7 @@ impl Symbol {
     }
 
     /// Iterator over a descending class hierarchy.
-    pub fn descending_class_hierarchy(&self, host: &mut SymbolHost) -> DescendingClassHierarchy {
+    pub fn descending_class_hierarchy<'a>(&self, host: &'a mut SymbolHost) -> DescendingClassHierarchy<'a> {
         DescendingClassHierarchy(Some(self.clone()), host)
     }
 
@@ -2290,7 +2290,7 @@ pub struct DescendingClassHierarchy<'a>(Option<Symbol>, &'a mut SymbolHost);
 impl<'a> Iterator for DescendingClassHierarchy<'a> {
     type Item = Symbol;
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(r) = self.0 {
+        if let Some(r) = self.0.clone() {
             if r.is_unresolved() {
                 self.0 = None;
             } else {
@@ -2308,7 +2308,7 @@ pub struct DescendingScopeHierarchy(Option<Symbol>);
 impl Iterator for DescendingScopeHierarchy {
     type Item = Symbol;
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(r) = self.0 {
+        if let Some(r) = self.0.clone() {
             self.0 = r.parent_scope();
             Some(r)
         } else {
@@ -2322,7 +2322,7 @@ pub struct DescendingDefinitionHierarchy(Option<Symbol>);
 impl Iterator for DescendingDefinitionHierarchy {
     type Item = Symbol;
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(r) = self.0 {
+        if let Some(r) = self.0.clone() {
             self.0 = r.parent_definition();
             Some(r)
         } else {

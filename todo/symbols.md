@@ -41,7 +41,5 @@
 * [x] Type relationship
 * [x] Default value
 * [x] `property_is_visible(&scope)`
-* [ ] Property resolution
-  * Take care with unresolved parts (consult symbol-operations.md for cases)
-  * Return a `Result` that throws `PropertyResolutionError::AmbiguousReference` and `PropertyResolutionError::DeferVerification` variants.
+* [x] Property resolution
 * [ ] Type conversions

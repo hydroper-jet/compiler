@@ -1,5 +1,4 @@
 use crate::ns::*;
-use std::rc::Rc;
 
 pub struct PropertyResolution<'a>(pub &'a mut SymbolHost);
 
@@ -13,16 +12,22 @@ pub enum SemanticPropertyKey {
 impl SemanticPropertyKey {
     pub fn symbol(&self, host: &mut SymbolHost) -> Symbol {
         match self {
-            Self::String(s) => host.factory().create_string_constant(s.clone(), &host.string_type()),
-            Self::Number(d) => host.factory().create_number_constant(AbstractRangeNumber::Number(d.clone()), &host.number_type()),
+            Self::String(s) => {
+                let string_type = host.string_type();
+                host.factory().create_string_constant(s.clone(), &string_type)
+            },
+            Self::Number(d) => {
+                let number_type = host.number_type();
+                host.factory().create_number_constant(AbstractRangeNumber::Number(d.clone()), &number_type)
+            },
             Self::Value(s) => s.clone(),
         }
     }
 
     pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
         match self {
-            Self::String(s) => host.string_type(),
-            Self::Number(d) => host.number_type(),
+            Self::String(_) => host.string_type(),
+            Self::Number(_) => host.number_type(),
             Self::Value(s) => s.static_type(host),
         }
     }
@@ -90,13 +95,11 @@ impl<'a> PropertyResolution<'a> {
         // 5. If base is a class or enum
         if base.is_class_type() || base.is_enum_type() {
             // Key must be a String constant
-            let key = string_key;
-            if key.is_none() {
+            let Some(key) = string_key else {
                 return Ok(None);
-            }
-            let key = key.unwrap();
+            };
 
-            for class in base.descending_class_hierarchy(self.0) {
+            for class in base.descending_class_hierarchy(self.0).collect::<Vec<_>>() {
                 // Throw if unresolved
                 class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
@@ -126,7 +129,7 @@ impl<'a> PropertyResolution<'a> {
             // 6.2. If key is a String constant
             if let Some(key) = string_key {
                 if base_type.is_class_type() || base_type.is_enum_type() {
-                    for class in base_type.descending_class_hierarchy(self.0) {
+                    for class in base_type.descending_class_hierarchy(self.0).collect::<Vec<_>>() {
                         // Throw if unresolved
                         class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
@@ -156,7 +159,7 @@ impl<'a> PropertyResolution<'a> {
 
             // 6.3. For each descending type in the type hierarchy of base
             if base_type.is_class_type() || base_type.is_enum_type() {
-                let proxy = base_type.find_proxy(ProxyKind::GetProperty, self.0)?;
+                let proxy = base_type.find_proxy(ProxyKind::GetProperty, self.0).map_err(|_| PropertyResolutionError::DeferVerification)?;
                 if let Some(proxy) = proxy {
                     let key_type = key.static_type(self.0);
                     let proxy_signature = proxy.signature(self.0);
@@ -186,11 +189,9 @@ impl<'a> PropertyResolution<'a> {
         // 7. If base is a package
         if base.is_package() {
             // Key must be a String constant
-            let key = string_key;
-            if key.is_none() {
+            let Some(key) = string_key else {
                 return Ok(None);
-            }
-            let key = key.unwrap();
+            };
 
             let r = base.properties(self.0).get(&key);
             if let Some(r) = r {
@@ -211,11 +212,9 @@ impl<'a> PropertyResolution<'a> {
         // 8. If base is a package set
         if base.is_package_set() {
             // Key must be a String constant
-            let key = string_key;
-            if key.is_none() {
+            let Some(key) = string_key else {
                 return Ok(None);
-            }
-            let key = key.unwrap();
+            };
 
             for p in base.packages().iter() {
                 let r = self.resolve_property(&p, qual.clone(), SemanticPropertyKey::String(key.clone()))?;
@@ -229,13 +228,11 @@ impl<'a> PropertyResolution<'a> {
         // 9. If base is the import.meta symbol
         if base.is_import_meta() {
             // Key must be a String constant
-            let key = string_key;
-            if key.is_none() {
+            let Some(key) = string_key else {
                 return Ok(None);
-            }
-            let key: &str = key.unwrap().as_ref();
+            };
 
-            match key {
+            match key.as_ref() {
                 "env" => {
                     return Ok(Some(self.0.import_meta_env()));
                 },
@@ -251,15 +248,14 @@ impl<'a> PropertyResolution<'a> {
         // 10. If base is the import.meta.env symbol
         if base.is_import_meta_env() {
             // Key must be a String constant
-            let key = string_key;
-            if key.is_none() {
+            let Some(key) = string_key else {
                 return Ok(None);
-            }
-            let key = key.unwrap();
+            };
 
             let ev_dict = self.0.preload_environment_variables();
             if let Some(ev) = ev_dict.get(&key) {
-                return Ok(Some(self.0.factory().create_string_constant(ev.clone(), &self.0.string_type())));
+                let string_type = self.0.string_type();
+                return Ok(Some(self.0.factory().create_string_constant(ev.clone(), &string_type)));
             } else {
                 return Ok(None);
             }
@@ -270,6 +266,100 @@ impl<'a> PropertyResolution<'a> {
     }
 
     pub fn resolve_scope_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey) -> Result<Option<Symbol>, PropertyResolutionError> {
-        zxc_zxc_zxc;
+        // 1. If base is a with scope
+        if base.is_with_scope() {
+            let obj = base.object();
+            let obj_static_type = obj.static_type(self.0);
+            if [self.0.any_type(), self.0.xml_type(), self.0.xml_list_type()].contains(&obj_static_type) {
+                let k = key.symbol(self.0);
+                return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k)));
+            }
+            let r = self.resolve_property(&obj, qual.clone(), key.clone())?;
+            if let Some(r) = r {
+                return Ok(Some(r));
+            }
+        }
+
+        // 2. If base is a filter operator scope
+        if base.is_filter_operator_scope() {
+            let k = key.symbol(self.0);
+            return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k)));
+        }
+
+        let string_key = key.string_value();
+
+        // 3. Let r be undefined.
+        let mut r: Option<Symbol> = None;
+
+        // 4. If qual is undefined and key is a String constant
+        if qual.is_none() && string_key.is_some() {
+            r = base.properties(self.0).get(&string_key.clone().unwrap());
+        }
+
+        // 5. If r is not undefined
+        if r.is_some() {
+            // Throw if static type is unresolved
+            r.clone().unwrap().property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+            r = Some(r.unwrap().resolve_alias().wrap_property_reference(self.0));
+        }
+
+        // 6. If base is an activation scope and base[[This]] is not undefined
+        if base.is_activation_scope() && base.this().is_some() {
+            r = self.resolve_property(&base.this().unwrap(), qual.clone(), key.clone())?;
+            if r.is_some() {
+                return Ok(r);
+            }
+        }
+
+        // 7. If base is a class scope or enum scope
+        if base.is_class_scope() || base.is_enum_scope() {
+            r = self.resolve_property(&base.class(), qual.clone(), key.clone())?;
+        }
+
+        // 8. Let amb be undefined.
+        let mut amb: Option<Symbol>;
+
+        // 9. If base is a package scope
+        if base.is_package_scope() {
+            amb = self.resolve_property(&base.package(), qual.clone(), key.clone())?;
+            if r.is_some() {
+                return Err(PropertyResolutionError::AmbiguousReference);
+            }
+            r = amb;
+        }
+
+        // 10. If qual is undefined and key is a String constant
+        if qual.is_none() && string_key.is_some() {
+            let p = base.imports().get(&string_key.unwrap());
+            if let Some(p) = p {
+                // Throw if static type is unresolved
+                p.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                amb = Some(p.resolve_alias().wrap_property_reference(self.0));
+                if r.is_some() {
+                    return Err(PropertyResolutionError::AmbiguousReference);
+                }
+                r = amb;
+            }
+        }
+
+        // 11. For each op in base[[OpenPackages]]
+        for p in base.packages().iter() {
+            amb = self.resolve_property(&p, qual.clone(), key.clone())?;
+            if r.is_some() {
+                return Err(PropertyResolutionError::AmbiguousReference);
+            }
+            r = amb;
+        }
+
+        // 12. If r is undefined and base[[ParentScope]] is not undefined
+        let parent_scope = base.parent_scope();
+        if r.is_none() && parent_scope.is_some() {
+            return self.resolve_scope_property(&parent_scope.unwrap(), qual, key);
+        }
+
+        // 13. Return r
+        Ok(r)
     }
 }

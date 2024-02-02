@@ -10,6 +10,4 @@ pub enum PropertyResolutionError {
     DeferVerification,
     VoidBase,
     NullableBase,
-    ExpectedNoQualifier,
-    ExpectedStringConstantKey,
 }
