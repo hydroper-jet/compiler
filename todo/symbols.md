@@ -48,8 +48,9 @@
     * [x] Throws `DeferVerificationError` when an involved ascending type is unresolved (an inherited class)
   * [ ] `override_method()`
     * [ ] Do not use `resolve_property()` for the lookup due to visibility.
-    * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited class)
-    * [ ] Throws `DeferVerificationError` when an involved signature is unresolved
+    * [ ] Throws `MethodOverridingError::DeferVerification` when an involved ascending type is unresolved (like an inherited class)
+    * [ ] Throws `MethodOverridingError::DeferVerification` when an involved signature is unresolved
+    * [ ] Throws `MethodOverridingError::CannotIntroduceTypeParameters` where necessary.
 * [ ] Interface implementation
   * [ ] `verify(): Result<InterfaceImplementationVerification, DeferVerificationError>`
     * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited interface or inherited class)

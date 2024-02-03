@@ -45,11 +45,14 @@ Verification must be deferred in cases where the semantic model produces the `Un
 * Structural types such as function types and these after type substitution must not be constructed containing any `Unresolved` compound.
 * Extends list and implements list must not contain `Unresolved` compound.
 * Compounds in expressions and statements may cause deferred verification of the respective syntax constructs.
+* Special enumeration properties and methods must be created without `Unresolved` signatures or static type.
 * There are miscellaneous other cases not written here yet, so be ultra careful with compounds in syntax constructs and certain contexts involving `Unresolved` including when using standard objects such as `jet.lang.Array` and `jet.lang.String`.
 
 ## Parent definitions
 
-Set parent definitions of all properties properly, including for these that belong to scopes.
+* [ ] Set parent definitions of all properties properly, including for these that belong to scopes.
+  * [ ] Set parent definition of getters and setters
+  * [ ] Set parent definition of the virtual property from getters and setters
 
 ## Infinity and NaN
 

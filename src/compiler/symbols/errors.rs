@@ -1,3 +1,5 @@
+use crate::ns::*;
+
 #[derive(Clone, Debug)]
 pub struct DeferVerificationError;
 
@@ -10,4 +12,17 @@ pub enum PropertyResolutionError {
     DeferVerification,
     VoidBase,
     NullableBase,
+}
+
+#[derive(Clone)]
+pub enum MethodOverridingError {
+    DeferVerification,
+    MustOverrideAMethod,
+    CannotOverrideTypeParameterizedMethod,
+    CannotIntroduceTypeParameters,
+    IncompatibleSignature {
+        expected_signature: Symbol,
+        actual_signature: Symbol,
+    },
+    OverridingFinalMethod,
 }
