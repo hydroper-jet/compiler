@@ -2394,6 +2394,25 @@ impl Symbol {
             _ => panic!(),
         }
     }
+
+    /// Assuming a `Scope` base, if the specified reference is a property that has been captured by another
+    /// activation in the base *current scope*, `check_property_has_capture()`
+    /// marks this property as captured in its respective activation.
+    ///
+    /// `check_property_has_capture` performs the following action:
+    /// 
+    /// ```
+    /// let current_scope = self;
+    /// if reference.is_scope_reference_value() && reference.base().find_activation().unwrap() != current_scope.find_activation().unwrap() {
+    ///     reference.base().find_activation().unwrap().set_property_has_capture(reference.property(), true);
+    /// }
+    /// ```
+    pub fn check_property_has_capture(&self, reference: &Symbol) {
+        let current_scope = self;
+        if reference.is_scope_reference_value() && reference.base().find_activation().unwrap() != current_scope.find_activation().unwrap() {
+            reference.base().find_activation().unwrap().set_property_has_capture(&reference.property(), true);
+        }
+    }
 }
 
 impl ToString for Symbol {

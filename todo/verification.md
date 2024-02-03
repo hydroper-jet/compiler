@@ -28,9 +28,7 @@
 * [ ] Do the following after successful property resolutions:
 
 ```rust
-if r.is_scope_reference_value() && r.base().find_activation().unwrap() != current_frame.find_activation().unwrap() {
-    r.base().find_activation().unwrap().set_property_has_capture(r.property(), true);
-}
+current_scope.check_property_has_capture(&reference_value);
 ```
 
 ## Enumeration definitions
