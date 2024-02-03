@@ -22,6 +22,16 @@
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for getters.
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for setters.
 
+## Extended life properties
+
+* [ ] Do the following after successful property resolutions:
+
+```rust
+if r.is_scope_reference_value() && r.base().find_activation_scope().unwrap() != current_frame.find_activation().unwrap() {
+    r.base().find_activation().unwrap().add_extended_life_variable(r.property());
+}
+```
+
 ## Enumeration definitions
 
 * [ ] Lazily initialize special methods (normal and set enumerations)

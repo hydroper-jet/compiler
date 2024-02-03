@@ -714,4 +714,19 @@ impl<'a> SymbolFactory<'a> {
             property: property.clone(),
         })))))))
     }
+
+    /// Creates a function value as result of a function expression.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the activation's signature is unresolved.
+    pub fn create_function_value(&mut self, activation_scope: &Symbol) -> Symbol {
+        let signature = activation_scope.function().signature(self.host);
+        assert!(!signature.is_unresolved());
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(signature),
+        }, Some(Rc::new(ValueKind::Function {
+            activation_scope: activation_scope.clone(),
+        })))))
+    }
 }

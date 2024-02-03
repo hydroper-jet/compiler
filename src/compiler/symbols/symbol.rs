@@ -356,6 +356,14 @@ impl Symbol {
         matches!(data.as_ref(), ReferenceValueKind::Package { .. })
     }
 
+    pub fn is_function_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Function { .. })
+    }
+
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -2316,6 +2324,19 @@ impl Symbol {
             false
         }
     }
+
+    pub fn activation_scope(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Function { activation_scope } => activation_scope.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -2687,6 +2708,9 @@ pub(crate) enum ValueKind {
     Conversion(Rc<ConversionValueData>),
     ImportMetaOutput,
     Reference(Rc<ReferenceValueKind>),
+    Function {
+        activation_scope: Symbol,
+    },
 }
 
 pub(crate) enum ConstantKind {
@@ -4035,6 +4059,22 @@ impl Deref for PackageReferenceValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_package_reference_value());
+        &self.0
+    }
+}
+
+/// Function value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `activation_scope()`
+pub struct FunctionValue(pub Symbol);
+
+impl Deref for FunctionValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_function_value());
         &self.0
     }
 }
