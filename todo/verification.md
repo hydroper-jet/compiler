@@ -15,6 +15,7 @@
 
 ## Function definitions
 
+* [ ] Invoke `symbol.set_activation_scope(Some(activation_scope))` for all non `abstract` and non `native` functions.
 * [ ] Invoke `symbol.set_is_constructor(true)` for constructor definitions.
 * [ ] Invoke `symbol.set_of_virtual_property(p)` appropriately for getters and setters.
 * [ ] Invoke `symbol.set_name(name)` for getters and setters (required).
@@ -27,8 +28,8 @@
 * [ ] Do the following after successful property resolutions:
 
 ```rust
-if r.is_scope_reference_value() && r.base().find_activation_scope().unwrap() != current_frame.find_activation().unwrap() {
-    r.base().find_activation().unwrap().add_extended_life_variable(r.property());
+if r.is_scope_reference_value() && r.base().find_activation().unwrap() != current_frame.find_activation().unwrap() {
+    r.base().find_activation().unwrap().set_property_has_extended_life(r.property(), true);
 }
 ```
 

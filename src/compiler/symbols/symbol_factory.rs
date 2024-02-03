@@ -391,6 +391,7 @@ impl<'a> SymbolFactory<'a> {
             of_virtual_property: RefCell::new(None),
             overriden_by: SharedArray::new(),
             overrides_method: RefCell::new(None),
+            activation_scope: RefCell::new(None),
         }))))
     }
 
@@ -491,6 +492,7 @@ impl<'a> SymbolFactory<'a> {
         }), Some(ScopeKind::Activation(Rc::new(ActivationScopeData {
             function: function.clone(),
             this: RefCell::new(None),
+            extended_life_properties: RefCell::new(None),
         }))))))
     }
 

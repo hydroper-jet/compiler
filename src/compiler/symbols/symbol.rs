@@ -2325,13 +2325,70 @@ impl Symbol {
         }
     }
 
-    pub fn activation_scope(&self) -> Symbol {
+    pub fn activation_scope(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
+            SymbolKind::Function(data) => data.activation_scope.borrow().clone(),
             SymbolKind::Value(_, Some(data)) => {
                 match data.as_ref() {
-                    ValueKind::Function { activation_scope } => activation_scope.clone(),
+                    ValueKind::Function { activation_scope } => Some(activation_scope.clone()),
                     _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_activation_scope(&self, value: Option<Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Function(data) => {
+                data.activation_scope.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn find_activation(&self) -> Option<Symbol> {
+        for scope in self.descending_scope_hierarchy() {
+            if scope.is_activation_scope() {
+                return Some(scope);
+            }
+        }
+        return None
+    }
+
+    pub fn property_has_extended_life(&self, property: &Symbol) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => {
+                if let Some(set) = data.extended_life_properties.borrow().as_ref() {
+                    set.includes(property)
+                } else {
+                    false
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_property_has_extended_life(&self, property: &Symbol, value: bool) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => {
+                if let Some(set) = data.extended_life_properties.borrow_mut().as_mut() {
+                    if value {
+                        if !set.includes(property) {
+                            set.push(property.clone());
+                        }
+                    } else {
+                        let i = set.index_of(property);
+                        if let Some(i) = i {
+                            set.remove(i);
+                        }
+                    }
+                } else if value {
+                    data.extended_life_properties.replace(Some(shared_array![property.clone()]));
                 }
             },
             _ => panic!(),
@@ -2635,6 +2692,7 @@ pub(crate) struct FunctionSymbolData {
     pub overrides_method: RefCell<Option<Symbol>>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+    pub activation_scope: RefCell<Option<Symbol>>,
 }
 
 bitflags! {
@@ -2674,6 +2732,7 @@ pub(crate) struct ScopeData {
 pub(crate) struct ActivationScopeData {
     pub function: Symbol,
     pub this: RefCell<Option<Symbol>>,
+    pub extended_life_properties: RefCell<Option<SharedArray<Symbol>>>,
 }
 
 pub(crate) enum ScopeKind {
@@ -3375,6 +3434,8 @@ impl Deref for VirtualPropertyAfterIndirectTypeSubstitution {
 /// * `overriden_by()` — List of function symbols used to override the function symbol.
 /// * `overrides_method()` — Indicates an overriden method.
 /// * `set_overrides_method()`
+/// * `activation_scope()`
+/// * `set_activation_scope()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionSymbol(pub Symbol);
 
@@ -3508,6 +3569,10 @@ impl Deref for FilterOperatorScope {
 
 /// Activation scope symbol.
 ///
+/// Activations may contain *extended life* properties. Extended life
+/// properties are properties that have been captured by subsequent
+/// activations.
+///
 /// # Supported methods
 ///
 /// * `Scope` inherited methods
@@ -3524,6 +3589,8 @@ impl Deref for FilterOperatorScope {
 /// * `function()`
 /// * `this()`
 /// * `set_this()`
+/// * `property_has_extended_life()` — Indicates whether a scope's property has extended life.
+/// * `set_property_has_extended_life()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ActivationScope(pub Symbol);
 
