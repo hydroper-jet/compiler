@@ -1683,6 +1683,39 @@ impl Symbol {
         }
     }
 
+    pub fn overrides_method(&self, host: &mut SymbolHost) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Function(data) => data.overrides_method.borrow().clone(),
+            SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => {
+                if let Some(r) = data.overrides_method.borrow().as_ref() {
+                    return Some(r.clone());
+                }
+                let r = data.origin.overrides_method(host);
+                if r.is_none() {
+                    return None;
+                }
+                let r = TypeSubstitution(host).execute(&r.unwrap(), &data.explicit_or_indirect_substitute_types, &data.explicit_or_indirect_substitute_types);
+                data.overrides_method.replace(Some(r.clone()));
+                Some(r)
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_overrides_method(&self, value: Option<Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Function(data) => {
+                data.overrides_method.replace(value);
+            },
+            SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => {
+                data.overrides_method.replace(value);
+            },
+            _ => panic!(),
+        }
+    }
+
     pub fn parent_scope(&self) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -2578,6 +2611,7 @@ pub(crate) struct FunctionSymbolData {
     pub type_parameters: RefCell<Option<SharedArray<Symbol>>>,
     pub of_virtual_property: RefCell<Option<Symbol>>,
     pub overriden_by: SharedArray<Symbol>,
+    pub overrides_method: RefCell<Option<Symbol>>,
     pub jetdoc: RefCell<Option<Rc<JetDoc>>>,
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
 }
@@ -2603,6 +2637,7 @@ pub(crate) struct FunctionAfterExplicitOrIndirectTypeSubstitutionData {
     pub signature: RefCell<Option<Symbol>>,
     pub of_virtual_property: RefCell<Option<Symbol>>,
     pub overriden_by: RefCell<Option<SharedArray<Symbol>>>,
+    pub overrides_method: RefCell<Option<Symbol>>,
     pub is_overriding: Cell<bool>,
 }
 
@@ -3314,6 +3349,8 @@ impl Deref for VirtualPropertyAfterIndirectTypeSubstitution {
 /// * `of_virtual_property()`
 /// * `set_of_virtual_property()`
 /// * `overriden_by()` — List of function symbols used to override the function symbol.
+/// * `overrides_method()` — Indicates an overriden method.
+/// * `set_overrides_method()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionSymbol(pub Symbol);
 
@@ -3351,6 +3388,8 @@ impl Deref for FunctionSymbol {
 /// * `signature()`
 /// * `of_virtual_property()`
 /// * `overriden_by()` — List of function symbols used to override the function symbol.
+/// * `overrides_method()` — Indicates an overriden method.
+/// * `set_overrides_method()`
 /// * `origin()`
 /// * `explicit_or_indirect_type_parameters()`
 /// * `explicit_or_indirect_substitute_types()`

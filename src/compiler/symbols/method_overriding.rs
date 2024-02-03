@@ -105,6 +105,7 @@ impl<'a> MethodOverriding<'a> {
         }
 
         base_method.overriden_by(self.0).push(method.clone());
+        method.set_overrides_method(Some(base_method));
         Ok(())
     }
 

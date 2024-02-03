@@ -390,6 +390,7 @@ impl<'a> SymbolFactory<'a> {
             type_parameters: RefCell::new(None),
             of_virtual_property: RefCell::new(None),
             overriden_by: SharedArray::new(),
+            overrides_method: RefCell::new(None),
         }))))
     }
 
@@ -432,6 +433,7 @@ impl<'a> SymbolFactory<'a> {
             signature: RefCell::new(None),
             of_virtual_property: RefCell::new(None),
             overriden_by: RefCell::new(None),
+            overrides_method: RefCell::new(None),
             is_overriding: Cell::new(origin.is_overriding()),
         }))));
 
