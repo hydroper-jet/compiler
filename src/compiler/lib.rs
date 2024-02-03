@@ -9,5 +9,6 @@ pub mod operator;
 pub mod parser;
 pub mod symbols;
 pub mod util;
+pub mod verifier;
 
 pub mod ns;

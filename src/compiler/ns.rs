@@ -8,3 +8,4 @@ pub use crate::operator::*;
 pub use crate::parser::*;
 pub use crate::symbols::*;
 pub use crate::util::*;
+pub use crate::verifier::*;
