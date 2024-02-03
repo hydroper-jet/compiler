@@ -2933,6 +2933,7 @@ impl<'input> Parser<'input> {
         let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
         let has_proxy = Attribute::find_proxy(&attributes).is_some();
         let has_native = Attribute::find_native(&attributes).is_some();
+        let has_abstract = Attribute::find_abstract(&attributes).is_some();
         self.push_location(&start_location);
         let mut name = self.expect_identifier(true)?;
         let mut getter = false;
@@ -2996,9 +2997,9 @@ impl<'input> Parser<'input> {
         // Interface methods are skipped in the verification as they
         // may omit body.
         if !interface_method {
-            if has_native && common.body.is_some() {
+            if (has_native || has_abstract) && common.body.is_some() {
                 self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustNotContainBody, diagnostic_arguments![]);
-            } else if !has_native && common.body.is_none() {
+            } else if !(has_native || has_abstract) && common.body.is_none() {
                 self.add_syntax_error(&name.location(), DiagnosticKind::FunctionMustContainBody, diagnostic_arguments![]);
             }
         }
