@@ -3607,7 +3607,8 @@ impl Deref for FilterOperatorScope {
 /// * `function()`
 /// * `this()`
 /// * `set_this()`
-/// * `property_has_capture()` — Indicates whether a scope's property has extended life.
+/// * `property_has_capture()` — Indicates whether an activation's property has been captured by a subsequent activation.
+///   Properties range from the activation scope to the innermost scope of an activation.
 /// * `set_property_has_capture()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ActivationScope(pub Symbol);
