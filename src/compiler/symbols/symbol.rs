@@ -2358,11 +2358,11 @@ impl Symbol {
         return None
     }
 
-    pub fn property_has_extended_life(&self, property: &Symbol) -> bool {
+    pub fn property_has_capture(&self, property: &Symbol) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => {
-                if let Some(set) = data.extended_life_properties.borrow().as_ref() {
+                if let Some(set) = data.property_has_capture.borrow().as_ref() {
                     set.includes(property)
                 } else {
                     false
@@ -2372,11 +2372,11 @@ impl Symbol {
         }
     }
 
-    pub fn set_property_has_extended_life(&self, property: &Symbol, value: bool) {
+    pub fn set_property_has_capture(&self, property: &Symbol, value: bool) {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Scope(_, Some(ScopeKind::Activation(data))) => {
-                if let Some(set) = data.extended_life_properties.borrow_mut().as_mut() {
+                if let Some(set) = data.property_has_capture.borrow_mut().as_mut() {
                     if value {
                         if !set.includes(property) {
                             set.push(property.clone());
@@ -2388,7 +2388,7 @@ impl Symbol {
                         }
                     }
                 } else if value {
-                    data.extended_life_properties.replace(Some(shared_array![property.clone()]));
+                    data.property_has_capture.replace(Some(shared_array![property.clone()]));
                 }
             },
             _ => panic!(),
@@ -2732,7 +2732,7 @@ pub(crate) struct ScopeData {
 pub(crate) struct ActivationScopeData {
     pub function: Symbol,
     pub this: RefCell<Option<Symbol>>,
-    pub extended_life_properties: RefCell<Option<SharedArray<Symbol>>>,
+    pub property_has_capture: RefCell<Option<SharedArray<Symbol>>>,
 }
 
 pub(crate) enum ScopeKind {
@@ -3569,9 +3569,8 @@ impl Deref for FilterOperatorScope {
 
 /// Activation scope symbol.
 ///
-/// Activations may contain *extended life* properties. Extended life
-/// properties are properties that have been captured by subsequent
-/// activations.
+/// Properties within an activation may be captured by subsequent
+/// activations, therefore yielding `activation.property_has_capture(p) == true`.
 ///
 /// # Supported methods
 ///
@@ -3589,8 +3588,8 @@ impl Deref for FilterOperatorScope {
 /// * `function()`
 /// * `this()`
 /// * `set_this()`
-/// * `property_has_extended_life()` — Indicates whether a scope's property has extended life.
-/// * `set_property_has_extended_life()`
+/// * `property_has_capture()` — Indicates whether a scope's property has extended life.
+/// * `set_property_has_capture()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct ActivationScope(pub Symbol);
 

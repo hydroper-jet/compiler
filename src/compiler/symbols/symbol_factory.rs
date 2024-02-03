@@ -492,7 +492,7 @@ impl<'a> SymbolFactory<'a> {
         }), Some(ScopeKind::Activation(Rc::new(ActivationScopeData {
             function: function.clone(),
             this: RefCell::new(None),
-            extended_life_properties: RefCell::new(None),
+            property_has_capture: RefCell::new(None),
         }))))))
     }
 

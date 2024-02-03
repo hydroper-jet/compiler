@@ -23,13 +23,13 @@
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for getters.
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for setters.
 
-## Extended life properties
+## Captured properties
 
 * [ ] Do the following after successful property resolutions:
 
 ```rust
 if r.is_scope_reference_value() && r.base().find_activation().unwrap() != current_frame.find_activation().unwrap() {
-    r.base().find_activation().unwrap().set_property_has_extended_life(r.property(), true);
+    r.base().find_activation().unwrap().set_property_has_capture(r.property(), true);
 }
 ```
 
