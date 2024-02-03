@@ -30,7 +30,7 @@ pub enum TypeConversionRelationship {
     FromTypeParameter,
 }
 
-pub struct TypeConversions<'a>(pub &'a mut SymbolHost);
+pub struct TypeConversions<'a>(pub &'a SymbolHost);
 
 impl<'a> TypeConversions<'a> {
     pub fn implicit_constant_conversion(&mut self, value: &Symbol, target_type: &Symbol) -> Option<Symbol> {

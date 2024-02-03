@@ -1,6 +1,6 @@
 use crate::ns::*;
 
-pub struct PropertyResolution<'a>(pub &'a mut SymbolHost);
+pub struct PropertyResolution<'a>(pub &'a SymbolHost);
 
 #[derive(Clone)]
 pub enum SemanticPropertyKey {
@@ -10,7 +10,7 @@ pub enum SemanticPropertyKey {
 }
 
 impl SemanticPropertyKey {
-    pub fn symbol(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn symbol(&self, host: &SymbolHost) -> Symbol {
         match self {
             Self::String(s) => {
                 let string_type = host.string_type();
@@ -24,7 +24,7 @@ impl SemanticPropertyKey {
         }
     }
 
-    pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn static_type(&self, host: &SymbolHost) -> Symbol {
         match self {
             Self::String(_) => host.string_type(),
             Self::Number(_) => host.number_type(),

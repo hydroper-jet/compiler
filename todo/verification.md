@@ -13,6 +13,11 @@
 * [ ] Interfaces report duplicate error
 * [ ] `type` definitions report duplicate error
 
+## Plain meta-data
+
+* [ ] Process plain meta-data in definitions
+* [ ] Process plain meta-data in blocks by assigning to a `BlockStatementSymbol`
+
 ## Function definitions
 
 * [ ] Invoke `symbol.set_activation_scope(Some(activation_scope))` for all non `abstract` and non `native` functions.

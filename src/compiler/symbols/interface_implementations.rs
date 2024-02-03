@@ -1,6 +1,6 @@
 use crate::ns::*;
 
-pub struct InterfaceImplementations<'a>(pub &'a mut SymbolHost);
+pub struct InterfaceImplementations<'a>(pub &'a SymbolHost);
 
 impl<'a> InterfaceImplementations<'a> {
     pub fn verify(&mut self, implementor: &Symbol, interface: &Symbol) -> Result<Vec<InterfaceImplementationLog>, DeferVerificationError> {

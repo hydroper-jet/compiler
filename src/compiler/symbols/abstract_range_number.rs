@@ -71,7 +71,7 @@ impl BitOr for AbstractRangeNumber {
 }
 
 impl AbstractRangeNumber {
-    pub fn zero(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+    pub fn zero(type_symbol: &Symbol, host: &SymbolHost) -> Self {
         if type_symbol == &host.number_type() {
             Self::Number(0.0)
         } else if type_symbol == &host.int_type() {
@@ -99,7 +99,7 @@ impl AbstractRangeNumber {
         }
     }
 
-    pub fn one(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+    pub fn one(type_symbol: &Symbol, host: &SymbolHost) -> Self {
         if type_symbol == &host.number_type() {
             Self::Number(1.0)
         } else if type_symbol == &host.int_type() {
@@ -127,7 +127,7 @@ impl AbstractRangeNumber {
         }
     }
 
-    pub fn minimum_value(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+    pub fn minimum_value(type_symbol: &Symbol, host: &SymbolHost) -> Self {
         if type_symbol == &host.number_type() {
             Self::Number(f64::NEG_INFINITY)
         } else if type_symbol == &host.int_type() {
@@ -155,7 +155,7 @@ impl AbstractRangeNumber {
         }
     }
 
-    pub fn maximum_value(type_symbol: &Symbol, host: &mut SymbolHost) -> Self {
+    pub fn maximum_value(type_symbol: &Symbol, host: &SymbolHost) -> Self {
         if type_symbol == &host.number_type() {
             Self::Number(f64::INFINITY)
         } else if type_symbol == &host.int_type() {
@@ -321,7 +321,7 @@ impl AbstractRangeNumber {
         }
     }
 
-    pub fn convert_type(&self, target_type: &Symbol, host: &mut SymbolHost) -> Self {
+    pub fn convert_type(&self, target_type: &Symbol, host: &SymbolHost) -> Self {
         let number_type = host.number_type();
         let single_type = host.single_type();
         let byte_type = host.byte_type();

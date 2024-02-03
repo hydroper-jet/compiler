@@ -36,6 +36,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Unresolved)
     }
 
+    pub fn is_block_statement(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::BlockStatement(_))
+    }
+
     pub fn is_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(_))
     }
@@ -366,7 +370,7 @@ impl Symbol {
 
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
-    pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
+    pub fn type_substitution(&self, host: &SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
         TypeSubstitution(host).execute(self, type_parameters, substitute_types)
     }
 
@@ -625,7 +629,7 @@ impl Symbol {
         }
     }
 
-    pub fn implements(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
+    pub fn implements(&self, host: &SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -644,7 +648,7 @@ impl Symbol {
         }
     }
 
-    pub fn extends_interfaces(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
+    pub fn extends_interfaces(&self, host: &SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::InterfaceType(data)) => {
@@ -719,7 +723,7 @@ impl Symbol {
 
     /// The class which a class extends. This field may possibly be
     /// `Unresolved`.
-    pub fn extends_class(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn extends_class(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => data.extends_class.borrow().clone(),
@@ -808,7 +812,7 @@ impl Symbol {
         }
     }
 
-    pub fn static_properties(&self, host: &mut SymbolHost) -> SharedMap<String, Symbol> {
+    pub fn static_properties(&self, host: &SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -835,7 +839,7 @@ impl Symbol {
         }
     }
 
-    pub fn prototype(&self, host: &mut SymbolHost) -> SharedMap<String, Symbol> {
+    pub fn prototype(&self, host: &SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -866,7 +870,7 @@ impl Symbol {
         }
     }
 
-    pub fn proxies(&self, host: &mut SymbolHost) -> SharedMap<ProxyKind, Symbol> {
+    pub fn proxies(&self, host: &SymbolHost) -> SharedMap<ProxyKind, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -893,7 +897,7 @@ impl Symbol {
         }
     }
 
-    pub fn list_of_to_proxies(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
+    pub fn list_of_to_proxies(&self, host: &SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -932,7 +936,7 @@ impl Symbol {
         }
     }
 
-    pub fn constructor_function(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn constructor_function(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Type(TypeKind::ClassType(data)) => {
@@ -1010,6 +1014,7 @@ impl Symbol {
             SymbolKind::VariablePropertyAfterIndirectTypeSubstitution(data) => data.origin.plain_metadata(),
             SymbolKind::Function(data) => data.plain_metadata.clone(),
             SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => data.origin.plain_metadata(),
+            SymbolKind::BlockStatement(data) => data.plain_metadata.clone(),
             _ => panic!(),
         }
     }
@@ -1301,11 +1306,11 @@ impl Symbol {
         return self.clone();
     }
 
-    pub fn resolve_property(&self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, host: &mut SymbolHost) -> Result<Option<Symbol>, PropertyResolutionError> {
+    pub fn resolve_property(&self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, host: &SymbolHost) -> Result<Option<Symbol>, PropertyResolutionError> {
         PropertyResolution(host).resolve_property(base, qual, key)
     }
 
-    pub fn properties(&self, _host: &mut SymbolHost) -> SharedMap<String, Symbol> {
+    pub fn properties(&self, _host: &SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Package(data) => data.properties.clone(),
@@ -1341,7 +1346,7 @@ impl Symbol {
     }
 
     /// Static type of a value or property. Possibly `Unresolved`.
-    pub fn static_type(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn static_type(&self, host: &SymbolHost) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => data.static_type.borrow().clone(),
@@ -1421,7 +1426,7 @@ impl Symbol {
         }
     }
 
-    pub fn read_only(&self, host: &mut SymbolHost) -> bool {
+    pub fn read_only(&self, host: &SymbolHost) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VariableProperty(data) => data.read_only.get(),
@@ -1466,7 +1471,7 @@ impl Symbol {
         }
     }
 
-    pub fn write_only(&self, host: &mut SymbolHost) -> bool {
+    pub fn write_only(&self, host: &SymbolHost) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VirtualProperty(data) => data.getter.borrow().is_none(),
@@ -1503,7 +1508,7 @@ impl Symbol {
     }
 
     /// Finds proxy in the class inheritance.
-    pub fn find_proxy(&self, kind: ProxyKind, host: &mut SymbolHost) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub fn find_proxy(&self, kind: ProxyKind, host: &SymbolHost) -> Result<Option<Symbol>, DeferVerificationError> {
         if self.is_unresolved() {
             return Ok(None);
         }
@@ -1518,7 +1523,7 @@ impl Symbol {
     }
 
     /// Indicates whether a `class` or `enum` defines the `setProperty()` proxy.
-    pub fn has_set_property_proxy(&self, host: &mut SymbolHost) -> Result<bool, DeferVerificationError> {
+    pub fn has_set_property_proxy(&self, host: &SymbolHost) -> Result<bool, DeferVerificationError> {
         Ok(self.find_proxy(ProxyKind::SetProperty, host)?.is_some())
     }
 
@@ -1541,7 +1546,7 @@ impl Symbol {
     }
 
     /// Indicates whether a variable property is optional for an object initializer.
-    pub fn is_optional_variable(&self, host: &mut SymbolHost) -> Result<bool, DeferVerificationError> {
+    pub fn is_optional_variable(&self, host: &SymbolHost) -> Result<bool, DeferVerificationError> {
         let st = self.static_type(host);
         if st.is_unresolved() {
             Err(DeferVerificationError)
@@ -1550,7 +1555,7 @@ impl Symbol {
         }
     }
 
-    pub fn getter(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn getter(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VirtualProperty(data) => data.getter.borrow().clone(),
@@ -1580,7 +1585,7 @@ impl Symbol {
         }
     }
 
-    pub fn setter(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn setter(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::VirtualProperty(data) => data.setter.borrow().clone(),
@@ -1612,7 +1617,7 @@ impl Symbol {
 
     /// Signature of a function symbol as a structural function type.
     /// Possibly `Unresolved`.
-    pub fn signature(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn signature(&self, host: &SymbolHost) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Function(data) => data.signature.borrow().clone(),
@@ -1643,7 +1648,7 @@ impl Symbol {
     }
 
     /// The virtual property to which a function symbol belongs.
-    pub fn of_virtual_property(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn of_virtual_property(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Function(data) => data.of_virtual_property.borrow().clone(),
@@ -1674,7 +1679,7 @@ impl Symbol {
     }
 
     /// Set of function symbols used to override a function symbol.
-    pub fn overriden_by(&self, host: &mut SymbolHost) -> SharedArray<Symbol> {
+    pub fn overriden_by(&self, host: &SymbolHost) -> SharedArray<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Function(data) => data.overriden_by.clone(),
@@ -1691,7 +1696,7 @@ impl Symbol {
         }
     }
 
-    pub fn overrides_method(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn overrides_method(&self, host: &SymbolHost) -> Option<Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
             SymbolKind::Function(data) => data.overrides_method.borrow().clone(),
@@ -2045,7 +2050,7 @@ impl Symbol {
         }
     }
 
-    pub fn property_is_visible(&self, scope: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn property_is_visible(&self, scope: &Symbol, host: &SymbolHost) -> bool {
         let mut prop = self.clone();
         if prop.is_value() {
             if prop.is_static_reference_value() {
@@ -2127,20 +2132,20 @@ impl Symbol {
         }
     }
 
-    pub fn is_ascending_type_of(&self, possibly_subtype: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn is_ascending_type_of(&self, possibly_subtype: &Symbol, host: &SymbolHost) -> bool {
         possibly_subtype.is_subtype_of(self, host)
     }
 
-    pub fn is_subtype_of(&self, possibly_ascending_type: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn is_subtype_of(&self, possibly_ascending_type: &Symbol, host: &SymbolHost) -> bool {
         possibly_ascending_type.is_any_type() || self.all_ascending_types(host).contains(possibly_ascending_type)
     }
 
-    pub fn is_equals_or_subtype_of(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn is_equals_or_subtype_of(&self, other: &Symbol, host: &SymbolHost) -> bool {
         self == other || self.is_subtype_of(other, host)
     }
 
     /// Returns all ascending types of a type in ascending type order.
-    pub fn all_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
+    pub fn all_ascending_types(&self, host: &SymbolHost) -> Vec<Symbol> {
         let mut r = vec![];
         let mut r2 = vec![];
         for type_symbol in self.direct_ascending_types(host) {
@@ -2160,7 +2165,7 @@ impl Symbol {
     }
 
     /// Returns direct ascending types of a type.
-    pub fn direct_ascending_types(&self, host: &mut SymbolHost) -> Vec<Symbol> {
+    pub fn direct_ascending_types(&self, host: &SymbolHost) -> Vec<Symbol> {
         if self.is_class_type() {
             let mut r: Vec<Symbol> = self.implements(host).iter().collect();
             if let Some(ascending_class) = self.extends_class(host) {
@@ -2191,7 +2196,7 @@ impl Symbol {
     }
 
     /// Given a type base, returns its default value.
-    pub fn type_default_value(&self, host: &mut SymbolHost) -> Option<Symbol> {
+    pub fn type_default_value(&self, host: &SymbolHost) -> Option<Symbol> {
         if self.is_void_type() {
             Some(host.factory().create_undefined_constant(self))
         } else if self.is_nullable_type() {
@@ -2216,7 +2221,7 @@ impl Symbol {
     }
 
     /// The internal *PropertyStaticType*() function.
-    pub fn property_static_type(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn property_static_type(&self, host: &SymbolHost) -> Symbol {
         if self.is_variable_property() || self.is_virtual_property() {
             return self.static_type(host);
         }
@@ -2237,7 +2242,7 @@ impl Symbol {
     }
 
     /// Iterator over a descending class hierarchy.
-    pub fn descending_class_hierarchy<'a>(&self, host: &'a mut SymbolHost) -> DescendingClassHierarchy<'a> {
+    pub fn descending_class_hierarchy<'a>(&self, host: &'a SymbolHost) -> DescendingClassHierarchy<'a> {
         DescendingClassHierarchy(Some(self.clone()), host)
     }
 
@@ -2252,7 +2257,7 @@ impl Symbol {
     }
 
     /// The internal *WrapPropertyReference*() function.
-    pub fn wrap_property_reference(&self, host: &mut SymbolHost) -> Symbol {
+    pub fn wrap_property_reference(&self, host: &SymbolHost) -> Symbol {
         let parent = self.parent_definition().unwrap();
         if parent.is_class_type() || parent.is_enum_type() {
             return host.factory().create_static_reference_value(&parent, &self);
@@ -2264,7 +2269,7 @@ impl Symbol {
         return host.factory().create_scope_reference_value(&parent, &self);
     }
 
-    pub fn is_floating_point_type_of_wider_range_than(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn is_floating_point_type_of_wider_range_than(&self, other: &Symbol, host: &SymbolHost) -> bool {
         let number_type = host.number_type();
         let single_type = host.single_type();
 
@@ -2277,7 +2282,7 @@ impl Symbol {
         }
     }
 
-    pub fn is_integer_type_of_wider_range_than(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
+    pub fn is_integer_type_of_wider_range_than(&self, other: &Symbol, host: &SymbolHost) -> bool {
         let byte_type = host.byte_type();
         let short_type = host.short_type();
         let int_type = host.int_type();
@@ -2307,7 +2312,7 @@ impl Symbol {
         self.is_type_after_explicit_type_substitution() && &self.origin() == origin
     }
 
-    pub(crate) fn not_overriden_abstract_getter(&self, getter_from_base_class: &Symbol, subclass: &Symbol, host: &mut SymbolHost) -> bool {
+    pub(crate) fn not_overriden_abstract_getter(&self, getter_from_base_class: &Symbol, subclass: &Symbol, host: &SymbolHost) -> bool {
         if getter_from_base_class.is_abstract() {
             let prop2 = subclass.prototype(host).get(&getter_from_base_class.name());
             prop2.is_none() || !prop2.clone().unwrap().is_virtual_property() || prop2.unwrap().getter(host).is_none()
@@ -2316,7 +2321,7 @@ impl Symbol {
         }
     }
 
-    pub(crate) fn not_overriden_abstract_setter(&self, setter_from_base_class: &Symbol, subclass: &Symbol, host: &mut SymbolHost) -> bool {
+    pub(crate) fn not_overriden_abstract_setter(&self, setter_from_base_class: &Symbol, subclass: &Symbol, host: &SymbolHost) -> bool {
         if setter_from_base_class.is_abstract() {
             let prop2 = subclass.prototype(host).get(&setter_from_base_class.name());
             prop2.is_none() || !prop2.clone().unwrap().is_virtual_property() || prop2.unwrap().setter(host).is_none()
@@ -2478,7 +2483,7 @@ impl ToString for Symbol {
     }
 }
 
-pub struct DescendingClassHierarchy<'a>(Option<Symbol>, &'a mut SymbolHost);
+pub struct DescendingClassHierarchy<'a>(Option<Symbol>, &'a SymbolHost);
 
 impl<'a> Iterator for DescendingClassHierarchy<'a> {
     type Item = Symbol;
@@ -2540,6 +2545,11 @@ pub(crate) enum SymbolKind {
     ImportMeta,
     ImportMetaEnv,
     Value(ValueData, Option<Rc<ValueKind>>),
+    BlockStatement(Rc<BlockStatementSymbolData>),
+}
+
+pub(crate) struct BlockStatementSymbolData {
+    pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
 }
 
 pub(crate) enum TypeKind {
@@ -3086,7 +3096,7 @@ pub struct ParameterOfFunctionType {
 }
 
 impl ParameterOfFunctionType {
-    pub fn type_substitution(&self, host: &mut SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
+    pub fn type_substitution(&self, host: &SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
         ParameterOfFunctionType {
             kind: self.kind,
             name: self.name.clone(),
@@ -4154,6 +4164,7 @@ impl Deref for PackageReferenceValue {
 /// # Supported methods
 ///
 /// * Inherits methods from [`Value`].
+/// * `is_function_value()`
 /// * `activation_scope()`
 pub struct FunctionValue(pub Symbol);
 
@@ -4161,6 +4172,22 @@ impl Deref for FunctionValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_function_value());
+        &self.0
+    }
+}
+
+/// Block statement symbol.
+///
+/// # Supported methods
+///
+/// * `is_block_statement()`
+/// * `plain_metadata()`
+pub struct BlockStatementSymbol(pub Symbol);
+
+impl Deref for BlockStatementSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_block_statement());
         &self.0
     }
 }

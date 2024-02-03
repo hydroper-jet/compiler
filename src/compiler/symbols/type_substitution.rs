@@ -14,7 +14,7 @@ use std::rc::Rc;
 /// * Function symbols
 /// 
 /// In the future, type substitution may expand to other symbols if necessary.
-pub struct TypeSubstitution<'a>(pub &'a mut SymbolHost);
+pub struct TypeSubstitution<'a>(pub &'a SymbolHost);
 
 impl<'a> TypeSubstitution<'a> {
     pub fn execute(&mut self, symbol: &Symbol, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Symbol {

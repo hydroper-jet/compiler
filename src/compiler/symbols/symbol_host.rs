@@ -13,18 +13,18 @@ pub struct SymbolHost {
 
     pub(crate) env_cache: RefCell<Option<Rc<HashMap<String, String>>>>,
 
-    pub(crate) function_types: HashMap<usize, Vec<Symbol>>,
-    pub(crate) tuple_types: HashMap<usize, Vec<Symbol>>,
-    pub(crate) nullable_types: HashMap<Symbol, Symbol>,
+    pub(crate) function_types: RefCell<HashMap<usize, Vec<Symbol>>>,
+    pub(crate) tuple_types: RefCell<HashMap<usize, Vec<Symbol>>>,
+    pub(crate) nullable_types: RefCell<HashMap<Symbol, Symbol>>,
 
     /// Types after explicit type substitution.
-    pub(crate) taets: HashMap<Symbol, Vec<Symbol>>,
+    pub(crate) taets: RefCell<HashMap<Symbol, Vec<Symbol>>>,
     /// Variable properties after indirect type substitution.
-    pub(crate) vapaits: HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>,
+    pub(crate) vapaits: RefCell<HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>>,
     /// Virtual properties after indirect type substitution.
-    pub(crate) vipaits: HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>,
+    pub(crate) vipaits: RefCell<HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>>,
     /// Functions after explicit or indirect type substitution.
-    pub(crate) faeoits: HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>,
+    pub(crate) faeoits: RefCell<HashMap<Symbol, HashMap<SharedArray<Symbol>, Vec<Symbol>>>>,
 
     pub(crate) top_level_package: Symbol,
     pub(crate) jet_lang_package: RefCell<Option<Symbol>>,
@@ -69,13 +69,13 @@ impl SymbolHost {
 
             env_cache: RefCell::new(None),
 
-            function_types: HashMap::new(),
-            tuple_types: HashMap::new(),
-            nullable_types: HashMap::new(),
-            taets: HashMap::new(),
-            vapaits: HashMap::new(),
-            vipaits: HashMap::new(),
-            faeoits: HashMap::new(),
+            function_types: RefCell::new(HashMap::new()),
+            tuple_types: RefCell::new(HashMap::new()),
+            nullable_types: RefCell::new(HashMap::new()),
+            taets: RefCell::new(HashMap::new()),
+            vapaits: RefCell::new(HashMap::new()),
+            vipaits: RefCell::new(HashMap::new()),
+            faeoits: RefCell::new(HashMap::new()),
 
             top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
                 name: String::new(),
@@ -117,7 +117,7 @@ impl SymbolHost {
         }
     }
 
-    pub fn factory(&mut self) -> SymbolFactory {
+    pub fn factory(&self) -> SymbolFactory {
         SymbolFactory { host: self }
     }
 
@@ -149,7 +149,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.*` package.
-    pub fn jet_lang_package(&mut self) -> Symbol {
+    pub fn jet_lang_package(&self) -> Symbol {
         if let Some(r) = self.jet_lang_package.borrow().as_ref() {
             return r.clone();
         }
@@ -159,7 +159,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Object` class, possibly `Unresolved`.
-    pub fn object_type(&mut self) -> Symbol {
+    pub fn object_type(&self) -> Symbol {
         if let Some(r) = self.object_type.borrow().as_ref() {
             return r.clone();
         }
@@ -172,7 +172,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Boolean` class, possibly `Unresolved`.
-    pub fn boolean_type(&mut self) -> Symbol {
+    pub fn boolean_type(&self) -> Symbol {
         if let Some(r) = self.boolean_type.borrow().as_ref() {
             return r.clone();
         }
@@ -185,7 +185,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.String` class, possibly `Unresolved`.
-    pub fn string_type(&mut self) -> Symbol {
+    pub fn string_type(&self) -> Symbol {
         if let Some(r) = self.string_type.borrow().as_ref() {
             return r.clone();
         }
@@ -198,7 +198,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Char` class, possibly `Unresolved`.
-    pub fn char_type(&mut self) -> Symbol {
+    pub fn char_type(&self) -> Symbol {
         if let Some(r) = self.char_type.borrow().as_ref() {
             return r.clone();
         }
@@ -211,7 +211,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.CharIndex` class, possibly `Unresolved`.
-    pub fn char_index_type(&mut self) -> Symbol {
+    pub fn char_index_type(&self) -> Symbol {
         if let Some(r) = self.char_index_type.borrow().as_ref() {
             return r.clone();
         }
@@ -224,7 +224,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Number` class, possibly `Unresolved`.
-    pub fn number_type(&mut self) -> Symbol {
+    pub fn number_type(&self) -> Symbol {
         if let Some(r) = self.number_type.borrow().as_ref() {
             return r.clone();
         }
@@ -237,7 +237,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Single` class, possibly `Unresolved`.
-    pub fn single_type(&mut self) -> Symbol {
+    pub fn single_type(&self) -> Symbol {
         if let Some(r) = self.single_type.borrow().as_ref() {
             return r.clone();
         }
@@ -250,7 +250,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Byte` class, possibly `Unresolved`.
-    pub fn byte_type(&mut self) -> Symbol {
+    pub fn byte_type(&self) -> Symbol {
         if let Some(r) = self.byte_type.borrow().as_ref() {
             return r.clone();
         }
@@ -263,7 +263,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Short` class, possibly `Unresolved`.
-    pub fn short_type(&mut self) -> Symbol {
+    pub fn short_type(&self) -> Symbol {
         if let Some(r) = self.short_type.borrow().as_ref() {
             return r.clone();
         }
@@ -276,7 +276,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Int` class, possibly `Unresolved`.
-    pub fn int_type(&mut self) -> Symbol {
+    pub fn int_type(&self) -> Symbol {
         if let Some(r) = self.int_type.borrow().as_ref() {
             return r.clone();
         }
@@ -289,7 +289,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Long` class, possibly `Unresolved`.
-    pub fn long_type(&mut self) -> Symbol {
+    pub fn long_type(&self) -> Symbol {
         if let Some(r) = self.long_type.borrow().as_ref() {
             return r.clone();
         }
@@ -302,7 +302,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.UnsignedByte` class, possibly `Unresolved`.
-    pub fn unsigned_byte_type(&mut self) -> Symbol {
+    pub fn unsigned_byte_type(&self) -> Symbol {
         if let Some(r) = self.unsigned_byte_type.borrow().as_ref() {
             return r.clone();
         }
@@ -315,7 +315,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.UnsignedShort` class, possibly `Unresolved`.
-    pub fn unsigned_short_type(&mut self) -> Symbol {
+    pub fn unsigned_short_type(&self) -> Symbol {
         if let Some(r) = self.unsigned_short_type.borrow().as_ref() {
             return r.clone();
         }
@@ -328,7 +328,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.UnsignedInt` class, possibly `Unresolved`.
-    pub fn unsigned_int_type(&mut self) -> Symbol {
+    pub fn unsigned_int_type(&self) -> Symbol {
         if let Some(r) = self.unsigned_int_type.borrow().as_ref() {
             return r.clone();
         }
@@ -341,7 +341,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.UnsignedLong` class, possibly `Unresolved`.
-    pub fn unsigned_long_type(&mut self) -> Symbol {
+    pub fn unsigned_long_type(&self) -> Symbol {
         if let Some(r) = self.unsigned_long_type.borrow().as_ref() {
             return r.clone();
         }
@@ -354,7 +354,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.BigInt` class, possibly `Unresolved`.
-    pub fn big_int_type(&mut self) -> Symbol {
+    pub fn big_int_type(&self) -> Symbol {
         if let Some(r) = self.big_int_type.borrow().as_ref() {
             return r.clone();
         }
@@ -367,7 +367,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Function` class, possibly `Unresolved`.
-    pub fn function_type(&mut self) -> Symbol {
+    pub fn function_type(&self) -> Symbol {
         if let Some(r) = self.function_type.borrow().as_ref() {
             return r.clone();
         }
@@ -380,7 +380,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.XML` class, possibly `Unresolved`.
-    pub fn xml_type(&mut self) -> Symbol {
+    pub fn xml_type(&self) -> Symbol {
         if let Some(r) = self.xml_type.borrow().as_ref() {
             return r.clone();
         }
@@ -393,7 +393,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.XMLList` class, possibly `Unresolved`.
-    pub fn xml_list_type(&mut self) -> Symbol {
+    pub fn xml_list_type(&self) -> Symbol {
         if let Some(r) = self.xml_list_type.borrow().as_ref() {
             return r.clone();
         }
@@ -406,7 +406,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Class` class, possibly `Unresolved`.
-    pub fn class_type(&mut self) -> Symbol {
+    pub fn class_type(&self) -> Symbol {
         if let Some(r) = self.class_type.borrow().as_ref() {
             return r.clone();
         }
@@ -419,7 +419,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Array` class, possibly `Unresolved`.
-    pub fn array_type(&mut self) -> Symbol {
+    pub fn array_type(&self) -> Symbol {
         if let Some(r) = self.array_type.borrow().as_ref() {
             return r.clone();
         }
@@ -432,7 +432,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.Infinity` constant, possibly `Unresolved`.
-    pub fn infinity_constant(&mut self) -> Symbol {
+    pub fn infinity_constant(&self) -> Symbol {
         if let Some(r) = self.infinity_constant.borrow().as_ref() {
             return r.clone();
         }
@@ -445,7 +445,7 @@ impl SymbolHost {
     }
 
     /// The `jet.lang.NaN` constant, possibly `Unresolved`.
-    pub fn nan_constant(&mut self) -> Symbol {
+    pub fn nan_constant(&self) -> Symbol {
         if let Some(r) = self.nan_constant.borrow().as_ref() {
             return r.clone();
         }
@@ -457,11 +457,11 @@ impl SymbolHost {
         }
     }
 
-    fn lookup_at_jet_lang(&mut self, name: &str) -> Option<Symbol> {
+    fn lookup_at_jet_lang(&self, name: &str) -> Option<Symbol> {
         self.jet_lang_package().properties(self).get(&name.to_owned())
     }
 
-    pub fn is_numeric_type(&mut self, symbol: &Symbol) -> bool {
+    pub fn is_numeric_type(&self, symbol: &Symbol) -> bool {
         [
             self.number_type(),
             self.int_type(),
@@ -477,7 +477,7 @@ impl SymbolHost {
         ].contains(symbol)
     }
 
-    pub fn is_integer_type(&mut self, symbol: &Symbol) -> bool {
+    pub fn is_integer_type(&self, symbol: &Symbol) -> bool {
         [
             self.int_type(),
             self.unsigned_int_type(),
@@ -491,7 +491,7 @@ impl SymbolHost {
         ].contains(symbol)
     }
 
-    pub fn is_floating_point_type(&mut self, symbol: &Symbol) -> bool {
+    pub fn is_floating_point_type(&self, symbol: &Symbol) -> bool {
         [
             self.number_type(),
             self.single_type(),
@@ -499,7 +499,7 @@ impl SymbolHost {
     }
 
     /// The root scope that imports the top-level package and `jet.lang.*`.
-    pub fn root_scope(&mut self) -> Symbol {
+    pub fn root_scope(&self) -> Symbol {
         if let Some(r) = self.root_scope.borrow().as_ref() {
             return r.clone();
         }
@@ -509,7 +509,7 @@ impl SymbolHost {
         r
     }
 
-    pub(crate) fn preload_environment_variables(&mut self) -> Rc<HashMap<String, String>> {
+    pub(crate) fn preload_environment_variables(&self) -> Rc<HashMap<String, String>> {
         if let Some(env) = self.env_cache.borrow().as_ref() {
             return env.clone();
         }

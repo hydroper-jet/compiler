@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct SymbolFactory<'a> {
-    pub(crate) host: &'a mut SymbolHost,
+    pub(crate) host: &'a SymbolHost,
 }
 
 impl<'a> SymbolFactory<'a> {
@@ -75,13 +75,14 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned function type.
-    pub fn create_function_type(&mut self, parameters: Vec<Rc<ParameterOfFunctionType>>, result_type: Symbol) -> Symbol {
+    pub fn create_function_type(&self, parameters: Vec<Rc<ParameterOfFunctionType>>, result_type: Symbol) -> Symbol {
         let parameter_count = parameters.len();
-        let mut collection = self.host.function_types.get_mut(&parameter_count);
+        let mut function_types = self.host.function_types.borrow_mut();
+        let mut collection = function_types.get_mut(&parameter_count);
         let mut empty_collection = vec![];
         if collection.is_none() {
             collection = Some(&mut empty_collection);
-            self.host.function_types.insert(parameters.len(), vec![]);
+            function_types.insert(parameters.len(), vec![]);
         }
         'ft: for ft in collection.unwrap() {
             if result_type != ft.result_type() {
@@ -103,20 +104,21 @@ impl<'a> SymbolFactory<'a> {
             result_type,
         })))));
 
-        let collection = self.host.function_types.get_mut(&parameter_count);
+        let collection = function_types.get_mut(&parameter_count);
         collection.unwrap().push(ft.clone());
 
         ft
     }
 
     /// Creates an interned tuple type.
-    pub fn create_tuple_type(&mut self, element_types: Vec<Symbol>) -> Symbol {
+    pub fn create_tuple_type(&self, element_types: Vec<Symbol>) -> Symbol {
         let element_count = element_types.len();
-        let mut collection = self.host.tuple_types.get_mut(&element_count);
+        let mut tuple_types = self.host.tuple_types.borrow_mut();
+        let mut collection = tuple_types.get_mut(&element_count);
         let mut empty_collection = vec![];
         if collection.is_none() {
             collection = Some(&mut empty_collection);
-            self.host.tuple_types.insert(element_count, vec![]);
+            tuple_types.insert(element_count, vec![]);
         }
         'tt: for tt in collection.unwrap() {
             let mut element_types_1 = element_types.iter();
@@ -134,7 +136,7 @@ impl<'a> SymbolFactory<'a> {
             element_types: SharedArray::from(element_types),
         })))));
 
-        let collection = self.host.tuple_types.get_mut(&element_count);
+        let collection = tuple_types.get_mut(&element_count);
         collection.unwrap().push(tt.clone());
 
         tt
@@ -142,16 +144,17 @@ impl<'a> SymbolFactory<'a> {
 
     /// Creates an interned nullable type. Returns `base` back
     /// if it already includes `null`.
-    pub fn create_nullable_type(&mut self, base: &Symbol) -> Symbol {
+    pub fn create_nullable_type(&self, base: &Symbol) -> Symbol {
         if base.includes_null() {
             return base.clone();
         }
-        let nt = self.host.nullable_types.get(base);
+        let mut nullable_types = self.host.nullable_types.borrow_mut();
+        let nt = nullable_types.get(base);
         if let Some(nt) = nt {
             return nt.clone();
         }
         let nt = Symbol(self.host.arena.allocate(SymbolKind::Type(TypeKind::NullableType(base.clone()))));
-        self.host.nullable_types.insert(base.clone(), nt.clone());
+        nullable_types.insert(base.clone(), nt.clone());
         nt
     }
 
@@ -162,17 +165,19 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned type after explicit type substitution.
-    pub fn create_type_after_explicit_type_substitution(&mut self, origin: &Symbol, substitute_types: &SharedArray<Symbol>) -> Symbol {
+    pub fn create_type_after_explicit_type_substitution(&self, origin: &Symbol, substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         let parameters = origin.type_parameters().unwrap();
         let parameter_count = parameters.length();
         assert_eq!(substitute_types.length(), parameter_count);
 
-        let mut list = self.host.taets.get(&origin);
+        let mut taets_list = self.host.taets.borrow_mut();
+
+        let mut list = taets_list.get(&origin);
         let empty_list = vec![];
         if list.is_none() {
             list = Some(&empty_list);
-            self.host.taets.insert(origin.clone(), vec![]);
+            taets_list.insert(origin.clone(), vec![]);
         }
         'taets: for taets in list.unwrap() {
             let mut substitute_types_1 = substitute_types.iter();
@@ -200,7 +205,7 @@ impl<'a> SymbolFactory<'a> {
             list_of_to_proxies: RefCell::new(None),
         })))));
 
-        let list = self.host.taets.get_mut(&origin).unwrap();
+        let list = taets_list.get_mut(&origin).unwrap();
         list.push(taets.clone());
 
         taets
@@ -275,15 +280,17 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned variable property after indirect type substitution.
-    pub fn create_variable_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
+    pub fn create_variable_property_after_indirect_type_substitution(&self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
-        
-        let mut base_list = self.host.vapaits.get_mut(origin);
+
+        let mut vapaits_list = self.host.vapaits.borrow_mut();
+
+        let mut base_list = vapaits_list.get_mut(origin);
         let mut empty_base_list = HashMap::<SharedArray<Symbol>, Vec<Symbol>>::new();
         if base_list.is_none() {
             base_list = Some(&mut empty_base_list);
-            self.host.vapaits.insert(origin.clone(), HashMap::new());
+            vapaits_list.insert(origin.clone(), HashMap::new());
         }
         let base_list = base_list.unwrap();
 
@@ -313,7 +320,7 @@ impl<'a> SymbolFactory<'a> {
             static_type: RefCell::new(None),
         }))));
 
-        let list = self.host.vapaits.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
+        let list = vapaits_list.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
         list.push(vapaits.clone());
 
         vapaits
@@ -332,15 +339,17 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned virtual property after indirect type substitution.
-    pub fn create_virtual_property_after_indirect_type_substitution(&mut self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
+    pub fn create_virtual_property_after_indirect_type_substitution(&self, origin: &Symbol, indirect_type_parameters: &SharedArray<Symbol>, indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(indirect_type_parameters.length(), indirect_substitute_types.length());
 
-        let mut base_list = self.host.vipaits.get_mut(origin);
+        let mut vipaits_list = self.host.vipaits.borrow_mut();
+
+        let mut base_list = vipaits_list.get_mut(origin);
         let mut empty_base_list = HashMap::<SharedArray<Symbol>, Vec<Symbol>>::new();
         if base_list.is_none() {
             base_list = Some(&mut empty_base_list);
-            self.host.vipaits.insert(origin.clone(), HashMap::new());
+            vipaits_list.insert(origin.clone(), HashMap::new());
         }
         let base_list = base_list.unwrap();
 
@@ -372,7 +381,7 @@ impl<'a> SymbolFactory<'a> {
             setter: RefCell::new(None),
         }))));
 
-        let list = self.host.vipaits.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
+        let list = vipaits_list.get_mut(origin).unwrap().get_mut(&indirect_type_parameters).unwrap();
         list.push(vipaits.clone());
 
         vipaits
@@ -396,15 +405,17 @@ impl<'a> SymbolFactory<'a> {
     }
 
     /// Creates an interned function after explicit or indirect type substitution.
-    pub fn create_function_after_explicit_or_indirect_type_substitution(&mut self, origin: &Symbol, explicit_or_indirect_type_parameters: &SharedArray<Symbol>, explicit_or_indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
+    pub fn create_function_after_explicit_or_indirect_type_substitution(&self, origin: &Symbol, explicit_or_indirect_type_parameters: &SharedArray<Symbol>, explicit_or_indirect_substitute_types: &SharedArray<Symbol>) -> Symbol {
         // Verify parameter count
         assert_eq!(explicit_or_indirect_type_parameters.length(), explicit_or_indirect_substitute_types.length());
 
-        let mut base_list = self.host.faeoits.get_mut(origin);
+        let mut faeoits_list = self.host.faeoits.borrow_mut();
+
+        let mut base_list = faeoits_list.get_mut(origin);
         let mut empty_base_list = HashMap::<SharedArray<Symbol>, Vec<Symbol>>::new();
         if base_list.is_none() {
             base_list = Some(&mut empty_base_list);
-            self.host.faeoits.insert(origin.clone(), HashMap::new());
+            faeoits_list.insert(origin.clone(), HashMap::new());
         }
         let base_list = base_list.unwrap();
 
@@ -438,7 +449,7 @@ impl<'a> SymbolFactory<'a> {
             is_overriding: Cell::new(origin.is_overriding()),
         }))));
 
-        let list = self.host.faeoits.get_mut(origin).unwrap().get_mut(&explicit_or_indirect_type_parameters).unwrap();
+        let list = faeoits_list.get_mut(origin).unwrap().get_mut(&explicit_or_indirect_type_parameters).unwrap();
         list.push(faeoits.clone());
 
         faeoits
@@ -608,7 +619,7 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::This)))))
     }
 
-    pub fn create_conversion_value(&mut self, base: &Symbol, relationship: TypeConversionRelationship, optional: bool, target: &Symbol) -> Symbol {
+    pub fn create_conversion_value(&self, base: &Symbol, relationship: TypeConversionRelationship, optional: bool, target: &Symbol) -> Symbol {
         let st = if optional { self.create_nullable_type(target) } else { target.clone() };
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -620,7 +631,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_import_meta_output_value(&mut self) -> Symbol {
+    pub fn create_import_meta_output_value(&self) -> Symbol {
         let string_type = self.host.string_type();
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(string_type),
@@ -647,7 +658,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_static_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+    pub fn create_static_reference_value(&self, base: &Symbol, property: &Symbol) -> Symbol {
         let st = property.property_static_type(self.host);
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -657,7 +668,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_instance_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+    pub fn create_instance_reference_value(&self, base: &Symbol, property: &Symbol) -> Symbol {
         let st = property.property_static_type(self.host);
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -667,7 +678,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_proxy_reference_value(&mut self, base: &Symbol, proxy: &Symbol) -> Symbol {
+    pub fn create_proxy_reference_value(&self, base: &Symbol, proxy: &Symbol) -> Symbol {
         let st = proxy.signature(self.host).result_type();
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -677,7 +688,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_tuple_reference_value(&mut self, base: &Symbol, index: usize) -> Symbol {
+    pub fn create_tuple_reference_value(&self, base: &Symbol, index: usize) -> Symbol {
         let st = base.static_type(self.host).non_null_type().element_types().get(index).unwrap();
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -687,7 +698,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_scope_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+    pub fn create_scope_reference_value(&self, base: &Symbol, property: &Symbol) -> Symbol {
         let st = property.property_static_type(self.host);
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -707,7 +718,7 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_package_reference_value(&mut self, base: &Symbol, property: &Symbol) -> Symbol {
+    pub fn create_package_reference_value(&self, base: &Symbol, property: &Symbol) -> Symbol {
         let st = property.property_static_type(self.host);
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(st),
@@ -722,7 +733,7 @@ impl<'a> SymbolFactory<'a> {
     /// # Panics
     ///
     /// Panics if the activation's signature is unresolved.
-    pub fn create_function_value(&mut self, activation_scope: &Symbol) -> Symbol {
+    pub fn create_function_value(&self, activation_scope: &Symbol) -> Symbol {
         let signature = activation_scope.function().signature(self.host);
         assert!(!signature.is_unresolved());
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
@@ -730,5 +741,11 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::Function {
             activation_scope: activation_scope.clone(),
         })))))
+    }
+
+    pub fn create_block_statement(&self) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::BlockStatement(Rc::new(BlockStatementSymbolData {
+            plain_metadata: SharedArray::new(),
+        }))))
     }
 }
