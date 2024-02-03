@@ -54,7 +54,15 @@ Verification must be deferred in cases where the semantic model produces the `Un
   * [ ] Set parent definition of getters and setters
   * [ ] Set parent definition of the virtual property from getters and setters
 
-## Infinity and NaN
+## undefined, Infinity and NaN
+
+* [ ] `jet.lang.undefined` assigned `void 0` which yields an `undefined` constant of the `*` type
+
+```
+package jet.lang {
+    public const undefined = void 0
+}
+```
 
 * [ ] The `jet.lang.Infinity` and `jet.lang.NaN` constants are processed in a special way such that they contain their respective values. Although they are assigned zero in the following example, they must be assigned a different IEEE 754 constant initializer.
 

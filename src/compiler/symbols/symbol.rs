@@ -2091,7 +2091,7 @@ impl Symbol {
     }
 
     pub fn is_subtype_of(&self, possibly_ascending_type: &Symbol, host: &mut SymbolHost) -> bool {
-        self.all_ascending_types(host).contains(possibly_ascending_type)
+        possibly_ascending_type.is_any_type() || self.all_ascending_types(host).contains(possibly_ascending_type)
     }
 
     pub fn is_equals_or_subtype_of(&self, other: &Symbol, host: &mut SymbolHost) -> bool {
