@@ -45,12 +45,8 @@
 * [x] Type conversions
 * [x] Method overriding
   * [x] `abstract_methods_not_overriden()`
-    * [x] Throws `DeferVerificationError` when an involved ascending type is unresolved (an inherited class)
   * [x] `override_method()`
-    * [x] Throws `MethodOverridingError::DeferVerification` when an involved ascending type is unresolved (like an inherited class)
-    * [x] Throws `MethodOverridingError::DeferVerification` when an involved signature is unresolved
-    * [x] Throws `MethodOverridingError::CannotIntroduceTypeParameters` where necessary.
-* [ ] Interface implementation
-  * [ ] `verify(): Result<InterfaceImplementationVerification, DeferVerificationError>`
+* [ ] Interface implementations
+  * [ ] `verify(): Result<Vec<InterfaceImplementationLog>, DeferVerificationError>`
     * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited interface or inherited class)
     * [ ] Throws `DeferVerificationError` when an involved signature is unresolved

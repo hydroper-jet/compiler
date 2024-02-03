@@ -18,5 +18,7 @@ mod property_resolution;
 pub use property_resolution::*;
 mod method_overriding;
 pub use method_overriding::*;
+mod interface_implementations;
+pub use interface_implementations::*;
 mod errors;
 pub use errors::*;
