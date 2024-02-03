@@ -159,6 +159,11 @@ impl<'a> MethodOverriding<'a> {
             }
         }
 
+        let cont_param = subtype_parameters.next();
+        if cont_param.is_some() && cont_param.unwrap().kind == ParameterKind::Required {
+            return false;
+        }
+
         subtype_signature.result_type().is_equals_or_subtype_of(&base_signature.result_type(), self.0)
     }
 }
