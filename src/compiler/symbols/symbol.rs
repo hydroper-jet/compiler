@@ -4191,3 +4191,15 @@ impl Deref for BlockStatementSymbol {
         &self.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::ns::*;
+
+    #[test]
+    fn creating_packages() {
+        let host = SymbolHost::new();
+        let p = host.factory().create_package(["y", "n"]);
+        println!("{}", p.fully_qualified_name());
+    }
+}
