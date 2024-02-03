@@ -18,6 +18,9 @@
 * [ ] Invoke `symbol.set_is_constructor(true)` for constructor definitions.
 * [ ] Invoke `symbol.set_of_virtual_property(p)` appropriately for getters and setters.
 * [ ] Invoke `symbol.set_name(name)` for getters and setters (required).
+* [ ] Invoke `symbol.set_is_optional_interface_method()` for regular methods.
+* [ ] Invoke `symbol.set_is_optional_interface_method()` for getters.
+* [ ] Invoke `symbol.set_is_optional_interface_method()` for setters.
 
 ## Enumeration definitions
 
@@ -50,7 +53,7 @@ Verification must be deferred in cases where the semantic model produces the `Un
 
 ## Parent definitions
 
-* [ ] Set parent definitions of all properties properly, including for these that belong to scopes.
+* [ ] Set parent definitions of all properties properly, including for these that belong to scopes (aliases, types, variables, accessors and functions).
   * [ ] Set parent definition of getters and setters
   * [ ] Set parent definition of the virtual property from getters and setters
 

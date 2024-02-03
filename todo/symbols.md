@@ -46,7 +46,5 @@
 * [x] Method overriding
   * [x] `abstract_methods_not_overriden()`
   * [x] `override_method()`
-* [ ] Interface implementations
-  * [ ] `verify(): Result<Vec<InterfaceImplementationLog>, DeferVerificationError>`
-    * [ ] Throws `DeferVerificationError` when an involved ascending type is unresolved (like an inherited interface or inherited class)
-    * [ ] Throws `DeferVerificationError` when an involved signature is unresolved
+* [x] Interface implementations
+  * [x] `verify(): Result<Vec<InterfaceImplementationLog>, DeferVerificationError>`
