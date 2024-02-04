@@ -59,13 +59,27 @@ pub struct SymbolHost {
 impl SymbolHost {
     pub fn new() -> Self {
         let arena = Arena::new();
+        let unresolved = Symbol(arena.allocate(SymbolKind::Unresolved));
+        let any_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType)));
+        let void_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType)));
+        let import_meta = Symbol(arena.allocate(SymbolKind::ImportMeta));
+        let import_meta_env = Symbol(arena.allocate(SymbolKind::ImportMetaEnv));
+        let top_level_package = Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
+            name: String::new(),
+            parent_definition: RefCell::new(None),
+            properties: SharedMap::new(),
+            redirect_packages: SharedArray::new(),
+            subpackages: SharedMap::new(),
+            jetdoc: RefCell::new(None),
+        }))));
+
         Self {
-            arena: Arena::new(),
-            unresolved: Symbol(arena.allocate(SymbolKind::Unresolved)),
-            any_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType))),
-            void_type: Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType))),
-            import_meta: Symbol(arena.allocate(SymbolKind::ImportMeta)),
-            import_meta_env: Symbol(arena.allocate(SymbolKind::ImportMetaEnv)),
+            arena,
+            unresolved,
+            any_type,
+            void_type,
+            import_meta,
+            import_meta_env,
 
             env_cache: RefCell::new(None),
 
@@ -77,14 +91,7 @@ impl SymbolHost {
             vipaits: RefCell::new(HashMap::new()),
             faeoits: RefCell::new(HashMap::new()),
 
-            top_level_package: Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
-                name: String::new(),
-                parent_definition: RefCell::new(None),
-                properties: SharedMap::new(),
-                redirect_packages: SharedArray::new(),
-                subpackages: SharedMap::new(),
-                jetdoc: RefCell::new(None),
-            })))),
+            top_level_package,
 
             jet_lang_package: RefCell::new(None),
 

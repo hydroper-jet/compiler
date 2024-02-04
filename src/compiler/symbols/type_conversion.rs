@@ -8,11 +8,10 @@ pub enum TypeConversionRelationship {
     FromAny,
     ToAny,
     FromNonNullableToCovariantType,
-    FromNonNullableToNullableCovariantType,
     FromNullableToNullableCovariantType,
+    /// Results in exact equal type, but nullable
     FromNonNullableToNullable,
     FromInterfaceToObject,
-    FromInterfaceToNullableObject,
     FromNullableInterfaceToNullableObject,
 
     // Explicit
@@ -170,14 +169,9 @@ impl<'a> TypeConversions<'a> {
             }
         }
 
-        // From non-nullable to covariant type
-        if from_non_nullable && target_type.is_ascending_type_of(&from_type, self.0) {
+        // From non-nullable to covariant type or nullable covariant type
+        if from_non_nullable && target_type_non_null.is_ascending_type_of(&from_type, self.0) {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNonNullableToCovariantType, optional, target_type));
-        }
-
-        // From non-nullable to nullable covariant type
-        if from_non_nullable && to_nullable && target_type.base().is_ascending_type_of(&from_type, self.0) {
-            return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNonNullableToNullableCovariantType, optional, target_type));
         }
 
         // From nullable to nullable covariant type
@@ -186,21 +180,16 @@ impl<'a> TypeConversions<'a> {
         }
 
         // From T to T?
-        if from_non_nullable && to_nullable {
+        if from_non_nullable && to_nullable && from_type == target_type_non_null {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNonNullableToNullable, optional, target_type));
         }
 
         let from_interface = from_type.is_interface_type();
         let object_type = self.0.object_type();
 
-        // From ìnterface to Object
-        if from_interface && target_type == &object_type {
+        // From ìnterface to Object or Object?
+        if from_interface && target_type_non_null == object_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromInterfaceToObject, optional, target_type));
-        }
-
-        // From ìnterface to nullable Object
-        if from_interface && to_nullable && target_type.base() == object_type {
-            return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromInterfaceToNullableObject, optional, target_type));
         }
 
         // From nullable ìnterface to nullable Object
@@ -230,14 +219,14 @@ impl<'a> TypeConversions<'a> {
         let to_non_nullable = !to_nullable;
 
         // To T through proxy::to
-        if target_type.is_class_type() || target_type.is_enum_type() {
-            for proxy in target_type.list_of_to_proxies(self.0).iter() {
+        if from_type.is_class_type() || from_type.is_enum_type() {
+            for proxy in from_type.list_of_to_proxies(self.0).iter() {
                 let signature = proxy.signature(self.0);
                 if signature.is_unresolved() {
                     continue;
                 }
                 let result_type = signature.result_type();
-                if result_type.is_equals_or_subtype_of(target_type, self.0) {
+                if result_type.is_equals_or_subtype_of(&target_type, self.0) {
                     return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::ThroughToProxy, optional, target_type));
                 }
             }
@@ -256,9 +245,9 @@ impl<'a> TypeConversions<'a> {
         let array_type = self.0.array_type();
 
         if from_type.type_after_substitution_has_origin(&array_type)
-        && target_type.type_after_substitution_has_origin(&array_type) {
+        && target_type_non_null.type_after_substitution_has_origin(&array_type) {
             let from_el_type = from_type.substitute_types().get(0).unwrap();
-            let to_el_type = target_type.substitute_types().get(0).unwrap();
+            let to_el_type = target_type_non_null.substitute_types().get(0).unwrap();
 
             // Array to contravariant Array
             if to_el_type.is_subtype_of(&from_el_type, self.0) {
@@ -279,36 +268,36 @@ impl<'a> TypeConversions<'a> {
         let string_type = self.0.string_type();
 
         // From String to enum
-        if from_type == string_type && target_type.is_enum_type() {
+        if from_type == string_type && target_type_non_null.is_enum_type() {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromStringToEnum, optional, target_type));
         }
 
         // From number to enum
-        if target_type.is_enum_type() && from_type == target_type.enumeration_representation_type().unwrap() {
+        if target_type_non_null.is_enum_type() && from_type == target_type_non_null.enumeration_representation_type().unwrap() {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNumberToEnum, optional, target_type));
         }
 
         let char_type = self.0.char_type();
 
         // From String to Char
-        if from_type == string_type && target_type == &char_type {
+        if from_type == string_type && target_type_non_null == char_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromStringToChar, optional, target_type));
         }
 
         // From Char to String
-        if from_type == char_type && target_type == &string_type {
+        if from_type == char_type && target_type_non_null == string_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromCharToString, optional, target_type));
         }
 
         let number_type = self.0.number_type();
 
         // From Char to Number
-        if from_type == char_type && target_type == &number_type {
+        if from_type == char_type && target_type_non_null == number_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromCharToNumber, optional, target_type));
         }
 
         // From Number to Char
-        if from_type == number_type && target_type == &char_type {
+        if from_type == number_type && target_type_non_null == char_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNumberToChar, optional, target_type));
         }
 
