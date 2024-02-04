@@ -2418,6 +2418,17 @@ impl Symbol {
             reference.base().find_activation().unwrap().set_property_has_capture(&reference.property(), true);
         }
     }
+
+    pub fn is_array_type_of_any(&self, host: &SymbolHost) -> bool {
+        self.type_after_substitution_has_origin(&host.array_type()) &&
+        self.substitute_types().get(0).unwrap().is_any_type()
+    }
+
+    pub fn is_map_type_of_any_any(&self, host: &SymbolHost) -> bool {
+        self.type_after_substitution_has_origin(&host.map_type()) &&
+        self.substitute_types().get(0).unwrap().is_any_type() &&
+        self.substitute_types().get(1).unwrap().is_any_type()
+    }
 }
 
 impl ToString for Symbol {

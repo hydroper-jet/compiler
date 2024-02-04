@@ -27,6 +27,8 @@ pub enum TypeConversionRelationship {
     FromCharToNumber,
     FromNumberToChar,
     FromTypeParameter,
+    FromMapToLiteralClass,
+    FromLiteralClassToMap,
 }
 
 pub struct TypeConversions<'a>(pub &'a SymbolHost);
@@ -299,6 +301,16 @@ impl<'a> TypeConversions<'a> {
         // From Number to Char
         if from_type == number_type && target_type_non_null == char_type {
             return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromNumberToChar, optional, target_type));
+        }
+
+        // From Map.<*, *> to C where C is a class with C[[AllowLiteral]] = true
+        if from_type.is_map_type_of_any_any(self.0) && target_type_non_null.is_class_type() && target_type_non_null.allow_literal() {
+            return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromMapToLiteralClass, optional, target_type));
+        }
+
+        // From C to Map.<*, *> where C is a class with C[[AllowLiteral]] = true
+        if from_type.is_class_type() && from_type.allow_literal() && target_type_non_null.is_map_type_of_any_any(self.0) {
+            return Some(self.0.factory().create_conversion_value(value, TypeConversionRelationship::FromLiteralClassToMap, optional, target_type));
         }
 
         // From type parameter T to W

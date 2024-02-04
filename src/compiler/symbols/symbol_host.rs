@@ -49,6 +49,7 @@ pub struct SymbolHost {
     pub(crate) xml_list_type: RefCell<Option<Symbol>>,
     pub(crate) class_type: RefCell<Option<Symbol>>,
     pub(crate) array_type: RefCell<Option<Symbol>>,
+    pub(crate) map_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -116,6 +117,7 @@ impl SymbolHost {
             xml_list_type: RefCell::new(None),
             class_type: RefCell::new(None),
             array_type: RefCell::new(None),
+            map_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -184,7 +186,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Boolean") {
-            self.object_type.replace(Some(r.clone()));
+            self.boolean_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -197,7 +199,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("String") {
-            self.object_type.replace(Some(r.clone()));
+            self.string_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -210,7 +212,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Char") {
-            self.object_type.replace(Some(r.clone()));
+            self.char_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -223,7 +225,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("CharIndex") {
-            self.object_type.replace(Some(r.clone()));
+            self.char_index_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -236,7 +238,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Number") {
-            self.object_type.replace(Some(r.clone()));
+            self.number_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -249,7 +251,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Single") {
-            self.object_type.replace(Some(r.clone()));
+            self.single_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -262,7 +264,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Byte") {
-            self.object_type.replace(Some(r.clone()));
+            self.byte_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -275,7 +277,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Short") {
-            self.object_type.replace(Some(r.clone()));
+            self.short_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -288,7 +290,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Int") {
-            self.object_type.replace(Some(r.clone()));
+            self.int_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -301,7 +303,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("Long") {
-            self.object_type.replace(Some(r.clone()));
+            self.long_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -314,7 +316,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("UnsignedByte") {
-            self.object_type.replace(Some(r.clone()));
+            self.unsigned_byte_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -327,7 +329,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("UnsignedShort") {
-            self.object_type.replace(Some(r.clone()));
+            self.unsigned_short_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -340,7 +342,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("UnsignedInt") {
-            self.object_type.replace(Some(r.clone()));
+            self.unsigned_int_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -353,7 +355,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("UnsignedLong") {
-            self.object_type.replace(Some(r.clone()));
+            self.unsigned_long_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -366,7 +368,7 @@ impl SymbolHost {
             return r.clone();
         }
         if let Some(r) = self.lookup_at_jet_lang("BigInt") {
-            self.object_type.replace(Some(r.clone()));
+            self.big_int_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -432,6 +434,19 @@ impl SymbolHost {
         }
         if let Some(r) = self.lookup_at_jet_lang("Array") {
             self.array_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Map` class, possibly `Unresolved`.
+    pub fn map_type(&self) -> Symbol {
+        if let Some(r) = self.map_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Map") {
+            self.map_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
