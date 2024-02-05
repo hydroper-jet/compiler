@@ -2412,6 +2412,12 @@ impl Symbol {
     ///     reference.base().find_activation().unwrap().set_property_has_capture(reference.property(), true);
     /// }
     /// ```
+    /// 
+    /// # Example
+    /// 
+    /// ```ignore
+    /// current_scope.check_property_has_capture(&reference);
+    /// ```
     pub fn check_property_has_capture(&self, reference: &Symbol) {
         let current_scope = self;
         if reference.is_scope_reference_value() && reference.base().find_activation().unwrap() != current_scope.find_activation().unwrap() {
