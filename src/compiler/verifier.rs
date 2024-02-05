@@ -134,4 +134,8 @@ impl VerifierVerifier {
     pub fn exit_scope(&mut self) {
         self.scope = self.scope.parent_scope().unwrap();
     }
+
+    pub fn verify_constant_expression(&mut self, context_type: Option<Symbol>, diagnostics: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+        //
+    }
 }
