@@ -11,13 +11,13 @@ use std::rc::Rc;
 /// A set of programs can be verified by invoking `verify_programs()`:
 /// 
 /// ```ignore
-/// verifier.verify_programs(program_list)?;
+/// verifier.verify_programs(program_list);
 /// ```
 /// 
 /// A single expression can be verified by invoking `verify_expression()`:
 /// 
 /// ```ignore
-/// verifier.verify_expression(&expression, Some(context_type))?;
+/// verifier.verify_expression(&expression, Some(context_type));
 /// ```
 /// 
 /// # Scopes
