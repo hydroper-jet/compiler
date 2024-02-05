@@ -683,7 +683,7 @@ impl Symbol {
             SymbolKind::VirtualPropertyAfterIndirectTypeSubstitution(data) => data.origin.parent_definition(),
             SymbolKind::Function(data) => data.parent_definition.borrow().clone(),
             SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => data.origin.parent_definition(),
-            _ => panic!(),
+            _ => None,
         }
     }
 
