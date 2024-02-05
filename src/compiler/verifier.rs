@@ -67,6 +67,8 @@ impl Verifier {
         &self.ast_to_symbol
     }
 
+    /// Indicates whether a syntax or verify error occurred while
+    /// verifying.
     pub fn invalidated(&self) -> bool {
         self.invalidated
     }
