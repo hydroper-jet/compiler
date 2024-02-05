@@ -41,6 +41,62 @@ use std::rc::Rc;
 /// let symbol: Option<Symbol> = verifier.ast_to_symbol().get(&expression);
 /// ```
 pub struct Verifier {
+    verifier: VerifierVerifier,
+}
+
+impl Verifier {
+    pub fn new(host: &Rc<SymbolHost>) -> Self {
+        Self {
+            verifier: VerifierVerifier {
+                host: host.clone(),
+                ast_to_symbol: AstToSymbol::new(),
+                deferred_expressions: vec![],
+                deferred_directives: vec![],
+                invalidated: false,
+                deferred_counter: 0,
+                scope: host.root_scope(),
+            },
+        }
+    }
+
+    pub fn ast_to_symbol(&self) -> &Rc<AstToSymbol> {
+        &self.verifier.ast_to_symbol
+    }
+
+    /// Indicates whether a syntax or verify error occurred while
+    /// verifying.
+    pub fn invalidated(&self) -> bool {
+        self.verifier.invalidated
+    }
+
+    pub fn verify_programs(&mut self, programs: Vec<Rc<Program>>) {
+        if self.verifier.invalidated {
+            return;
+        }
+        self.verifier.reset_state();
+
+        to_do_here();
+    }
+
+    pub fn verify_expression(&mut self, expression: &Rc<Expression>, context_type: Option<Symbol>) {
+        if self.verifier.invalidated {
+            return;
+        }
+        self.verifier.reset_state();
+
+        to_do_here();
+    }
+
+    pub fn enter_scope(&mut self, scope: &Symbol) {
+        self.verifier.enter_scope(scope);
+    }
+
+    pub fn exit_scope(&mut self) {
+        self.verifier.exit_scope();
+    }
+}
+
+pub(crate) struct VerifierVerifier {
     host: Rc<SymbolHost>,
     ast_to_symbol: Rc<AstToSymbol>,
     deferred_expressions: Vec<Rc<Expression>>,
@@ -50,19 +106,7 @@ pub struct Verifier {
     scope: Symbol,
 }
 
-impl Verifier {
-    pub fn new(host: &Rc<SymbolHost>) -> Self {
-        Verifier {
-            host: host.clone(),
-            ast_to_symbol: AstToSymbol::new(),
-            deferred_expressions: vec![],
-            deferred_directives: vec![],
-            invalidated: false,
-            deferred_counter: 0,
-            scope: host.root_scope(),
-        }
-    }
-
+impl VerifierVerifier {
     pub fn ast_to_symbol(&self) -> &Rc<AstToSymbol> {
         &self.ast_to_symbol
     }
@@ -71,24 +115,6 @@ impl Verifier {
     /// verifying.
     pub fn invalidated(&self) -> bool {
         self.invalidated
-    }
-
-    pub fn verify_programs(&mut self, programs: Vec<Rc<Program>>) {
-        if self.invalidated {
-            return;
-        }
-        self.reset_state();
-
-        to_do_here();
-    }
-
-    pub fn verify_expression(&mut self, expression: &Rc<Expression>) {
-        if self.invalidated {
-            return;
-        }
-        self.reset_state();
-
-        to_do_here();
     }
 
     fn reset_state(&mut self) {
