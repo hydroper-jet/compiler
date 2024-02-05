@@ -3474,7 +3474,8 @@ impl Deref for VirtualPropertyAfterIndirectTypeSubstitution {
 /// * `overriden_by()` — List of function symbols used to override the function symbol.
 /// * `overrides_method()` — Indicates an overriden method.
 /// * `set_overrides_method()`
-/// * `activation_scope()`
+/// * `activation_scope()` — Activation scope, present for
+///   non `abstract` non `native` functions and required interface methods.
 /// * `set_activation_scope()`
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct FunctionSymbol(pub Symbol);

@@ -2282,7 +2282,7 @@ impl<'input> Parser<'input> {
         let init = if let Some(exp) = init_exp.as_ref() {
             Some(ForInitializer::Expression(exp.clone()))
         } else if let Some(variable) = init_variable.as_ref() {
-            Some(ForInitializer::VariableDefinition(variable.clone()))
+            Some(ForInitializer::VariableDefinition(Rc::new(variable.clone())))
         } else {
             None
         };
@@ -2324,11 +2324,11 @@ impl<'input> Parser<'input> {
             if let Some(init) = &binding.initializer {
                 self.add_syntax_error(&init.location(), DiagnosticKind::IllegalForInInitializer, vec![]);
             }
-            ForInBinding::VariableDefinition(SimpleVariableDefinition {
+            ForInBinding::VariableDefinition(Rc::new(SimpleVariableDefinition {
                 location: self.pop_location(),
                 kind,
                 bindings: vec![Rc::new(binding)],
-            })
+            }))
         } else {
             ForInBinding::Expression(self.parse_expression(ParsingExpressionContext {
                 allow_in: false, min_precedence: OperatorPrecedence::Postfix, ..default()
@@ -2370,7 +2370,7 @@ impl<'input> Parser<'input> {
 
         Ok((Rc::new(Directive::ForInStatement(ForInStatement {
             location: self.pop_location(),
-            each: false, left: ForInBinding::VariableDefinition(left), right, body,
+            each: false, left: ForInBinding::VariableDefinition(Rc::new(left)), right, body,
         })), semicolon_inserted))
     }
 

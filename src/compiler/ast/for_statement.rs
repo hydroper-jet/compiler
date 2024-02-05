@@ -14,7 +14,7 @@ pub struct ForStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ForInitializer {
     Expression(Rc<Expression>),
-    VariableDefinition(SimpleVariableDefinition),
+    VariableDefinition(Rc<SimpleVariableDefinition>),
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -29,5 +29,5 @@ pub struct ForInStatement {
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ForInBinding {
     Expression(Rc<Expression>),
-    VariableDefinition(SimpleVariableDefinition),
+    VariableDefinition(Rc<SimpleVariableDefinition>),
 }

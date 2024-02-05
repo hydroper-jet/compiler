@@ -135,3 +135,8 @@ mod package_definition;
 pub use package_definition::*;
 mod program;
 pub use program::*;
+
+// Helpers
+#[path = "./ast_to_symbol.rs"]
+mod ast_to_symbol;
+pub use ast_to_symbol::*;

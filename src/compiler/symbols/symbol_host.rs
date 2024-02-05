@@ -58,7 +58,7 @@ pub struct SymbolHost {
 }
 
 impl SymbolHost {
-    pub fn new() -> Self {
+    pub fn new() -> Rc<Self> {
         let arena = Arena::new();
         let unresolved = Symbol(arena.allocate(SymbolKind::Unresolved));
         let any_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType)));
@@ -74,7 +74,7 @@ impl SymbolHost {
             jetdoc: RefCell::new(None),
         }))));
 
-        Self {
+        Rc::new(Self {
             arena,
             unresolved,
             any_type,
@@ -123,7 +123,7 @@ impl SymbolHost {
             nan_constant: RefCell::new(None),
 
             root_scope: RefCell::new(None),
-        }
+        })
     }
 
     pub fn factory(&self) -> SymbolFactory {
