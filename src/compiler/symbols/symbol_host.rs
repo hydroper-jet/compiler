@@ -50,6 +50,8 @@ pub struct SymbolHost {
     pub(crate) class_type: RefCell<Option<Symbol>>,
     pub(crate) array_type: RefCell<Option<Symbol>>,
     pub(crate) map_type: RefCell<Option<Symbol>>,
+    pub(crate) namespace_type: RefCell<Option<Symbol>>,
+    pub(crate) qname_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -63,8 +65,7 @@ impl SymbolHost {
         let unresolved = Symbol(arena.allocate(SymbolKind::Unresolved));
         let any_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType)));
         let void_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::VoidType)));
-        let import_meta = Symbol(arena.allocate(SymbolKind::ImportMeta));
-        let import_meta_env = Symbol(arena.allocate(SymbolKind::ImportMetaEnv));
+
         let top_level_package = Symbol(arena.allocate(SymbolKind::Package(Rc::new(PackageData {
             name: String::new(),
             parent_definition: RefCell::new(None),
@@ -73,6 +74,14 @@ impl SymbolHost {
             subpackages: SharedMap::new(),
             jetdoc: RefCell::new(None),
         }))));
+
+        let import_meta = Symbol(arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(any_type.clone()),
+        }, Some(Rc::new(ValueKind::ImportMeta)))));
+
+        let import_meta_env = Symbol(arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(any_type.clone()),
+        }, Some(Rc::new(ValueKind::ImportMetaEnv)))));
 
         Rc::new(Self {
             arena,
@@ -118,6 +127,8 @@ impl SymbolHost {
             class_type: RefCell::new(None),
             array_type: RefCell::new(None),
             map_type: RefCell::new(None),
+            namespace_type: RefCell::new(None),
+            qname_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -447,6 +458,32 @@ impl SymbolHost {
         }
         if let Some(r) = self.lookup_at_jet_lang("Map") {
             self.map_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Namespace` class, possibly `Unresolved`.
+    pub fn namespace_type(&self) -> Symbol {
+        if let Some(r) = self.namespace_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Namespace") {
+            self.namespace_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.QName` class, possibly `Unresolved`.
+    pub fn qname_type(&self) -> Symbol {
+        if let Some(r) = self.qname_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("QName") {
+            self.qname_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()

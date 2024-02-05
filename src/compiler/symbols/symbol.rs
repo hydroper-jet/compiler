@@ -181,16 +181,24 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Scope(_, Some(ScopeKind::Package { .. })))
     }
 
+    pub fn is_value(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Value(_, _))
+    }
+
     pub fn is_import_meta(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::ImportMeta)
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::ImportMeta)
     }
 
     pub fn is_import_meta_env(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::ImportMetaEnv)
-    }
-
-    pub fn is_value(&self) -> bool {
-        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Value(_, _))
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::ImportMetaEnv)
     }
 
     pub fn is_constant(&self) -> bool {
@@ -281,7 +289,7 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::Conversion(_))
     }
 
-    pub fn is_import_meta_output_value(&self) -> bool {
+    pub fn is_import_meta_output(&self) -> bool {
         let data = self.0.upgrade().unwrap();
         let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
             return false;
@@ -2559,8 +2567,6 @@ pub(crate) enum SymbolKind {
     Function(Rc<FunctionSymbolData>),
     FunctionAfterExplicitOrIndirectTypeSubstitution(Rc<FunctionAfterExplicitOrIndirectTypeSubstitutionData>),
     Scope(Rc<ScopeData>, Option<ScopeKind>),
-    ImportMeta,
-    ImportMetaEnv,
     Value(ValueData, Option<Rc<ValueKind>>),
     BlockStatement(Rc<BlockStatementSymbolData>),
 }
@@ -2811,6 +2817,8 @@ pub(crate) enum ValueKind {
     Constant(ConstantKind),
     This,
     Conversion(Rc<ConversionValueData>),
+    ImportMeta,
+    ImportMetaEnv,
     ImportMetaOutput,
     Reference(Rc<ReferenceValueKind>),
     Function {
@@ -3757,36 +3765,6 @@ impl Deref for PackageScope {
     }
 }
 
-/// `import.meta` symbol.
-///
-/// # Supported methods
-///
-/// * `is_import_meta()`
-pub struct ImportMetaSymbol(pub Symbol);
-
-impl Deref for ImportMetaSymbol {
-    type Target = Symbol;
-    fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_import_meta());
-        &self.0
-    }
-}
-
-/// `import.meta.env` symbol.
-///
-/// # Supported methods
-///
-/// * `is_import_meta_env()`
-pub struct ImportMetaEnvSymbol(pub Symbol);
-
-impl Deref for ImportMetaEnvSymbol {
-    type Target = Symbol;
-    fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_import_meta_env());
-        &self.0
-    }
-}
-
 /// Value symbol.
 ///
 /// # Supported methods
@@ -3803,6 +3781,54 @@ impl Deref for Value {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_value());
+        &self.0
+    }
+}
+
+/// `import.meta` value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_import_meta()`
+pub struct ImportMetaSymbol(pub Symbol);
+
+impl Deref for ImportMetaSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta());
+        &self.0
+    }
+}
+
+/// `import.meta.output` value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_import_meta_output()`
+pub struct ImportMetaOutputSymbol(pub Symbol);
+
+impl Deref for ImportMetaOutputSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta_output());
+        &self.0
+    }
+}
+
+/// `import.meta.env` value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_import_meta_env()`
+pub struct ImportMetaEnvSymbol(pub Symbol);
+
+impl Deref for ImportMetaEnvSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_import_meta_env());
         &self.0
     }
 }
@@ -3983,22 +4009,6 @@ impl Deref for ConversionValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_conversion_value());
-        &self.0
-    }
-}
-
-/// `import.meta.output` value symbol.
-///
-/// # Supported methods
-///
-/// * Inherits methods from [`Value`].
-/// * `is_import_meta_output_value()`
-pub struct ImportMetaOutputValue(pub Symbol);
-
-impl Deref for ImportMetaOutputValue {
-    type Target = Symbol;
-    fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_import_meta_output_value());
         &self.0
     }
 }
