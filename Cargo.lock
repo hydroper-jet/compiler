@@ -170,7 +170,7 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hydroper_jet_compiler"
-version = "0.1.21"
+version = "0.1.22"
 dependencies = [
  "bitflags",
  "by_address",
