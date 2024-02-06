@@ -7,6 +7,10 @@
     * [ ] Result into `enum` constant wherever possible (if the array literal is constant)
   * Object initializer
     * [ ] Result into `enum` constant wherever possible (if the initializer is constant)
+  * Unary expressions
+    * [ ] Result into constant every wherever possible
+  * Binary expressions
+    * [ ] Result into constant every wherever possible
   * Member expressions
     * [ ] Fully qualified names shadow any other variables
 

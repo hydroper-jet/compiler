@@ -387,14 +387,6 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::Function { .. })
     }
 
-    pub fn is_sequence_value(&self) -> bool {
-        let data = self.0.upgrade().unwrap();
-        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
-            return false;
-        };
-        matches!(data.as_ref(), ValueKind::Sequence { .. })
-    }
-
     /// Performs type substitution. Invoking this method is equivalent to
     /// `TypeSubstitution(&mut host).execute(&symbol, &type_parameters, &substitute_types)`.
     pub fn type_substitution(&self, host: &SymbolHost, type_parameters: &SharedArray<Symbol>, substitute_types: &SharedArray<Symbol>) -> Self {
@@ -2390,32 +2382,6 @@ impl Symbol {
         }
     }
 
-    pub fn sequence_left(&self) -> Symbol {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
-            SymbolKind::Value(_, Some(data)) => {
-                match data.as_ref() {
-                    ValueKind::Sequence { left, .. } => left.clone(),
-                    _ => panic!(),
-                }
-            },
-            _ => panic!(),
-        }
-    }
-
-    pub fn sequence_right(&self) -> Symbol {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
-            SymbolKind::Value(_, Some(data)) => {
-                match data.as_ref() {
-                    ValueKind::Sequence { right, .. } => right.clone(),
-                    _ => panic!(),
-                }
-            },
-            _ => panic!(),
-        }
-    }
-
     pub fn find_activation(&self) -> Option<Symbol> {
         for scope in self.descending_scope_hierarchy() {
             if scope.is_activation_scope() {
@@ -2919,10 +2885,6 @@ pub(crate) enum ValueKind {
     Reference(Rc<ReferenceValueKind>),
     Function {
         activation_scope: Symbol,
-    },
-    Sequence {
-        left: Symbol,
-        right: Symbol,
     },
 }
 
@@ -4321,24 +4283,6 @@ impl Deref for FunctionValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_function_value());
-        &self.0
-    }
-}
-
-/// Sequence value symbol, used for sequence expressions.
-///
-/// # Supported methods
-///
-/// * Inherits methods from [`Value`].
-/// * `is_sequence_value()`
-/// * `sequence_left()`
-/// * `sequence_right()`
-pub struct SequenceValue(pub Symbol);
-
-impl Deref for SequenceValue {
-    type Target = Symbol;
-    fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_sequence_value());
         &self.0
     }
 }
