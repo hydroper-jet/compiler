@@ -129,7 +129,6 @@ impl SymbolHost {
             map_type: RefCell::new(None),
             namespace_type: RefCell::new(None),
             qname_type: RefCell::new(None),
-            xml_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
