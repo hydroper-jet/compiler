@@ -309,6 +309,13 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::Reference(_))
     }
 
+    pub fn is_type_as_reference_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
+        let ValueKind::Reference(data) = data.as_ref() else { return false; };
+        matches!(data.as_ref(), ReferenceValueKind::Type { .. })
+    }
+
     pub fn is_xml_reference_value(&self) -> bool {
         let data = self.0.upgrade().unwrap();
         let SymbolKind::Value(_, Some(data)) = data.as_ref() else { return false; };
@@ -1200,6 +1207,7 @@ impl Symbol {
                             ReferenceValueKind::Scope { base, .. } => base.clone(),
                             ReferenceValueKind::DynamicScope { base, .. } => base.clone(),
                             ReferenceValueKind::Package { base, .. } => base.clone(),
+                            _ => panic!(),
                         }
                     },
                     _ => panic!(),
@@ -1449,6 +1457,7 @@ impl Symbol {
                 match data.as_ref() {
                     ValueKind::Reference(data) => {
                         match data.as_ref() {
+                            ReferenceValueKind::Type { .. } => true,
                             ReferenceValueKind::Xml { .. } => false,
                             ReferenceValueKind::Dynamic { .. } => false,
                             ReferenceValueKind::Static { property, .. } => property.read_only(host),
@@ -1492,6 +1501,7 @@ impl Symbol {
                 match data.as_ref() {
                     ValueKind::Reference(data) => {
                         match data.as_ref() {
+                            ReferenceValueKind::Type { .. } => false,
                             ReferenceValueKind::Xml { .. } => false,
                             ReferenceValueKind::Dynamic { .. } => false,
                             ReferenceValueKind::Static { property, .. } => property.write_only(host),
@@ -2197,6 +2207,9 @@ impl Symbol {
     }
 
     pub fn expect_type(&self) -> Result<Symbol, ExpectedTypeError> {
+        if self.is_type_as_reference_value() {
+            return Ok(self.referenced_type());
+        }
         if self.is_package_reference_value() || self.is_scope_reference_value() {
             return self.property().expect_type();
         }
@@ -2270,6 +2283,9 @@ impl Symbol {
 
     /// The internal *WrapPropertyReference*() function.
     pub fn wrap_property_reference(&self, host: &SymbolHost) -> Symbol {
+        if self.is_type() && (self.is_void_type() || self.is_any_type() || self.is_function_type() || self.is_tuple_type() || self.is_nullable_type()) {
+            return host.factory().create_type_as_reference_value(&self);
+        }
         let parent = self.parent_definition().unwrap();
         if parent.is_class_type() || parent.is_enum_type() {
             return host.factory().create_static_reference_value(&parent, &self);
@@ -2461,6 +2477,25 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::VariableDefinitionDirective(data) => {
                 data.shadow_scope.replace(value.cloned());
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn referenced_type(&self) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Conversion(data) => data.base.clone(),
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Type { referenced_type, .. } => referenced_type.clone(),
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
             },
             _ => panic!(),
         }
@@ -2872,6 +2907,9 @@ pub(crate) struct ConversionValueData {
 }
 
 pub(crate) enum ReferenceValueKind {
+    Type {
+        referenced_type: Symbol,
+    },
     Xml {
         base: Symbol,
         qualifier: Option<Symbol>,
@@ -4046,13 +4084,31 @@ impl Deref for ConversionValue {
 ///
 /// * Inherits methods from [`Value`].
 /// * `is_reference_value()`
+/// * `is_type_as_reference_value()`
+/// * `referenced_type()`
+pub struct TypeAsReferenceValue(pub Symbol);
+
+impl Deref for TypeAsReferenceValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_type_as_reference_value());
+        &self.0
+    }
+}
+
+/// Reference value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_reference_value()`
 /// * `is_xml_reference_value()`
 /// * `base()`
 /// * `qualifier()`
 /// * `key()`
-pub struct XMLReferenceValue(pub Symbol);
+pub struct XmlReferenceValue(pub Symbol);
 
-impl Deref for XMLReferenceValue {
+impl Deref for XmlReferenceValue {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_xml_reference_value());

@@ -66,7 +66,7 @@ impl SemanticPropertyKey {
 
 impl<'a> PropertyResolution<'a> {
     pub fn resolve_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey) -> Result<Option<Symbol>, PropertyResolutionError> {
-        // 1. If base is a value whose type is one of { XML, XMLList }, return XMLReferenceValue(base, qual, key).
+        // 1. If base is a value whose type is one of { XML, XMLList }, return XmlReferenceValue(base, qual, key).
         if base.is_value() && [self.0.xml_type(), self.0.xml_list_type()].contains(&base.static_type(self.0)) {
             let k = key.symbol(self.0);
             return Ok(Some(self.0.factory().create_xml_reference_value(base, qual, &k)));

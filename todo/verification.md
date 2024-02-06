@@ -1,5 +1,11 @@
 # Verification
 
+## AST
+
+* Expressions
+  * Member expressions
+    * [ ] Fully qualified names shadow any other variables
+
 ## Duplicate errors
 
 * [ ] Variable bindings report duplicate error

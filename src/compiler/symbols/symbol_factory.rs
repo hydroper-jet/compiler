@@ -638,6 +638,14 @@ impl<'a> SymbolFactory<'a> {
         }, Some(Rc::new(ValueKind::ImportMetaOutput)))))
     }
 
+    pub fn create_type_as_reference_value(&self, referenced_type: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(self.host.class_type()),
+        }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Type {
+            referenced_type: referenced_type.clone(),
+        })))))))
+    }
+
     pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
