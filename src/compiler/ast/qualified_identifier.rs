@@ -15,3 +15,9 @@ pub enum QualifiedIdentifierIdentifier {
     Id((String, Location)),
     Brackets(Rc<Expression>),
 }
+
+impl QualifiedIdentifier {
+    pub(crate) fn verify_as_constant_exp(&self, exp: &Rc<Expression>, diagnostics: bool, type_argumented: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+        //
+    }
+}
