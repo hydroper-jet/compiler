@@ -40,6 +40,10 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::BlockStatement(_))
     }
 
+    pub fn is_variable_definition_directive(&self) -> bool {
+        matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::VariableDefinitionDirective(_))
+    }
+
     pub fn is_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(_))
     }
@@ -2443,6 +2447,24 @@ impl Symbol {
         self.substitute_types().get(0).unwrap().is_any_type() &&
         self.substitute_types().get(1).unwrap().is_any_type()
     }
+
+    pub fn shadow_scope(&self) -> Option<Symbol> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableDefinitionDirective(data) => data.shadow_scope.borrow().clone(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn set_shadow_scope(&self, value: Option<&Symbol>) {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::VariableDefinitionDirective(data) => {
+                data.shadow_scope.replace(value.cloned());
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 impl ToString for Symbol {
@@ -2569,10 +2591,15 @@ pub(crate) enum SymbolKind {
     Scope(Rc<ScopeData>, Option<ScopeKind>),
     Value(ValueData, Option<Rc<ValueKind>>),
     BlockStatement(Rc<BlockStatementSymbolData>),
+    VariableDefinitionDirective(Rc<VariableDefinitionDirectiveSymbolData>),
 }
 
 pub(crate) struct BlockStatementSymbolData {
     pub plain_metadata: SharedArray<Rc<PlainMetadata>>,
+}
+
+pub(crate) struct VariableDefinitionDirectiveSymbolData {
+    pub shadow_scope: RefCell<Option<Symbol>>,
 }
 
 pub(crate) enum TypeKind {
@@ -4216,6 +4243,23 @@ impl Deref for BlockStatementSymbol {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_block_statement());
+        &self.0
+    }
+}
+
+/// Variable definition directive symbol.
+///
+/// # Supported methods
+///
+/// * `is_variable_definition_directive()`
+/// * `shadow_scope()`
+/// * `set_shadow_scope()`
+pub struct VariableDefinitionDirectiveSymbol(pub Symbol);
+
+impl Deref for VariableDefinitionDirectiveSymbol {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_variable_definition_directive());
         &self.0
     }
 }

@@ -748,4 +748,10 @@ impl<'a> SymbolFactory<'a> {
             plain_metadata: SharedArray::new(),
         }))))
     }
+
+    pub fn create_variable_definition_directive(&self) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::VariableDefinitionDirective(Rc::new(VariableDefinitionDirectiveSymbolData {
+            shadow_scope: RefCell::new(None),
+        }))))
+    }
 }

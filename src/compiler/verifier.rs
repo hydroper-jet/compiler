@@ -78,7 +78,7 @@ impl Verifier {
         to_do_here();
     }
 
-    pub fn verify_expression(&mut self, expression: &Rc<Expression>, context_type: Option<Symbol>) {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>) {
         if self.verifier.invalidated {
             return;
         }
@@ -99,11 +99,17 @@ impl Verifier {
 pub(crate) struct VerifierVerifier {
     host: Rc<SymbolHost>,
     ast_to_symbol: Rc<AstToSymbol>,
-    deferred_expressions: Vec<Rc<Expression>>,
+    deferred_expressions: Vec<VerifierDeferredExp>,
     deferred_directives: Vec<Rc<Directive>>,
     invalidated: bool,
     deferred_counter: usize,
     scope: Symbol,
+}
+
+pub(crate) struct VerifierDeferredExp {
+    pub exp: Rc<Expression>,
+    pub diagnostics: bool,
+    pub context_type: Option<Symbol>,
 }
 
 impl VerifierVerifier {
@@ -123,6 +129,20 @@ impl VerifierVerifier {
         self.deferred_expressions.clear();
     }
 
+    pub fn add_syntax_error(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
+        location.compilation_unit().add_diagnostic(Diagnostic::new_syntax_error(location, kind, arguments));
+        self.invalidated = true;
+    }
+
+    pub fn add_verify_error(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
+        location.compilation_unit().add_diagnostic(Diagnostic::new_verify_error(location, kind, arguments));
+        self.invalidated = true;
+    }
+
+    pub fn add_warning(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
+        location.compilation_unit().add_diagnostic(Diagnostic::new_warning(location, kind, arguments));
+    }
+
     pub fn enter_scope(&mut self, scope: &Symbol) {
         let k = self.scope.clone();
         self.scope = scope.clone();
@@ -135,7 +155,11 @@ impl VerifierVerifier {
         self.scope = self.scope.parent_scope().unwrap();
     }
 
-    pub fn verify_constant_expression(&mut self, context_type: Option<Symbol>, diagnostics: bool) -> Result<Option<Symbol>, DeferVerificationError> {
-        //
+    pub fn verify_constant_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, diagnostics: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+        match exp.as_ref() {
+            Expression::QualifiedIdentifier(QualifiedIdentifier {}) => {
+                to_do();
+            },
+        }
     }
 }
