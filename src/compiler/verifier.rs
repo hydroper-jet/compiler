@@ -102,12 +102,12 @@ impl Verifier {
 }
 
 pub(crate) struct VerifierVerifier {
-    host: Rc<SymbolHost>,
-    ast_to_symbol: Rc<AstToSymbol>,
-    deferred_directives: Vec<Rc<Directive>>,
+    pub host: Rc<SymbolHost>,
+    pub ast_to_symbol: Rc<AstToSymbol>,
+    pub deferred_directives: Vec<Rc<Directive>>,
     invalidated: bool,
-    deferred_counter: usize,
-    scope: Symbol,
+    pub deferred_counter: usize,
+    pub scope: Symbol,
 }
 
 impl VerifierVerifier {
