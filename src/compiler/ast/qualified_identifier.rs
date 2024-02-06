@@ -34,23 +34,35 @@ impl QualifiedIdentifier {
             }
         }
 
+        let mut result_key: Option<SemanticPropertyKey> = None;
+
         match id {
             QualifiedIdentifierIdentifier::Id((id, _)) => {
-                to_do();
+                result_key = Some(SemanticPropertyKey::String(id.clone()));
             },
             QualifiedIdentifierIdentifier::Brackets(exp) => {
-                to_do();
+                let v = verifier.limit_expression_type(exp, &verifier.host.string_type())?;
+                if let Some(v) = v {
+                    result_key = Some(SemanticPropertyKey::Value(v));
+                } else {
+                    failed = true;
+                }
             },
         }
 
         if failed {
             Ok(None)
         } else {
-            Ok(Some((result_qual, result_key)))
+            Ok(Some((result_qual, result_key.unwrap())))
         }
     }
 
     pub(crate) fn verify_as_exp(&self, verifier: &mut VerifierVerifier, exp: &Rc<Expression>, followed_by_type_arguments: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+        let qn = self.verify(verifier)?;
+        if qn.is_none() {
+            return Ok(None);
+        }
+        let (qual, key) = qn.unwrap();
         //
     }
 }
