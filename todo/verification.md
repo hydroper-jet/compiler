@@ -3,6 +3,10 @@
 ## AST
 
 * Expressions
+  * Array literal
+    * [ ] Result into `enum` constant wherever possible (if the array literal is constant)
+  * Object initializer
+    * [ ] Result into `enum` constant wherever possible (if the initializer is constant)
   * Member expressions
     * [ ] Fully qualified names shadow any other variables
 

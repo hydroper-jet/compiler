@@ -146,10 +146,10 @@ impl VerifierVerifier {
         self.scope = self.scope.parent_scope().unwrap();
     }
 
-    pub fn verify_constant_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, diagnostics: bool, type_argumented: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, diagnostics: bool, type_argumented: bool) -> Result<Option<Symbol>, DeferVerificationError> {
         match exp.as_ref() {
             Expression::QualifiedIdentifier(id) => {
-                id.verify_as_constant_exp(exp, diagnostics, type_argumented)
+                id.verify_as_exp(exp, diagnostics, type_argumented)
             },
         }
     }

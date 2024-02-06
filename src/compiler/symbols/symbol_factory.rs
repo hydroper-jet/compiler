@@ -751,6 +751,15 @@ impl<'a> SymbolFactory<'a> {
         })))))
     }
 
+    pub fn create_sequence_value(&self, left: &Symbol, right: &Symbol) -> Symbol {
+        Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+            static_type: RefCell::new(right.static_type(self.host)),
+        }, Some(Rc::new(ValueKind::Sequence {
+            left: left.clone(),
+            right: right.clone(),
+        })))))
+    }
+
     pub fn create_block_statement(&self) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::BlockStatement(Rc::new(BlockStatementSymbolData {
             plain_metadata: SharedArray::new(),
