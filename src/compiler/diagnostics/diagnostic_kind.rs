@@ -41,6 +41,7 @@ pub enum DiagnosticKind {
     UnrecognizedProxy = 1061,
     EnumMembersMustBeConst = 1062,
     ConstructorMustNotSpecifyResultType = 1063,
+    IncompatibleTypes = 1064,
 }
 
 impl DiagnosticKind {

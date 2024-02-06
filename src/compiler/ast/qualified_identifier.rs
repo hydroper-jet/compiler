@@ -17,7 +17,22 @@ pub enum QualifiedIdentifierIdentifier {
 }
 
 impl QualifiedIdentifier {
-    pub(crate) fn verify_as_exp(&self, verifier: &mut VerifierVerifier, exp: &Rc<Expression>, type_argumented: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier) -> Result<Option<(Option<Symbol>, SemanticPropertyKey)>, DeferVerificationError> {
+        let QualifiedIdentifier {
+            qualifier,
+            id,
+            ..
+        } = self;
+
+        let mut result_qual: Option<Symbol> = None;
+        if let Some(qualifier) = qualifier {
+            //
+        }
+
+        (result_qual, result_key)
+    }
+
+    pub(crate) fn verify_as_exp(&self, verifier: &mut VerifierVerifier, exp: &Rc<Expression>, followed_by_type_arguments: bool) -> Result<Option<Symbol>, DeferVerificationError> {
         //
     }
 }

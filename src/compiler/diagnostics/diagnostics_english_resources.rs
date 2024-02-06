@@ -46,6 +46,7 @@ lazy_static! {
         DiagnosticKind::UnrecognizedProxy.id() => "Unrecognized proxy: '{1}'".into(),
         DiagnosticKind::EnumMembersMustBeConst.id() => "Enumeration members must be 'const'".into(),
         DiagnosticKind::ConstructorMustNotSpecifyResultType.id() => "Constructor must not specify result type".into(),
+        DiagnosticKind::IncompatibleTypes.id() => "Incompatible types: expected '{1}', got '{2}'".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

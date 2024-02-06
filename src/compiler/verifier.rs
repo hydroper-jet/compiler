@@ -68,18 +68,24 @@ impl Verifier {
         self.verifier.invalidated
     }
 
+    /// # Panics
+    ///
+    /// Panics if the verifier is already invalidated before verifying.
     pub fn verify_programs(&mut self, programs: Vec<Rc<Program>>) {
         if self.verifier.invalidated {
-            return;
+            panic!("Verifier already invalidated.");
         }
         self.verifier.reset_state();
 
         to_do_here();
     }
 
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>) {
+    /// # Panics
+    ///
+    /// Panics if the verifier is already invalidated before verifying.
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>) -> Option<Symbol> {
         if self.verifier.invalidated {
-            return;
+            panic!("Verifier already invalidated.");
         }
         self.verifier.reset_state();
 
@@ -146,11 +152,33 @@ impl VerifierVerifier {
         self.scope = self.scope.parent_scope().unwrap();
     }
 
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, diagnostics: bool, type_argumented: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, followed_by_type_arguments: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+        let pre_result = self.ast_to_symbol.get(exp);
+        if let Some(pre_result) = pre_result {
+            return Ok(Some(pre_result));
+        }
         match exp.as_ref() {
             Expression::QualifiedIdentifier(id) => {
-                id.verify_as_exp(self, exp, diagnostics, type_argumented)
+                id.verify_as_exp(self, exp, followed_by_type_arguments)
             },
         }
+    }
+
+    pub fn limit_expression_type(&mut self, exp: &Rc<Expression>, limit_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
+        let v = self.verify_expression(exp, Some(limit_type.clone()), false)?;
+        if v.is_none() {
+            return Ok(None);
+        }
+        let v = v.unwrap();
+        let got_type = v.static_type(&self.host);
+        let v = TypeConversions(&self.host).implicit_conversion(&v, limit_type, false);
+        if v.is_none() {
+            self.add_verify_error(&exp.location(), DiagnosticKind::IncompatibleTypes, diagnostic_arguments![Symbol(got_type), Symbol(limit_type.clone())]);
+            self.ast_to_symbol.delete(exp);
+            return Ok(None);
+        }
+        let v = v.unwrap();
+        self.ast_to_symbol.set(exp, &v);
+        Ok(Some(v))
     }
 }

@@ -134,6 +134,7 @@ impl Diagnostic {
         match argument {
             DiagnosticArgument::String(s) => s.clone(),
             DiagnosticArgument::Token(t) => t.to_string(),
+            DiagnosticArgument::Symbol(s) => s.to_string(),
         }
     }
 }
@@ -146,4 +147,5 @@ pub macro diagnostic_arguments {
 pub enum DiagnosticArgument {
     String(String),
     Token(Token),
+    Symbol(Symbol),
 }
