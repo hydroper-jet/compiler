@@ -50,7 +50,6 @@ impl Verifier {
             verifier: VerifierVerifier {
                 host: host.clone(),
                 ast_to_symbol: AstToSymbol::new(),
-                deferred_expressions: vec![],
                 deferred_directives: vec![],
                 invalidated: false,
                 deferred_counter: 0,
@@ -99,17 +98,10 @@ impl Verifier {
 pub(crate) struct VerifierVerifier {
     host: Rc<SymbolHost>,
     ast_to_symbol: Rc<AstToSymbol>,
-    deferred_expressions: Vec<VerifierDeferredExp>,
     deferred_directives: Vec<Rc<Directive>>,
     invalidated: bool,
     deferred_counter: usize,
     scope: Symbol,
-}
-
-pub(crate) struct VerifierDeferredExp {
-    pub exp: Rc<Expression>,
-    pub diagnostics: bool,
-    pub context_type: Option<Symbol>,
 }
 
 impl VerifierVerifier {
@@ -126,7 +118,6 @@ impl VerifierVerifier {
     fn reset_state(&mut self) {
         self.deferred_counter = 0;
         self.deferred_directives.clear();
-        self.deferred_expressions.clear();
     }
 
     pub fn add_syntax_error(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
