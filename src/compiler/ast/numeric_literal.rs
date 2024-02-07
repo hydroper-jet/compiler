@@ -32,6 +32,24 @@ impl NumericLiteral {
         f64::from_str(&(if negative { "-" } else { "" }.to_owned() + &s)).map_err(|_| ParsingFailure)
     }
 
+    /// Parses a single-precision floating point either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_single(&self, negative: bool) -> Result<f32, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = u64::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 16);
+                return n.map_err(|_| ParsingFailure)
+                    .and_then(|n| f32::value_from(n).map_err(|_| ParsingFailure));
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = u64::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 2);
+                return n.map_err(|_| ParsingFailure)
+                    .and_then(|n| f32::value_from(n).map_err(|_| ParsingFailure));
+            }
+        }
+        f32::from_str(&(if negative { "-" } else { "" }.to_owned() + &s)).map_err(|_| ParsingFailure)
+    }
+
     /// Parses a signed long either in
     /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
     pub fn parse_long(&self, negative: bool) -> Result<i64, ParsingFailure> {
@@ -62,6 +80,102 @@ impl NumericLiteral {
             }
         }
         u64::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses a signed integer either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_int(&self, negative: bool) -> Result<i32, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = i32::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = i32::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        i32::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses an unsigned integer either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_unsigned_int(&self) -> Result<u32, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = u32::from_str_radix(&s[2..], 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = u32::from_str_radix(&s[2..], 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        u32::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses a signed short either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_short(&self, negative: bool) -> Result<i16, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = i16::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = i16::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        i16::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses an unsigned short either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_unsigned_short(&self) -> Result<u16, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = u16::from_str_radix(&s[2..], 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = u16::from_str_radix(&s[2..], 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        u16::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses a signed byte either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_byte(&self, negative: bool) -> Result<i8, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = i8::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = i8::from_str_radix(&(if negative { "-" } else { "" }.to_owned() + &s[2..]), 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        i8::from_str(&s).map_err(|_| ParsingFailure)
+    }
+
+    /// Parses an unsigned byte either in
+    /// decimal, binary (`0b`) or hexadecimal (`0x`) notation.
+    pub fn parse_unsigned_byte(&self) -> Result<u8, ParsingFailure> {
+        let s = self.value.replace('_', "");
+        if s.starts_with('0') {
+            if s[1..].starts_with('x') || s[1..].starts_with('X') {
+                let n = u8::from_str_radix(&s[2..], 16);
+                return n.map_err(|_| ParsingFailure);
+            } else if s[1..].starts_with('b') || s[1..].starts_with('B') {
+                let n = u8::from_str_radix(&s[2..], 2);
+                return n.map_err(|_| ParsingFailure);
+            }
+        }
+        u8::from_str(&s).map_err(|_| ParsingFailure)
     }
 
     /// Parses a big integer either in
