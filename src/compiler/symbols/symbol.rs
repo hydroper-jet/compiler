@@ -4375,7 +4375,7 @@ mod tests {
 
     #[test]
     fn creating_packages() {
-        let host = SymbolHost::new();
+        let host = SymbolHost::new("");
         let p = host.factory().create_package(["y", "n"]);
         println!("{}", p.fully_qualified_name());
     }

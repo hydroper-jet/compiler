@@ -10,6 +10,7 @@ pub struct SymbolHost {
     pub(crate) void_type: Symbol,
     pub(crate) import_meta: Symbol,
     pub(crate) import_meta_env: Symbol,
+    pub(crate) jetpm_output_directory: String,
 
     pub(crate) env_cache: RefCell<Option<Rc<HashMap<String, String>>>>,
 
@@ -60,7 +61,7 @@ pub struct SymbolHost {
 }
 
 impl SymbolHost {
-    pub fn new() -> Rc<Self> {
+    pub fn new(jetpm_output_directory: &str) -> Rc<Self> {
         let arena = Arena::new();
         let unresolved = Symbol(arena.allocate(SymbolKind::Unresolved));
         let any_type = Symbol(arena.allocate(SymbolKind::Type(TypeKind::AnyType)));
@@ -90,6 +91,7 @@ impl SymbolHost {
             void_type,
             import_meta,
             import_meta_env,
+            jetpm_output_directory: jetpm_output_directory.to_owned(),
 
             env_cache: RefCell::new(None),
 
@@ -162,6 +164,11 @@ impl SymbolHost {
     /// The `import.meta.env` symbol.
     pub fn import_meta_env(&self) -> Symbol {
         (self.import_meta_env).clone()
+    }
+
+    /// The JetPM output directory path.
+    pub fn jetpm_output_directory(&self) -> String {
+        self.jetpm_output_directory.clone()
     }
 
     pub fn top_level_package(&self) -> Symbol {
