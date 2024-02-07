@@ -1520,6 +1520,33 @@ impl Symbol {
         }
     }
 
+    pub fn deletable(&self, host: &SymbolHost) -> bool {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { .. } => true,
+                            ReferenceValueKind::Dynamic { .. } => true,
+                            ReferenceValueKind::Proxy { base, .. } => {
+                                let r = base.static_type(host).find_proxy(ProxyKind::DeleteProperty, host);
+                                if r.is_err() {
+                                    return true;
+                                }
+                                r.unwrap().is_some()
+                            },
+                            ReferenceValueKind::DynamicScope { .. } => true,
+                            _ => false,
+                        }
+                    }
+                    _ => false,
+                }
+            },
+            _ => false,
+        }
+    }
+
     /// If a type is a nullable type, return it as a non nullable type.
     pub fn non_null_type(&self) -> Symbol {
         if self.is_nullable_type() {
@@ -3839,6 +3866,7 @@ impl Deref for PackageScope {
 /// * `set_static_type()`
 /// * `read_only()`
 /// * `write_only()`
+/// * `deletable()`
 /// * `property_is_visible()`
 pub struct Value(pub Symbol);
 

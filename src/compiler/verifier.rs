@@ -83,13 +83,13 @@ impl Verifier {
     /// # Panics
     ///
     /// Panics if the verifier is already invalidated before verifying.
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>) -> Option<Symbol> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, mode: VerifyMode) -> Option<Symbol> {
         if self.verifier.invalidated {
             panic!("Verifier already invalidated.");
         }
         self.verifier.reset_state();
 
-        to_do_here();
+        ()
     }
 
     pub fn enter_scope(&mut self, scope: &Symbol) {
@@ -152,16 +152,42 @@ impl VerifierVerifier {
         self.scope = self.scope.parent_scope().unwrap();
     }
 
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, followed_by_type_arguments: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, followed_by_type_arguments: bool, mode: VerifyMode) -> Result<Option<Symbol>, DeferVerificationError> {
         let pre_result = self.ast_to_symbol.get(exp);
         if let Some(pre_result) = pre_result {
             return Ok(Some(pre_result));
         }
+        let mut result: Option<Symbol>;
         match exp.as_ref() {
             Expression::QualifiedIdentifier(id) => {
-                id.verify_as_exp(self, exp, followed_by_type_arguments)
+                result = id.verify_as_exp(self, exp, followed_by_type_arguments)?;
             },
         }
+
+        if result.is_none() {
+            return Ok(result);
+        }
+        let result = result.unwrap();
+
+        match mode {
+            VerifyMode::Read => {
+                if result.write_only(&self.host) {
+                    self.add_verify_error(&exp.location(), DiagnosticKind::ReferenceIsWriteOnly, diagnostic_arguments![]);
+                }
+            },
+            VerifyMode::Write => {
+                if result.read_only(&self.host) {
+                    self.add_verify_error(&exp.location(), DiagnosticKind::ReferenceIsReadOnly, diagnostic_arguments![]);
+                }
+            },
+            VerifyMode::Delete => {
+                if !result.deletable(&self.host) {
+                    self.add_verify_error(&exp.location(), DiagnosticKind::ReferenceIsNotDeletable, diagnostic_arguments![]);
+                }
+            },
+        }
+
+        Ok(Some(result))
     }
 
     pub fn limit_expression_type(&mut self, exp: &Rc<Expression>, limit_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
@@ -181,4 +207,11 @@ impl VerifierVerifier {
         self.ast_to_symbol.set(exp, &v);
         Ok(Some(v))
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum VerifyMode {
+    Read,
+    Write,
+    Delete,
 }

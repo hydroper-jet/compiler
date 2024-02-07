@@ -42,6 +42,9 @@ pub enum DiagnosticKind {
     EnumMembersMustBeConst = 1062,
     ConstructorMustNotSpecifyResultType = 1063,
     IncompatibleTypes = 1064,
+    ReferenceIsWriteOnly = 1065,
+    ReferenceIsReadOnly = 1066,
+    ReferenceIsNotDeletable = 1067,
 }
 
 impl DiagnosticKind {

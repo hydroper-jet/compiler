@@ -47,6 +47,9 @@ lazy_static! {
         DiagnosticKind::EnumMembersMustBeConst.id() => "Enumeration members must be 'const'".into(),
         DiagnosticKind::ConstructorMustNotSpecifyResultType.id() => "Constructor must not specify result type".into(),
         DiagnosticKind::IncompatibleTypes.id() => "Incompatible types: expected '{1}', got '{2}'".into(),
+        DiagnosticKind::ReferenceIsWriteOnly.id() => "Reference is write-only".into(),
+        DiagnosticKind::ReferenceIsReadOnly.id() => "Reference is read-only".into(),
+        DiagnosticKind::ReferenceIsNotDeletable.id() => "Reference is not deletable".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }
