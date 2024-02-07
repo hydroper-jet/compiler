@@ -8,10 +8,10 @@ pub struct ExpectedTypeError;
 
 #[derive(Clone, Debug)]
 pub enum PropertyResolutionError {
-    AmbiguousReference,
+    AmbiguousReference { name: String },
     DeferVerification,
     VoidBase,
-    NullableBase,
+    NullableBase { nullable_type: Symbol },
 }
 
 #[derive(Clone)]

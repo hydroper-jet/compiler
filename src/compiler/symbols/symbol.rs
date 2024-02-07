@@ -1,5 +1,6 @@
 use crate::ns::*;
 use std::cell::{Cell, RefCell};
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
@@ -15,6 +16,12 @@ use bitflags::bitflags;
 /// Methods that are not compatible with a symbol kind result in a panic.
 #[derive(Clone)]
 pub struct Symbol(pub(crate) Weak<SymbolKind>);
+
+impl Debug for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Symbol()")
+    }
+}
 
 impl Eq for Symbol {}
 
@@ -1326,8 +1333,8 @@ impl Symbol {
         return self.clone();
     }
 
-    pub fn resolve_property(&self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, host: &SymbolHost) -> Result<Option<Symbol>, PropertyResolutionError> {
-        PropertyResolution(host).resolve_property(base, qual, key)
+    pub fn resolve_property(&self, qual: Option<Symbol>, key: SemanticPropertyKey, host: &SymbolHost) -> Result<Option<Symbol>, PropertyResolutionError> {
+        PropertyResolution(host).resolve_property(self, qual, key)
     }
 
     pub fn properties(&self, _host: &SymbolHost) -> SharedMap<String, Symbol> {

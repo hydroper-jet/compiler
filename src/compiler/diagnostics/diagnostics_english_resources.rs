@@ -50,6 +50,10 @@ lazy_static! {
         DiagnosticKind::ReferenceIsWriteOnly.id() => "Reference is write-only".into(),
         DiagnosticKind::ReferenceIsReadOnly.id() => "Reference is read-only".into(),
         DiagnosticKind::ReferenceIsNotDeletable.id() => "Reference is not deletable".into(),
+        DiagnosticKind::AmbiguousReference.id() => "Ambiguous reference to '{1}'".into(),
+        DiagnosticKind::AccessingPropertyOfVoidBase.id() => "Accessing property of base with static type 'void'".into(),
+        DiagnosticKind::AccessingPropertyOfNullableBase.id() => "Accessing property of nullable base with static type '{1}'".into(),
+        DiagnosticKind::InaccessibleProperty.id() => "Access of inaccessible property '{1}'".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

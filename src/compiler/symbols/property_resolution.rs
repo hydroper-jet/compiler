@@ -123,7 +123,9 @@ impl<'a> PropertyResolution<'a> {
                 return Err(PropertyResolutionError::VoidBase);
             }
             if base_type.is_nullable_type() {
-                return Err(PropertyResolutionError::NullableBase);
+                return Err(PropertyResolutionError::NullableBase {
+                    nullable_type: base_type,
+                });
             }
 
             // 6.2. If key is a String constant
@@ -324,7 +326,7 @@ impl<'a> PropertyResolution<'a> {
         if base.is_package_scope() {
             amb = self.resolve_property(&base.package(), qual.clone(), key.clone())?;
             if r.is_some() {
-                return Err(PropertyResolutionError::AmbiguousReference);
+                return Err(PropertyResolutionError::AmbiguousReference { name: string_key.clone().unwrap() });
             }
             r = amb;
         }
@@ -338,7 +340,7 @@ impl<'a> PropertyResolution<'a> {
 
                 amb = Some(p.resolve_alias().wrap_property_reference(self.0));
                 if r.is_some() {
-                    return Err(PropertyResolutionError::AmbiguousReference);
+                    return Err(PropertyResolutionError::AmbiguousReference { name: string_key.clone().unwrap() });
                 }
                 r = amb;
             }
@@ -348,7 +350,7 @@ impl<'a> PropertyResolution<'a> {
         for p in base.packages().iter() {
             amb = self.resolve_property(&p, qual.clone(), key.clone())?;
             if r.is_some() {
-                return Err(PropertyResolutionError::AmbiguousReference);
+                return Err(PropertyResolutionError::AmbiguousReference { name: string_key.clone().unwrap() });
             }
             r = amb;
         }

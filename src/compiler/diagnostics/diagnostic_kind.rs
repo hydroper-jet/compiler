@@ -45,6 +45,10 @@ pub enum DiagnosticKind {
     ReferenceIsWriteOnly = 1065,
     ReferenceIsReadOnly = 1066,
     ReferenceIsNotDeletable = 1067,
+    AmbiguousReference = 1068,
+    AccessingPropertyOfVoidBase = 1069,
+    AccessingPropertyOfNullableBase = 1070,
+    InaccessibleProperty = 1071,
 }
 
 impl DiagnosticKind {

@@ -191,7 +191,7 @@ impl VerifierVerifier {
     }
 
     pub fn limit_expression_type(&mut self, exp: &Rc<Expression>, limit_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
-        let v = self.verify_expression(exp, Some(limit_type.clone()), false)?;
+        let v = self.verify_expression(exp, Some(limit_type.clone()), false, VerifyMode::Read)?;
         if v.is_none() {
             return Ok(None);
         }
@@ -204,7 +204,7 @@ impl VerifierVerifier {
             return Ok(None);
         }
         let v = v.unwrap();
-        self.ast_to_symbol.set(exp, &v);
+        self.ast_to_symbol.set(exp, Some(v));
         Ok(Some(v))
     }
 }

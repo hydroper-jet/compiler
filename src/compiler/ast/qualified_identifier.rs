@@ -63,6 +63,40 @@ impl QualifiedIdentifier {
             return Ok(None);
         }
         let (qual, key) = qn.unwrap();
-        //
+        let r = verifier.scope.resolve_property(qual, key.clone(), &verifier.host);
+        if r.is_err() {
+            match r.unwrap_err() {
+                PropertyResolutionError::AmbiguousReference { name } => {
+                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AmbiguousReference, diagnostic_arguments![String(name.clone())]);
+                    verifier.ast_to_symbol.set(exp, None);
+                    return Ok(None);
+                },
+                PropertyResolutionError::DeferVerification => {
+                    return Err(DeferVerificationError);
+                },
+                PropertyResolutionError::VoidBase => {
+                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AccessingPropertyOfVoidBase, diagnostic_arguments![]);
+                    verifier.ast_to_symbol.set(exp, None);
+                    return Ok(None);
+                },
+                PropertyResolutionError::NullableBase { nullable_type } => {
+                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AccessingPropertyOfNullableBase, diagnostic_arguments![Symbol(nullable_type)]);
+                    verifier.ast_to_symbol.set(exp, None);
+                    return Ok(None);
+                },
+            }
+        }
+        let r = r.unwrap();
+        if r.is_none() {
+            verifier.ast_to_symbol.set(exp, None);
+            return Ok(None);
+        }
+        let r = r.unwrap();
+
+        if !r.property_is_visible(&verifier.scope, &verifier.host) {
+            verifier.add_verify_error(&exp.location(), DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(key.string_value().unwrap())]);
+        }
+
+        ()
     }
 }

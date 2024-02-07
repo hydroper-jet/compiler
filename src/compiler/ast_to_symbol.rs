@@ -10,11 +10,11 @@ pub struct AstToSymbol {
 }
 
 struct AstToSymbol1 {
-    expressions: HashMap<AstAsKey<Rc<Expression>>, Symbol>,
-    directives: HashMap<AstAsKey<Rc<Directive>>, Symbol>,
-    simple_variable_definitions: HashMap<AstAsKey<Rc<SimpleVariableDefinition>>, Symbol>,
-    blocks: HashMap<AstAsKey<Rc<Block>>, Symbol>,
-    programs: HashMap<AstAsKey<Rc<Program>>, Symbol>,
+    expressions: HashMap<AstAsKey<Rc<Expression>>, Option<Symbol>>,
+    directives: HashMap<AstAsKey<Rc<Directive>>, Option<Symbol>>,
+    simple_variable_definitions: HashMap<AstAsKey<Rc<SimpleVariableDefinition>>, Option<Symbol>>,
+    blocks: HashMap<AstAsKey<Rc<Block>>, Option<Symbol>>,
+    programs: HashMap<AstAsKey<Rc<Program>>, Option<Symbol>>,
 }
 
 impl AstToSymbol1 {
@@ -39,7 +39,7 @@ impl AstToSymbol {
 
 pub trait AstToSymbolAccessor<T> {
     fn get(&self, node: &Rc<T>) -> Option<Symbol>;
-    fn set(&self, node: &Rc<T>, symbol: &Symbol);
+    fn set(&self, node: &Rc<T>, symbol: Option<Symbol>);
     fn delete(&self, node: &Rc<T>) -> bool;
 
     fn has(&self, node: &Rc<T>) -> bool {
@@ -52,21 +52,21 @@ impl AstToSymbolAccessor<Expression> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location().compilation_unit()));
         if let Some(m1) = m1 {
-            m1.expressions.get(&AstAsKey(node.clone())).cloned()
+            m1.expressions.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
         } else {
             None
         }
     }
 
-    fn set(&self, node: &Rc<Expression>, symbol: &Symbol) {
+    fn set(&self, node: &Rc<Expression>, symbol: Option<Symbol>) {
         let compilation_unit = node.location().compilation_unit();
         let mut compilation_units = self.compilation_units.borrow_mut();
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
         if let Some(m1) = m1 {
-            m1.expressions.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.expressions.insert(AstAsKey(node.clone()), symbol);
         } else {
             let mut m1 = AstToSymbol1::new();
-            m1.expressions.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.expressions.insert(AstAsKey(node.clone()), symbol);
             compilation_units.insert(ByAddress(compilation_unit), m1);
         }
     }
@@ -88,21 +88,21 @@ impl AstToSymbolAccessor<Directive> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location().compilation_unit()));
         if let Some(m1) = m1 {
-            m1.directives.get(&AstAsKey(node.clone())).cloned()
+            m1.directives.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
         } else {
             None
         }
     }
 
-    fn set(&self, node: &Rc<Directive>, symbol: &Symbol) {
+    fn set(&self, node: &Rc<Directive>, symbol: Option<Symbol>) {
         let compilation_unit = node.location().compilation_unit();
         let mut compilation_units = self.compilation_units.borrow_mut();
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
         if let Some(m1) = m1 {
-            m1.directives.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.directives.insert(AstAsKey(node.clone()), symbol);
         } else {
             let mut m1 = AstToSymbol1::new();
-            m1.directives.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.directives.insert(AstAsKey(node.clone()), symbol);
             compilation_units.insert(ByAddress(compilation_unit), m1);
         }
     }
@@ -124,21 +124,21 @@ impl AstToSymbolAccessor<SimpleVariableDefinition> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.simple_variable_definitions.get(&AstAsKey(node.clone())).cloned()
+            m1.simple_variable_definitions.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
         } else {
             None
         }
     }
 
-    fn set(&self, node: &Rc<SimpleVariableDefinition>, symbol: &Symbol) {
+    fn set(&self, node: &Rc<SimpleVariableDefinition>, symbol: Option<Symbol>) {
         let compilation_unit = node.location.compilation_unit();
         let mut compilation_units = self.compilation_units.borrow_mut();
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
         if let Some(m1) = m1 {
-            m1.simple_variable_definitions.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.simple_variable_definitions.insert(AstAsKey(node.clone()), symbol);
         } else {
             let mut m1 = AstToSymbol1::new();
-            m1.simple_variable_definitions.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.simple_variable_definitions.insert(AstAsKey(node.clone()), symbol);
             compilation_units.insert(ByAddress(compilation_unit), m1);
         }
     }
@@ -160,21 +160,21 @@ impl AstToSymbolAccessor<Block> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.blocks.get(&AstAsKey(node.clone())).cloned()
+            m1.blocks.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
         } else {
             None
         }
     }
 
-    fn set(&self, node: &Rc<Block>, symbol: &Symbol) {
+    fn set(&self, node: &Rc<Block>, symbol: Option<Symbol>) {
         let compilation_unit = node.location.compilation_unit();
         let mut compilation_units = self.compilation_units.borrow_mut();
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
         if let Some(m1) = m1 {
-            m1.blocks.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.blocks.insert(AstAsKey(node.clone()), symbol);
         } else {
             let mut m1 = AstToSymbol1::new();
-            m1.blocks.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.blocks.insert(AstAsKey(node.clone()), symbol);
             compilation_units.insert(ByAddress(compilation_unit), m1);
         }
     }
@@ -196,21 +196,21 @@ impl AstToSymbolAccessor<Program> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.programs.get(&AstAsKey(node.clone())).cloned()
+            m1.programs.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
         } else {
             None
         }
     }
 
-    fn set(&self, node: &Rc<Program>, symbol: &Symbol) {
+    fn set(&self, node: &Rc<Program>, symbol: Option<Symbol>) {
         let compilation_unit = node.location.compilation_unit();
         let mut compilation_units = self.compilation_units.borrow_mut();
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
         if let Some(m1) = m1 {
-            m1.programs.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.programs.insert(AstAsKey(node.clone()), symbol);
         } else {
             let mut m1 = AstToSymbol1::new();
-            m1.programs.insert(AstAsKey(node.clone()), symbol.clone());
+            m1.programs.insert(AstAsKey(node.clone()), symbol);
             compilation_units.insert(ByAddress(compilation_unit), m1);
         }
     }
