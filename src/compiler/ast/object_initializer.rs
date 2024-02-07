@@ -38,3 +38,16 @@ pub enum FieldName {
     StringLiteral(Rc<Expression>),
     NumericLiteral(Rc<Expression>),
 }
+
+impl FieldName {
+    pub(crate) fn id(&self) -> Option<String> {
+        let Self::Identifier(id) = &self else {
+            return None;
+        };
+        Some(id.clone())
+    }
+
+    pub(crate) fn id_equals(&self, name: &str) -> bool {
+        self.id().map(|name1| name == name1).unwrap_or(false)
+    }
+}

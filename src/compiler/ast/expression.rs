@@ -111,4 +111,18 @@ impl Expression {
             _ => None,
         }
     }
+
+    pub fn to_identifier_name_or_asterisk(&self) -> Option<(String, Location)> {
+        match self {
+            Self::QualifiedIdentifier(id) => id.to_identifier_name_or_asterisk(),
+            _ => None,
+        }
+    }
+
+    pub fn to_identifier_name(&self) -> Option<(String, Location)> {
+        match self {
+            Self::QualifiedIdentifier(id) => id.to_identifier_name(),
+            _ => None,
+        }
+    }
 }

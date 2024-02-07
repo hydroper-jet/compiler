@@ -55,6 +55,11 @@ lazy_static! {
         DiagnosticKind::AccessingPropertyOfNullableBase.id() => "Accessing property of nullable base with static type '{1}'".into(),
         DiagnosticKind::InaccessibleProperty.id() => "Access of inaccessible property '{1}'".into(),
         DiagnosticKind::TypeParameterizedPropertyMustBeArgumented.id() => "Type parameterized property must be argumented".into(),
+        DiagnosticKind::UnrecognizedEmbedExpressionField.id() => "Unrecognized embed expression field".into(),
+        DiagnosticKind::MustResolveToType.id() => "Expression must resolve to type".into(),
+        DiagnosticKind::EmbedSourceOrTypeNotSpecified.id() => "Embed source or type not specified".into(),
+        DiagnosticKind::EmbedUnsupportedType.id() => "Embed expression unsupported data type: '{1}'".into(),
+        DiagnosticKind::FailedLoadingEmbeddedFile.id() => "Failed loading embedded file: '{1}'".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

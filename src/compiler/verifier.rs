@@ -163,7 +163,7 @@ impl VerifierVerifier {
                 result = id.verify_as_exp(self, exp, followed_by_type_arguments)?;
             },
             Expression::Embed(emb) => {
-                result = emb.verify(self, exp, context_type);
+                result = emb.verify(self, exp, context_type)?;
             },
         }
 
@@ -191,6 +191,23 @@ impl VerifierVerifier {
         }
 
         Ok(Some(result))
+    }
+
+    pub fn verify_type_expression(&mut self, exp: &Rc<Expression>) -> Result<Option<Symbol>, DeferVerificationError> {
+        let v = self.verify_expression(exp, None, false, VerifyMode::Read)?;
+        if v.is_none() {
+            return Ok(None);
+        }
+        let v = v.unwrap();
+        let v = v.expect_type();
+        if v.is_err() {
+            self.add_verify_error(&exp.location(), DiagnosticKind::MustResolveToType, diagnostic_arguments![]);
+            self.ast_to_symbol.set(exp, None);
+            return Ok(None);
+        }
+        let v = v.unwrap();
+        self.ast_to_symbol.set(exp, Some(v));
+        Ok(Some(v))
     }
 
     pub fn limit_expression_type(&mut self, exp: &Rc<Expression>, limit_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {

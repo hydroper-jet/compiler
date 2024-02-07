@@ -116,4 +116,28 @@ impl QualifiedIdentifier {
         verifier.ast_to_symbol.set(exp, Some(r.clone()));
         Ok(Some(r))
     }
+
+    pub fn to_identifier_name_or_asterisk(&self) -> Option<(String, Location)> {
+        if self.attribute || self.qualifier.is_some() {
+            None
+        } else {
+            if let QualifiedIdentifierIdentifier::Id(id) = self.id {
+                Some(id.clone())
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn to_identifier_name(&self) -> Option<(String, Location)> {
+        if self.attribute || self.qualifier.is_some() {
+            None
+        } else {
+            if let QualifiedIdentifierIdentifier::Id(id) = self.id {
+                if id.0 == "*" { None } else { Some(id.clone()) }
+            } else {
+                None
+            }
+        }
+    }
 }

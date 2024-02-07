@@ -50,6 +50,11 @@ pub enum DiagnosticKind {
     AccessingPropertyOfNullableBase = 1070,
     InaccessibleProperty = 1071,
     TypeParameterizedPropertyMustBeArgumented = 1072,
+    UnrecognizedEmbedExpressionField = 1073,
+    MustResolveToType = 1074,
+    EmbedSourceOrTypeNotSpecified = 1075,
+    EmbedUnsupportedType = 1076,
+    FailedLoadingEmbeddedFile = 1077,
 }
 
 impl DiagnosticKind {
