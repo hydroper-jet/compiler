@@ -54,6 +54,7 @@ lazy_static! {
         DiagnosticKind::AccessingPropertyOfVoidBase.id() => "Accessing property of base with static type 'void'".into(),
         DiagnosticKind::AccessingPropertyOfNullableBase.id() => "Accessing property of nullable base with static type '{1}'".into(),
         DiagnosticKind::InaccessibleProperty.id() => "Access of inaccessible property '{1}'".into(),
+        DiagnosticKind::TypeParameterizedPropertyMustBeArgumented.id() => "Type parameterized property must be argumented".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

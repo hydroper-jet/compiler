@@ -71,6 +71,13 @@ impl Symbol {
         }
     }
 
+    pub fn is_origin_class_type(&self) -> bool {
+        match self.0.upgrade().unwrap().as_ref() {
+            SymbolKind::Type(TypeKind::ClassType(_)) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_enum_type(&self) -> bool {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Type(TypeKind::EnumType(_)))
     }
@@ -79,6 +86,13 @@ impl Symbol {
         match self.0.upgrade().unwrap().as_ref() {
             SymbolKind::Type(TypeKind::InterfaceType(_)) => true,
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(ref t)) => t.origin.is_interface_type(),
+            _ => false,
+        }
+    }
+
+    pub fn is_origin_interface_type(&self) -> bool {
+        match self.0.upgrade().unwrap().as_ref() {
+            SymbolKind::Type(TypeKind::InterfaceType(_)) => true,
             _ => false,
         }
     }

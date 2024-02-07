@@ -49,6 +49,7 @@ pub enum DiagnosticKind {
     AccessingPropertyOfVoidBase = 1069,
     AccessingPropertyOfNullableBase = 1070,
     InaccessibleProperty = 1071,
+    TypeParameterizedPropertyMustBeArgumented = 1072,
 }
 
 impl DiagnosticKind {

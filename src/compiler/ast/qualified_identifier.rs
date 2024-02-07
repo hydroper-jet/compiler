@@ -97,6 +97,23 @@ impl QualifiedIdentifier {
             verifier.add_verify_error(&exp.location(), DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(key.string_value().unwrap())]);
         }
 
-        ()
+        if r.is_reference_value() && (r.is_static_reference_value() || r.is_instance_reference_value() || r.is_scope_reference_value() || r.is_package_reference_value()) {
+            let p = r.property();
+
+            // Require type arguments
+            if (p.is_origin_function() || p.is_origin_class_type() || p.is_origin_interface_type()) && p.type_parameters().is_some() && !followed_by_type_arguments {
+                verifier.add_verify_error(&exp.location(), DiagnosticKind::TypeParameterizedPropertyMustBeArgumented, diagnostic_arguments![]);
+            }
+
+            // Compile-time constant
+            if p.is_origin_variable_property() && p.read_only(&verifier.host) && p.constant_initializer().is_some() {
+                let r = p.constant_initializer().unwrap();
+                verifier.ast_to_symbol.set(exp, Some(r));
+                return Ok(Some(r));
+            }
+        }
+
+        verifier.ast_to_symbol.set(exp, Some(r.clone()));
+        Ok(Some(r))
     }
 }
