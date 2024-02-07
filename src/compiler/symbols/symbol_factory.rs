@@ -631,6 +631,29 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
+    pub fn create_embed_value(&self, content: EmbedValueDataContent) -> Symbol {
+        match content {
+            EmbedValueDataContent::String(s) => {
+                let string_type = self.host.string_type();
+                Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+                    static_type: RefCell::new(string_type),
+                }, Some(Rc::new(ValueKind::Embed(Rc::new(EmbedValueData {
+                    embedded_string: Some(Rc::new(s)),
+                    embedded_byte_array: None,
+                })))))))
+            },
+            EmbedValueDataContent::ByteArray(ba) => {
+                let byte_array_type = self.host.byte_array_type();
+                Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
+                    static_type: RefCell::new(byte_array_type),
+                }, Some(Rc::new(ValueKind::Embed(Rc::new(EmbedValueData {
+                    embedded_string: None,
+                    embedded_byte_array: Some(Rc::new(ba)),
+                })))))))
+            },
+        }
+    }
+
     pub fn create_import_meta_output_value(&self) -> Symbol {
         let string_type = self.host.string_type();
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {

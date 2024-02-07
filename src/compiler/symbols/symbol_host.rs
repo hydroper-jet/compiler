@@ -53,6 +53,7 @@ pub struct SymbolHost {
     pub(crate) map_type: RefCell<Option<Symbol>>,
     pub(crate) namespace_type: RefCell<Option<Symbol>>,
     pub(crate) qname_type: RefCell<Option<Symbol>>,
+    pub(crate) byte_array_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -131,6 +132,7 @@ impl SymbolHost {
             map_type: RefCell::new(None),
             namespace_type: RefCell::new(None),
             qname_type: RefCell::new(None),
+            byte_array_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -491,6 +493,19 @@ impl SymbolHost {
         }
         if let Some(r) = self.lookup_at_jet_lang("QName") {
             self.qname_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.ByteArray` class, possibly `Unresolved`.
+    pub fn byte_array_type(&self) -> Symbol {
+        if let Some(r) = self.byte_array_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("ByteArray") {
+            self.byte_array_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()

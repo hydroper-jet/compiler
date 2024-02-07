@@ -210,6 +210,14 @@ impl Symbol {
         matches!(self.0.upgrade().unwrap().as_ref(), SymbolKind::Value(_, _))
     }
 
+    pub fn is_embed_value(&self) -> bool {
+        let data = self.0.upgrade().unwrap();
+        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
+            return false;
+        };
+        matches!(data.as_ref(), ValueKind::Embed(_))
+    }
+
     pub fn is_import_meta(&self) -> bool {
         let data = self.0.upgrade().unwrap();
         let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
@@ -1204,6 +1212,32 @@ impl Symbol {
             SymbolKind::Type(TypeKind::TupleType(data)) => {
                 let TupleTypeData { ref element_types } = data.as_ref();
                 element_types.clone()
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn embedded_byte_array(&self) -> Option<Rc<Vec<u8>>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Embed(data) => data.embedded_byte_array.clone(),
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn embedded_string(&self) -> Option<Rc<String>> {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Embed(data) => data.embedded_string.clone(),
+                    _ => panic!(),
+                }
             },
             _ => panic!(),
         }
@@ -2934,6 +2968,12 @@ pub(crate) enum ValueKind {
     Function {
         activation_scope: Symbol,
     },
+    Embed(Rc<EmbedValueData>),
+}
+
+pub(crate) struct EmbedValueData {
+    pub embedded_byte_array: Option<Rc<Vec<u8>>>,
+    pub embedded_string: Option<Rc<String>>,
 }
 
 pub(crate) enum ConstantKind {
@@ -3897,6 +3937,30 @@ impl Deref for Value {
         assert!(self.0.is_value());
         &self.0
     }
+}
+
+/// `embed { ... }` value symbol.
+///
+/// # Supported methods
+///
+/// * Inherits methods from [`Value`].
+/// * `is_embed_value()`
+/// * `embedded_byte_array()`
+/// * `embedded_string()`
+pub struct EmbedValue(pub Symbol);
+
+impl Deref for EmbedValue {
+    type Target = Symbol;
+    fn deref(&self) -> &Self::Target {
+        assert!(self.0.is_embed_value());
+        &self.0
+    }
+}
+
+#[derive(Clone)]
+pub enum EmbedValueDataContent {
+    String(String),
+    ByteArray(Vec<u8>),
 }
 
 /// `import.meta` value symbol.

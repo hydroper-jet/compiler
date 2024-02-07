@@ -162,6 +162,9 @@ impl VerifierVerifier {
             Expression::QualifiedIdentifier(id) => {
                 result = id.verify_as_exp(self, exp, followed_by_type_arguments)?;
             },
+            Expression::Embed(emb) => {
+                result = emb.verify(self, exp, context_type);
+            },
         }
 
         if result.is_none() {
@@ -200,7 +203,7 @@ impl VerifierVerifier {
         let v = TypeConversions(&self.host).implicit_conversion(&v, limit_type, false);
         if v.is_none() {
             self.add_verify_error(&exp.location(), DiagnosticKind::IncompatibleTypes, diagnostic_arguments![Symbol(got_type), Symbol(limit_type.clone())]);
-            self.ast_to_symbol.delete(exp);
+            self.ast_to_symbol.set(exp, None);
             return Ok(None);
         }
         let v = v.unwrap();
