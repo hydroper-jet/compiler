@@ -26,11 +26,13 @@
   * IdentifierName
     * [ ] Declarative
       * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+      * [ ] Set parent definition of variable
       * [ ] Variable shadowing in activations
     * [ ] Assignment
   * Object
     * [ ] Declarative
       * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+      * [ ] Set parent definition of variable
       * [ ] Variable shadowing in activations for a declarative field
     * [ ] Assignment
   * Array
@@ -42,7 +44,7 @@
       * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
     * [ ] Assignment
 * Typed destructuring
-  * [ ] `verify_typed_destructuring(&tdst, read_only, &properties_destination, visibility, Some(context_type)): Result<(), DeferVerificationError>`
+  * [ ] `verify_typed_destructuring(&tdst, read_only, &properties_destination, &parent_definition, visibility, Some(context_type)): Result<(), DeferVerificationError>`
 
 * Statements
   * Block
