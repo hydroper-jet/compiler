@@ -24,6 +24,9 @@
   * Block
     * [ ] Parse plain meta-data
 
+* Program
+  * [ ] Create and attach activation scope (contains function whose signature is `function(): void`)
+
 ## Duplicate errors
 
 * [ ] Variable bindings report duplicate error
