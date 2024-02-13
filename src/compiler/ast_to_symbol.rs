@@ -52,7 +52,7 @@ impl AstToSymbolAccessor<Expression> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location().compilation_unit()));
         if let Some(m1) = m1 {
-            m1.expressions.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
+            m1.expressions.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
         } else {
             None
         }
@@ -88,7 +88,7 @@ impl AstToSymbolAccessor<Directive> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location().compilation_unit()));
         if let Some(m1) = m1 {
-            m1.directives.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
+            m1.directives.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
         } else {
             None
         }
@@ -124,7 +124,7 @@ impl AstToSymbolAccessor<SimpleVariableDefinition> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.simple_variable_definitions.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
+            m1.simple_variable_definitions.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
         } else {
             None
         }
@@ -160,7 +160,7 @@ impl AstToSymbolAccessor<Block> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.blocks.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
+            m1.blocks.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
         } else {
             None
         }
@@ -196,7 +196,7 @@ impl AstToSymbolAccessor<Program> for AstToSymbol {
         let compilation_units = self.compilation_units.borrow();
         let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
         if let Some(m1) = m1 {
-            m1.programs.get(&AstAsKey(node.clone())).map(|v| v.unwrap())
+            m1.programs.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
         } else {
             None
         }

@@ -57,7 +57,7 @@ impl QualifiedIdentifier {
         }
     }
 
-    pub(crate) fn verify_as_exp(&self, verifier: &mut VerifierVerifier, exp: &Rc<Expression>, followed_by_type_arguments: bool) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub(crate) fn verify_as_exp(&self, verifier: &mut VerifierVerifier, context: &ExpressionVerifyContext) -> Result<Option<Symbol>, DeferVerificationError> {
         let qn = self.verify(verifier)?;
         if qn.is_none() {
             return Ok(None);
@@ -67,53 +67,48 @@ impl QualifiedIdentifier {
         if r.is_err() {
             match r.unwrap_err() {
                 PropertyResolutionError::AmbiguousReference { name } => {
-                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AmbiguousReference, diagnostic_arguments![String(name.clone())]);
-                    verifier.ast_to_symbol.set(exp, None);
+                    verifier.add_verify_error(&self.location, DiagnosticKind::AmbiguousReference, diagnostic_arguments![String(name.clone())]);
                     return Ok(None);
                 },
                 PropertyResolutionError::DeferVerification => {
                     return Err(DeferVerificationError);
                 },
                 PropertyResolutionError::VoidBase => {
-                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AccessingPropertyOfVoidBase, diagnostic_arguments![]);
-                    verifier.ast_to_symbol.set(exp, None);
+                    verifier.add_verify_error(&self.location, DiagnosticKind::AccessingPropertyOfVoidBase, diagnostic_arguments![]);
                     return Ok(None);
                 },
                 PropertyResolutionError::NullableBase { nullable_type } => {
-                    verifier.add_verify_error(&exp.location(), DiagnosticKind::AccessingPropertyOfNullableBase, diagnostic_arguments![Symbol(nullable_type)]);
-                    verifier.ast_to_symbol.set(exp, None);
+                    verifier.add_verify_error(&self.location, DiagnosticKind::AccessingPropertyOfNullableBase, diagnostic_arguments![Symbol(nullable_type)]);
                     return Ok(None);
                 },
             }
         }
         let r = r.unwrap();
         if r.is_none() {
-            verifier.ast_to_symbol.set(exp, None);
+            verifier.add_verify_error(&self.location, DiagnosticKind::UndefinedProperty, diagnostic_arguments![String(key.string_value().unwrap_or(key.number_value().unwrap().to_string()))]);
             return Ok(None);
         }
         let r = r.unwrap();
 
         if !r.property_is_visible(&verifier.scope, &verifier.host) {
-            verifier.add_verify_error(&exp.location(), DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(key.string_value().unwrap())]);
+            verifier.add_verify_error(&self.location, DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(key.string_value().unwrap())]);
         }
 
         if r.is_reference_value() && (r.is_static_reference_value() || r.is_instance_reference_value() || r.is_scope_reference_value() || r.is_package_reference_value()) {
             let p = r.property();
 
             // Require type arguments
-            if (p.is_origin_function() || p.is_origin_class_type() || p.is_origin_interface_type()) && p.type_parameters().is_some() && !followed_by_type_arguments {
-                verifier.add_verify_error(&exp.location(), DiagnosticKind::TypeParameterizedPropertyMustBeArgumented, diagnostic_arguments![]);
+            if (p.is_origin_function() || p.is_origin_class_type() || p.is_origin_interface_type()) && p.type_parameters().is_some() && !context.followed_by_type_arguments {
+                verifier.add_verify_error(&self.location, DiagnosticKind::TypeParameterizedPropertyMustBeArgumented, diagnostic_arguments![]);
             }
 
             // Compile-time constant
             if p.is_origin_variable_property() && p.read_only(&verifier.host) && p.constant_initializer().is_some() {
                 let r = p.constant_initializer().unwrap();
-                verifier.ast_to_symbol.set(exp, Some(r));
                 return Ok(Some(r));
             }
         }
 
-        verifier.ast_to_symbol.set(exp, Some(r.clone()));
         Ok(Some(r))
     }
 
@@ -121,7 +116,7 @@ impl QualifiedIdentifier {
         if self.attribute || self.qualifier.is_some() {
             None
         } else {
-            if let QualifiedIdentifierIdentifier::Id(id) = self.id {
+            if let QualifiedIdentifierIdentifier::Id(id) = &self.id {
                 Some(id.clone())
             } else {
                 None
@@ -133,7 +128,7 @@ impl QualifiedIdentifier {
         if self.attribute || self.qualifier.is_some() {
             None
         } else {
-            if let QualifiedIdentifierIdentifier::Id(id) = self.id {
+            if let QualifiedIdentifierIdentifier::Id(id) = &self.id {
                 if id.0 == "*" { None } else { Some(id.clone()) }
             } else {
                 None

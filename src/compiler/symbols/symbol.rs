@@ -274,14 +274,6 @@ impl Symbol {
         matches!(data.as_ref(), ValueKind::Constant(ConstantKind::Char(_)))
     }
 
-    pub fn is_char_index_constant(&self) -> bool {
-        let data = self.0.upgrade().unwrap();
-        let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
-            return false;
-        };
-        matches!(data.as_ref(), ValueKind::Constant(ConstantKind::CharIndex(_, _)))
-    }
-
     pub fn is_boolean_constant(&self) -> bool {
         let data = self.0.upgrade().unwrap();
         let SymbolKind::Value(_, Some(data)) = data.as_ref() else {
@@ -501,7 +493,7 @@ impl Symbol {
     pub fn is_final(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
-            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::IS_FINAL),
+            SymbolKind::Type(TypeKind::ClassType(data)) => data.flags.borrow().contains(ClassTypeFlags::IS_FINAL) || data.flags.borrow().contains(ClassTypeFlags::ALLOW_LITERAL),
             SymbolKind::Type(TypeKind::TypeAfterExplicitTypeSubstitution(data)) => data.origin.is_final(),
             SymbolKind::Function(data) => data.flags.borrow().contains(FunctionSymbolFlags::IS_FINAL),
             SymbolKind::FunctionAfterExplicitOrIndirectTypeSubstitution(data) => data.origin.is_final(),
@@ -672,6 +664,27 @@ impl Symbol {
         match symbol.as_ref() {
             SymbolKind::Function(data) => {
                 data.flags.borrow_mut().set(FunctionSymbolFlags::IS_CONSTRUCTOR, value);
+            },
+            _ => panic!(),
+        }
+    }
+
+    pub fn clone_constant_value(&self, host: &SymbolHost) -> Symbol {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(data_1, Some(data_2)) => {
+                match data_2.as_ref() {
+                    ValueKind::Constant(k) => match k {
+                        ConstantKind::Undefined => host.factory().create_undefined_constant(&data_1.static_type.borrow().clone()),
+                        ConstantKind::Null => host.factory().create_null_constant(&data_1.static_type.borrow().clone()),
+                        ConstantKind::Boolean(v) => host.factory().create_boolean_constant(*v, &data_1.static_type.borrow().clone()),
+                        ConstantKind::Number(v) => host.factory().create_number_constant(v.clone(), &data_1.static_type.borrow().clone()),
+                        ConstantKind::String(v) => host.factory().create_string_constant(v.clone(), &data_1.static_type.borrow().clone()),
+                        ConstantKind::Enum(v) => host.factory().create_enum_constant(v.clone(), &data_1.static_type.borrow().clone()),
+                        ConstantKind::Char(v) => host.factory().create_char_constant(*v, &data_1.static_type.borrow().clone()),
+                    },
+                    _ => panic!(),
+                }
             },
             _ => panic!(),
         }
@@ -1524,7 +1537,7 @@ impl Symbol {
                                 }
                                 r.unwrap()
                             },
-                            ReferenceValueKind::Tuple { .. } => true,
+                            ReferenceValueKind::Tuple { .. } => false,
                             ReferenceValueKind::Scope { property, .. } => property.read_only(host),
                             ReferenceValueKind::DynamicScope { .. } => false,
                             ReferenceValueKind::Package { property, .. } => property.read_only(host),
@@ -1978,19 +1991,6 @@ impl Symbol {
         }
     }
 
-    pub fn char_index_value(&self) -> (String, f64) {
-        let symbol = self.0.upgrade().unwrap();
-        match symbol.as_ref() {
-            SymbolKind::Value(_, Some(data)) => {
-                match data.as_ref() {
-                    ValueKind::Constant(ConstantKind::CharIndex(s, i)) => (s.clone(), i.clone()),
-                    _ => panic!(),
-                }
-            },
-            _ => panic!(),
-        }
-    }
-
     pub fn boolean_value(&self) -> bool {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -2317,8 +2317,6 @@ impl Symbol {
             Some(host.factory().create_string_constant(String::new(), self))
         } else if self == &host.char_type() {
             Some(host.factory().create_char_constant('\x00', self))
-        } else if self == &host.char_index_type() {
-            Some(host.factory().create_char_index_constant((String::new(), 0.0), self))
         } else if self.is_enum_type() && self.is_set_enumeration() {
             let v = AbstractRangeNumber::zero(&self.enumeration_representation_type().unwrap(), host);
             Some(host.factory().create_enum_constant(v, self))
@@ -2393,26 +2391,13 @@ impl Symbol {
     }
 
     pub fn is_integer_type_of_wider_range_than(&self, other: &Symbol, host: &SymbolHost) -> bool {
-        let byte_type = host.byte_type();
-        let short_type = host.short_type();
-        let int_type = host.int_type();
         let long_type = host.long_type();
-        let unsigned_byte_type = host.unsigned_byte_type();
-        let unsigned_short_type = host.unsigned_short_type();
-        let unsigned_int_type = host.unsigned_int_type();
-        let unsigned_long_type = host.unsigned_long_type();
         let big_int_type = host.big_int_type();
 
-        if self == &byte_type {
+        if self == &long_type {
             false
-        } else if self == &short_type || self == &unsigned_short_type {
-            [byte_type, unsigned_byte_type].contains(other)
-        } else if self == &int_type || self == &unsigned_int_type {
-            [byte_type, unsigned_byte_type, short_type, unsigned_short_type].contains(other)
-        } else if self == &long_type || self == &unsigned_long_type {
-            [byte_type, unsigned_byte_type, short_type, unsigned_short_type, int_type, unsigned_int_type].contains(other)
         } else if self == &big_int_type {
-            [byte_type, unsigned_byte_type, short_type, unsigned_short_type, int_type, unsigned_int_type, long_type, unsigned_long_type].contains(other)
+            [long_type].contains(other)
         } else {
             false
         }
@@ -2420,6 +2405,36 @@ impl Symbol {
 
     pub fn type_after_substitution_has_origin(&self, origin: &Symbol) -> bool {
         self.is_type_after_explicit_type_substitution() && &self.origin() == origin
+    }
+
+    /// If a type is `[T]`, returns `T`, either as an origin type parameter
+    /// or as a substitute type.
+    pub fn array_element_type(&self, host: &SymbolHost) -> Result<Option<Symbol>, DeferVerificationError> {
+        let array_type = host.array_type();
+        array_type.throw_if_unresolved()?;
+        if self == &array_type {
+            Ok(Some(array_type.type_parameters().unwrap().get(0).unwrap()))
+        } else if self.type_after_substitution_has_origin(&array_type) {
+            Ok(Some(self.substitute_types().get(0).unwrap()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// If a type is `Map.<K, V>`, returns (`K`, `V`), either as origin type parameters
+    /// or as substitute types.
+    pub fn map_key_value_types(&self, host: &SymbolHost) -> Result<Option<(Symbol, Symbol)>, DeferVerificationError> {
+        let map_type = host.map_type();
+        map_type.throw_if_unresolved()?;
+        if self == &map_type {
+            let params = map_type.type_parameters().unwrap();
+            Ok(Some((params.get(0).unwrap(), params.get(1).unwrap())))
+        } else if self.type_after_substitution_has_origin(&map_type) {
+            let sub = map_type.substitute_types();
+            Ok(Some((sub.get(0).unwrap(), sub.get(1).unwrap())))
+        } else {
+            Ok(None)
+        }
     }
 
     pub(crate) fn not_overriden_abstract_getter(&self, getter_from_base_class: &Symbol, subclass: &Symbol, host: &SymbolHost) -> bool {
@@ -2981,7 +2996,6 @@ pub(crate) enum ConstantKind {
     Null,
     String(String),
     Char(char),
-    CharIndex(String, f64),
     Boolean(bool),
     Number(AbstractRangeNumber),
     Enum(AbstractRangeNumber),
@@ -3794,7 +3808,7 @@ impl Deref for FilterOperatorScope {
 ///   * `set_local_variable_scope_count()`
 /// * `is_activation_scope()`
 /// * `function()`
-/// * `this()`
+/// * `this()` — An optional `ThisValue` symbol.
 /// * `set_this()`
 /// * `property_has_capture()` — Indicates whether an activation's property has been captured by a subsequent activation.
 ///   Properties range from the activation scope to the innermost scope of an activation.
@@ -4077,24 +4091,6 @@ impl Deref for CharConstant {
     type Target = Symbol;
     fn deref(&self) -> &Self::Target {
         assert!(self.0.is_char_constant());
-        &self.0
-    }
-}
-
-/// `CharIndex` constant value symbol.
-///
-/// # Supported methods
-///
-/// * Inherits methods from [`Value`].
-/// * `is_constant()`
-/// * `is_char_index_constant()`
-/// * `char_index_value()` — Returns (*string*, *index*).
-pub struct CharIndexConstant(pub Symbol);
-
-impl Deref for CharIndexConstant {
-    type Target = Symbol;
-    fn deref(&self) -> &Self::Target {
-        assert!(self.0.is_char_index_constant());
         &self.0
     }
 }

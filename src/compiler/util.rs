@@ -12,6 +12,10 @@ pub use shared_array::*;
 mod shared_map;
 pub use shared_map::*;
 
+pub use std::cell::{Cell, RefCell};
+pub use std::collections::{HashMap, HashSet};
+pub use std::rc::{Rc, Weak};
+
 pub fn default<T: Default>() -> T {
     T::default()
 }

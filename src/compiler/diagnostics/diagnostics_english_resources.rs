@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use lazy_static::lazy_static;
 use maplit::hashmap;
 use crate::ns::*;
@@ -60,6 +59,20 @@ lazy_static! {
         DiagnosticKind::EmbedSourceOrTypeNotSpecified.id() => "Embed source or type not specified".into(),
         DiagnosticKind::EmbedUnsupportedType.id() => "Embed expression unsupported data type: '{1}'".into(),
         DiagnosticKind::FailedLoadingEmbeddedFile.id() => "Failed loading embedded file: '{1}'".into(),
+        DiagnosticKind::FailedParsingNumericLiteral.id() => "Failed parsing numeric literal".into(),
+        DiagnosticKind::StringLiteralMustBeASingleCharacter.id() => "String literal must be a single character".into(),
+        DiagnosticKind::EnumerationHasNoMember.id() => "Enumeration '{1}' has no member '{2}'".into(),
+        DiagnosticKind::UnrecognizedMetadataSyntax.id() => "Unrecognized meta-data syntax".into(),
+        DiagnosticKind::FailedLoadingMetadataFile.id() => "Failed loading meta-data file at '{1}'".into(),
+        DiagnosticKind::IllegalThisReference.id() => "Illegal this reference".into(),
+        DiagnosticKind::CannotUseTypeInRest.id() => "Cannot use type in rest: '{1}'".into(),
+        DiagnosticKind::ArrayLiteralMustNotContainElision.id() => "Array literal must not contain elision".into(),
+        DiagnosticKind::ArrayLiteralMustNotContainRest.id() => "Array literal must not contain rest".into(),
+        DiagnosticKind::ArrayLiteralExceedingTupleElements.id() => "Array literal exceeding tuple elements: '{1}'".into(),
+        DiagnosticKind::InitializerUnsupportedType.id() => "Initializer unsupported type: '{1}'".into(),
+        DiagnosticKind::UndefinedProperty.id() => "Access of undefined property '{1}'".into(),
+        DiagnosticKind::IncompatibleFieldKey.id() => "Incompatible field key".into(),
+        DiagnosticKind::MissingPropertyInLiteral.id() => "Missing property in literal: '{1}'".into(),
         // DiagnosticKind::K.id() => "".into(),
     };
 }

@@ -1,6 +1,5 @@
 use crate::ns::*;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct SymbolHost {
@@ -11,6 +10,7 @@ pub struct SymbolHost {
     pub(crate) import_meta: Symbol,
     pub(crate) import_meta_env: Symbol,
     pub(crate) jetpm_output_directory: String,
+    pub(crate) jetpm_constants: SharedMap<String, String>,
 
     pub(crate) env_cache: RefCell<Option<Rc<HashMap<String, String>>>>,
 
@@ -33,17 +33,9 @@ pub struct SymbolHost {
     pub(crate) boolean_type: RefCell<Option<Symbol>>,
     pub(crate) string_type: RefCell<Option<Symbol>>,
     pub(crate) char_type: RefCell<Option<Symbol>>,
-    pub(crate) char_index_type: RefCell<Option<Symbol>>,
     pub(crate) number_type: RefCell<Option<Symbol>>,
     pub(crate) single_type: RefCell<Option<Symbol>>,
-    pub(crate) byte_type: RefCell<Option<Symbol>>,
-    pub(crate) short_type: RefCell<Option<Symbol>>,
-    pub(crate) int_type: RefCell<Option<Symbol>>,
     pub(crate) long_type: RefCell<Option<Symbol>>,
-    pub(crate) unsigned_byte_type: RefCell<Option<Symbol>>,
-    pub(crate) unsigned_short_type: RefCell<Option<Symbol>>,
-    pub(crate) unsigned_int_type: RefCell<Option<Symbol>>,
-    pub(crate) unsigned_long_type: RefCell<Option<Symbol>>,
     pub(crate) big_int_type: RefCell<Option<Symbol>>,
     pub(crate) function_type: RefCell<Option<Symbol>>,
     pub(crate) xml_type: RefCell<Option<Symbol>>,
@@ -54,6 +46,8 @@ pub struct SymbolHost {
     pub(crate) namespace_type: RefCell<Option<Symbol>>,
     pub(crate) qname_type: RefCell<Option<Symbol>>,
     pub(crate) byte_array_type: RefCell<Option<Symbol>>,
+    pub(crate) reg_exp_type: RefCell<Option<Symbol>>,
+    pub(crate) iterator_type: RefCell<Option<Symbol>>,
 
     pub(crate) infinity_constant: RefCell<Option<Symbol>>,
     pub(crate) nan_constant: RefCell<Option<Symbol>>,
@@ -93,6 +87,7 @@ impl SymbolHost {
             import_meta,
             import_meta_env,
             jetpm_output_directory: jetpm_output_directory.to_owned(),
+            jetpm_constants: SharedMap::new(),
 
             env_cache: RefCell::new(None),
 
@@ -112,17 +107,9 @@ impl SymbolHost {
             boolean_type: RefCell::new(None),
             string_type: RefCell::new(None),
             char_type: RefCell::new(None),
-            char_index_type: RefCell::new(None),
             number_type: RefCell::new(None),
             single_type: RefCell::new(None),
-            byte_type: RefCell::new(None),
-            short_type: RefCell::new(None),
-            int_type: RefCell::new(None),
             long_type: RefCell::new(None),
-            unsigned_byte_type: RefCell::new(None),
-            unsigned_short_type: RefCell::new(None),
-            unsigned_int_type: RefCell::new(None),
-            unsigned_long_type: RefCell::new(None),
             big_int_type: RefCell::new(None),
             function_type: RefCell::new(None),
             xml_type: RefCell::new(None),
@@ -133,6 +120,8 @@ impl SymbolHost {
             namespace_type: RefCell::new(None),
             qname_type: RefCell::new(None),
             byte_array_type: RefCell::new(None),
+            reg_exp_type: RefCell::new(None),
+            iterator_type: RefCell::new(None),
 
             infinity_constant: RefCell::new(None),
             nan_constant: RefCell::new(None),
@@ -171,6 +160,11 @@ impl SymbolHost {
     /// The JetPM output directory path.
     pub fn jetpm_output_directory(&self) -> String {
         self.jetpm_output_directory.clone()
+    }
+
+    /// The JetPM constants.
+    pub fn jetpm_constants(&self) -> SharedMap<String, String> {
+        self.jetpm_constants.clone()
     }
 
     pub fn top_level_package(&self) -> Symbol {
@@ -239,19 +233,6 @@ impl SymbolHost {
         }
     }
 
-    /// The `jet.lang.CharIndex` class, possibly `Unresolved`.
-    pub fn char_index_type(&self) -> Symbol {
-        if let Some(r) = self.char_index_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("CharIndex") {
-            self.char_index_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
     /// The `jet.lang.Number` class, possibly `Unresolved`.
     pub fn number_type(&self) -> Symbol {
         if let Some(r) = self.number_type.borrow().as_ref() {
@@ -278,45 +259,6 @@ impl SymbolHost {
         }
     }
 
-    /// The `jet.lang.Byte` class, possibly `Unresolved`.
-    pub fn byte_type(&self) -> Symbol {
-        if let Some(r) = self.byte_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("Byte") {
-            self.byte_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.Short` class, possibly `Unresolved`.
-    pub fn short_type(&self) -> Symbol {
-        if let Some(r) = self.short_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("Short") {
-            self.short_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.Int` class, possibly `Unresolved`.
-    pub fn int_type(&self) -> Symbol {
-        if let Some(r) = self.int_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("Int") {
-            self.int_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
     /// The `jet.lang.Long` class, possibly `Unresolved`.
     pub fn long_type(&self) -> Symbol {
         if let Some(r) = self.long_type.borrow().as_ref() {
@@ -324,58 +266,6 @@ impl SymbolHost {
         }
         if let Some(r) = self.lookup_at_jet_lang("Long") {
             self.long_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.UnsignedByte` class, possibly `Unresolved`.
-    pub fn unsigned_byte_type(&self) -> Symbol {
-        if let Some(r) = self.unsigned_byte_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("UnsignedByte") {
-            self.unsigned_byte_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.UnsignedShort` class, possibly `Unresolved`.
-    pub fn unsigned_short_type(&self) -> Symbol {
-        if let Some(r) = self.unsigned_short_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("UnsignedShort") {
-            self.unsigned_short_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.UnsignedInt` class, possibly `Unresolved`.
-    pub fn unsigned_int_type(&self) -> Symbol {
-        if let Some(r) = self.unsigned_int_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("UnsignedInt") {
-            self.unsigned_int_type.replace(Some(r.clone()));
-            r
-        } else {
-            self.unresolved()
-        }
-    }
-
-    /// The `jet.lang.UnsignedLong` class, possibly `Unresolved`.
-    pub fn unsigned_long_type(&self) -> Symbol {
-        if let Some(r) = self.unsigned_long_type.borrow().as_ref() {
-            return r.clone();
-        }
-        if let Some(r) = self.lookup_at_jet_lang("UnsignedLong") {
-            self.unsigned_long_type.replace(Some(r.clone()));
             r
         } else {
             self.unresolved()
@@ -460,6 +350,16 @@ impl SymbolHost {
         }
     }
 
+    /// The `jet.lang.Array.<*>` class, possibly `Unresolved`.
+    pub fn array_type_of_any(&self) -> Symbol {
+        let t = self.array_type();
+        if t.is_unresolved() {
+            t
+        } else {
+            self.factory().create_type_after_explicit_type_substitution(&t, &shared_array![self.any_type()])
+        }
+    }
+
     /// The `jet.lang.Map` class, possibly `Unresolved`.
     pub fn map_type(&self) -> Symbol {
         if let Some(r) = self.map_type.borrow().as_ref() {
@@ -470,6 +370,16 @@ impl SymbolHost {
             r
         } else {
             self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Map.<*, *>` class, possibly `Unresolved`.
+    pub fn map_type_of_any_any(&self) -> Symbol {
+        let t = self.map_type();
+        if t.is_unresolved() {
+            t
+        } else {
+            self.factory().create_type_after_explicit_type_substitution(&t, &shared_array![self.any_type(), self.any_type()])
         }
     }
 
@@ -512,6 +422,32 @@ impl SymbolHost {
         }
     }
 
+    /// The `jet.lang.RegExp` class, possibly `Unresolved`.
+    pub fn reg_exp_type(&self) -> Symbol {
+        if let Some(r) = self.reg_exp_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("RegExp") {
+            self.reg_exp_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
+    /// The `jet.lang.Iterator` class, possibly `Unresolved`.
+    pub fn iterator_type(&self) -> Symbol {
+        if let Some(r) = self.iterator_type.borrow().as_ref() {
+            return r.clone();
+        }
+        if let Some(r) = self.lookup_at_jet_lang("Iterator") {
+            self.iterator_type.replace(Some(r.clone()));
+            r
+        } else {
+            self.unresolved()
+        }
+    }
+
     /// The `jet.lang.Infinity` constant, possibly `Unresolved`.
     pub fn infinity_constant(&self) -> Symbol {
         if let Some(r) = self.infinity_constant.borrow().as_ref() {
@@ -545,29 +481,15 @@ impl SymbolHost {
     pub fn is_numeric_type(&self, symbol: &Symbol) -> bool {
         [
             self.number_type(),
-            self.int_type(),
-            self.unsigned_int_type(),
             self.single_type(),
-            self.byte_type(),
-            self.unsigned_byte_type(),
-            self.short_type(),
-            self.unsigned_short_type(),
             self.long_type(),
-            self.unsigned_long_type(),
             self.big_int_type(),
         ].contains(symbol)
     }
 
     pub fn is_integer_type(&self, symbol: &Symbol) -> bool {
         [
-            self.int_type(),
-            self.unsigned_int_type(),
-            self.byte_type(),
-            self.unsigned_byte_type(),
-            self.short_type(),
-            self.unsigned_short_type(),
             self.long_type(),
-            self.unsigned_long_type(),
             self.big_int_type(),
         ].contains(symbol)
     }

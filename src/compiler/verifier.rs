@@ -77,13 +77,15 @@ impl Verifier {
         }
         self.verifier.reset_state();
 
-        to_do_here();
+        todo_here();
     }
 
+    /// Verifies an expression. Returns `None` if verification failed.
+    ///
     /// # Panics
     ///
     /// Panics if the verifier is already invalidated before verifying.
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, mode: VerifyMode) -> Option<Symbol> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context: &ExpressionVerifyContext) -> Option<Symbol> {
         if self.verifier.invalidated {
             panic!("Verifier already invalidated.");
         }
@@ -126,12 +128,12 @@ impl VerifierVerifier {
         self.deferred_directives.clear();
     }
 
-    pub fn add_syntax_error(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
+    pub fn add_syntax_error(&mut self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
         location.compilation_unit().add_diagnostic(Diagnostic::new_syntax_error(location, kind, arguments));
         self.invalidated = true;
     }
 
-    pub fn add_verify_error(&self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
+    pub fn add_verify_error(&mut self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {
         location.compilation_unit().add_diagnostic(Diagnostic::new_verify_error(location, kind, arguments));
         self.invalidated = true;
     }
@@ -152,27 +154,69 @@ impl VerifierVerifier {
         self.scope = self.scope.parent_scope().unwrap();
     }
 
-    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context_type: Option<Symbol>, followed_by_type_arguments: bool, mode: VerifyMode) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub fn verify_expression(&mut self, exp: &Rc<Expression>, context: &ExpressionVerifyContext) -> Result<Option<Symbol>, DeferVerificationError> {
         let pre_result = self.ast_to_symbol.get(exp);
         if let Some(pre_result) = pre_result {
             return Ok(Some(pre_result));
         }
-        let mut result: Option<Symbol>;
+        let result: Option<Symbol>;
         match exp.as_ref() {
             Expression::QualifiedIdentifier(id) => {
-                result = id.verify_as_exp(self, exp, followed_by_type_arguments)?;
+                result = id.verify_as_exp(self, &context)?;
             },
             Expression::Embed(emb) => {
-                result = emb.verify(self, exp, context_type)?;
+                result = emb.verify(self, &context)?;
+            },
+            Expression::Paren(paren_exp) => {
+                result = self.verify_expression(&paren_exp.expression, &context)?;
+            },
+            Expression::NullLiteral(nl) => {
+                result = nl.verify(self, &context)?;
+            },
+            Expression::BooleanLiteral(bl) => {
+                result = Some(self.host.factory().create_boolean_constant(bl.value, &self.host.boolean_type()));
+            },
+            Expression::NumericLiteral(nl) => {
+                result = nl.verify(self, &context)?;
+            },
+            Expression::StringLiteral(sl) => {
+                result = sl.verify(self, &context)?;
+            },
+            Expression::ThisLiteral(tl) => {
+                result = tl.verify(self)?;
+            },
+            Expression::RegExpLiteral(rl) => {
+                result = rl.verify(self)?;
+            },
+            Expression::Xml(xml) => {
+                xml.element.verify(self)?;
+                result = Some(self.host.factory().create_value(&self.host.xml_type()));
+            },
+            Expression::XmlMarkup(xml) => {
+                result = Some(self.host.factory().create_value(&self.host.xml_type()));
+            },
+            Expression::XmlList(xml) => {
+                for content in &xml.content {
+                    content.verify(self)?;
+                }
+                result = Some(self.host.factory().create_value(&self.host.xml_list_type()));
+            },
+            Expression::ArrayLiteral(al) => {
+                result = al.verify(self, context)?;
+            },
+            Expression::ObjectInitializer(oi) => {
+                result = oi.verify(self, context)?;
             },
         }
+
+        self.ast_to_symbol.set(exp, result.clone());
 
         if result.is_none() {
             return Ok(result);
         }
         let result = result.unwrap();
 
-        match mode {
+        match context.mode {
             VerifyMode::Read => {
                 if result.write_only(&self.host) {
                     self.add_verify_error(&exp.location(), DiagnosticKind::ReferenceIsWriteOnly, diagnostic_arguments![]);
@@ -194,7 +238,7 @@ impl VerifierVerifier {
     }
 
     pub fn verify_type_expression(&mut self, exp: &Rc<Expression>) -> Result<Option<Symbol>, DeferVerificationError> {
-        let v = self.verify_expression(exp, None, false, VerifyMode::Read)?;
+        let v = self.verify_expression(exp, &ExpressionVerifyContext { ..default() })?;
         if v.is_none() {
             return Ok(None);
         }
@@ -206,12 +250,15 @@ impl VerifierVerifier {
             return Ok(None);
         }
         let v = v.unwrap();
-        self.ast_to_symbol.set(exp, Some(v));
+        self.ast_to_symbol.set(exp, Some(v.clone()));
         Ok(Some(v))
     }
 
     pub fn limit_expression_type(&mut self, exp: &Rc<Expression>, limit_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
-        let v = self.verify_expression(exp, Some(limit_type.clone()), false, VerifyMode::Read)?;
+        let v = self.verify_expression(exp, &ExpressionVerifyContext {
+            context_type: Some(limit_type.clone()),
+            ..default()
+        })?;
         if v.is_none() {
             return Ok(None);
         }
@@ -224,7 +271,7 @@ impl VerifierVerifier {
             return Ok(None);
         }
         let v = v.unwrap();
-        self.ast_to_symbol.set(exp, Some(v));
+        self.ast_to_symbol.set(exp, Some(v.clone()));
         Ok(Some(v))
     }
 }
@@ -234,4 +281,23 @@ pub enum VerifyMode {
     Read,
     Write,
     Delete,
+}
+
+#[derive(Clone)]
+pub struct ExpressionVerifyContext {
+    pub context_type: Option<Symbol>,
+    pub followed_by_type_arguments: bool,
+    pub mode: VerifyMode,
+    pub preceded_by_negative: bool,
+}
+
+impl Default for ExpressionVerifyContext {
+    fn default() -> Self {
+        Self {
+            context_type: None,
+            followed_by_type_arguments: false,
+            mode: VerifyMode::Read,
+            preceded_by_negative: false,
+        }
+    }
 }

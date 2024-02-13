@@ -7,6 +7,7 @@
       "name": [],
       "block": {
         "location": {},
+        "metadata": null,
         "directives": [
           {
             "VariableDefinition": {
@@ -83,6 +84,7 @@
               "location": {},
               "jetdoc": null,
               "attributes": [],
+              "is_set": false,
               "name": [
                 "E1",
                 {}
@@ -90,6 +92,7 @@
               "as_clause": null,
               "block": {
                 "location": {},
+                "metadata": null,
                 "directives": []
               }
             }
@@ -100,24 +103,10 @@
               "jetdoc": null,
               "attributes": [
                 {
-                  "Metadata": {
-                    "QualifiedIdentifier": {
-                      "location": {},
-                      "attribute": false,
-                      "qualifier": null,
-                      "id": {
-                        "Id": [
-                          "Set",
-                          {}
-                        ]
-                      }
-                    }
-                  }
-                },
-                {
                   "Public": {}
                 }
               ],
+              "is_set": true,
               "name": [
                 "E2",
                 {}
@@ -125,6 +114,7 @@
               "as_clause": null,
               "block": {
                 "location": {},
+                "metadata": null,
                 "directives": []
               }
             }
@@ -138,6 +128,7 @@
                   "Abstract": {}
                 }
               ],
+              "allow_literal": false,
               "name": [
                 "C1",
                 {}
@@ -147,6 +138,7 @@
               "implements_clause": null,
               "block": {
                 "location": {},
+                "metadata": null,
                 "directives": []
               }
             }
@@ -156,6 +148,7 @@
               "location": {},
               "jetdoc": null,
               "attributes": [],
+              "allow_literal": false,
               "name": [
                 "C2",
                 {}
@@ -165,6 +158,7 @@
               "implements_clause": null,
               "block": {
                 "location": {},
+                "metadata": null,
                 "directives": []
               }
             }
@@ -179,6 +173,7 @@
         "location": {},
         "jetdoc": null,
         "attributes": [],
+        "allow_literal": false,
         "name": [
           "CTP",
           {}
@@ -200,6 +195,7 @@
         "implements_clause": null,
         "block": {
           "location": {},
+          "metadata": null,
           "directives": [
             {
               "FunctionDefinition": {
@@ -236,6 +232,7 @@
                   "body": {
                     "Block": {
                       "location": {},
+                      "metadata": null,
                       "directives": []
                     }
                   }
@@ -244,6 +241,89 @@
             }
           ]
         }
+      }
+    },
+    {
+      "Block": {
+        "location": {},
+        "metadata": [
+          {
+            "Metadata": [
+              {
+                "name": "N1",
+                "entries": [
+                  {
+                    "key": "x",
+                    "value": {
+                      "String": "y"
+                    }
+                  },
+                  {
+                    "key": "x",
+                    "value": {
+                      "Number": 4.0
+                    }
+                  },
+                  {
+                    "key": "x",
+                    "value": {
+                      "Number": -4.0
+                    }
+                  },
+                  {
+                    "key": null,
+                    "value": {
+                      "File": {
+                        "filename": "asset.txt",
+                        "data": [
+                          65
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "key": null,
+                    "value": {
+                      "File": {
+                        "filename": "generated.txt",
+                        "data": [
+                          48
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {}
+            ]
+          }
+        ],
+        "directives": [
+          {
+            "ExpressionStatement": {
+              "location": {},
+              "expression": {
+                "Call": {
+                  "location": {},
+                  "base": {
+                    "QualifiedIdentifier": {
+                      "location": {},
+                      "attribute": false,
+                      "qualifier": null,
+                      "id": {
+                        "Id": [
+                          "run",
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "arguments": []
+                }
+              }
+            }
+          }
+        ]
       }
     }
   ]

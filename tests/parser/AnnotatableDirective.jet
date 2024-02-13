@@ -13,3 +13,7 @@ package {
 class CTP extends C1 {
     override final function f(): void {}
 }
+
+[N1(x = "y", x = 4, x = -4, File("asset.txt"), File(output + "auto/generated.txt"))] {
+    run()
+}

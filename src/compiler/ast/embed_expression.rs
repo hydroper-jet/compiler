@@ -12,7 +12,7 @@ pub struct EmbedExpression {
 }
 
 impl EmbedExpression {
-    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier, exp: &Rc<Expression>, context_type: Option<Symbol>) -> Result<Option<Symbol>, DeferVerificationError> {
+    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier, context: &ExpressionVerifyContext) -> Result<Option<Symbol>, DeferVerificationError> {
         let EmbedExpression { description, .. } = self;
 
         let mut source: Option<String> = None;
@@ -40,11 +40,10 @@ impl EmbedExpression {
             }
         }
 
-        result_type = result_type.or(context_type).map(|t| t.non_null_type());
+        result_type = result_type.or(context.context_type.clone()).map(|t| t.non_null_type());
 
         if source.is_none() || result_type.is_none() {
             verifier.add_verify_error(&self.location, DiagnosticKind::EmbedSourceOrTypeNotSpecified, diagnostic_arguments![]);
-            verifier.ast_to_symbol.set(exp, None);
             return Ok(None);
         }
 
@@ -55,28 +54,23 @@ impl EmbedExpression {
         if result_type == verifier.host.string_type() {
             if let Ok(data) = std::fs::read_to_string(&source) {
                 let v = verifier.host.factory().create_embed_value(EmbedValueDataContent::String(data));
-                verifier.ast_to_symbol.set(exp, Some(v.clone()));
                 Ok(Some(v))
             } else {
                 verifier.add_verify_error(&self.location, DiagnosticKind::FailedLoadingEmbeddedFile, diagnostic_arguments![String(source)]);
-                verifier.ast_to_symbol.set(exp, None);
                 Ok(None)
             }
         // ByteArray
         } else if result_type == verifier.host.byte_array_type() {
             if let Ok(data) = std::fs::read(&source) {
                 let v = verifier.host.factory().create_embed_value(EmbedValueDataContent::ByteArray(data));
-                verifier.ast_to_symbol.set(exp, Some(v.clone()));
                 Ok(Some(v))
             } else {
                 verifier.add_verify_error(&self.location, DiagnosticKind::FailedLoadingEmbeddedFile, diagnostic_arguments![String(source)]);
-                verifier.ast_to_symbol.set(exp, None);
                 Ok(None)
             }
         // Unsupported data type
         } else {
             verifier.add_verify_error(&self.location, DiagnosticKind::EmbedUnsupportedType, diagnostic_arguments![Symbol(result_type)]);
-            verifier.ast_to_symbol.set(exp, None);
             Ok(None)
         }
     }
@@ -86,10 +80,10 @@ impl EmbedExpression {
         if value.is_none() {
             return None;
         }
-        let value = value.unwrap();
+        let value = value.as_ref().unwrap();
         match value.as_ref() {
             Expression::StringLiteral(StringLiteral { value, .. }) => {
-                Some(FlexPath::new_native(value).to_string_with_flex_separator())
+                Some(FlexPath::new_native(&self.location.compilation_unit().file_path().unwrap_or(String::new())).resolve("..").resolve(value).to_string_with_flex_separator())
             },
             Expression::Binary(BinaryExpression { left, operator, right, .. }) => {
                 if *operator != Operator::Add {

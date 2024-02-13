@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Attribute {
-    Metadata(Rc<Expression>),
+    Metadata((Rc<PlainMetadata>, Location)),
     Public(Location),
     Private(Location),
     Protected(Location),
@@ -20,7 +20,7 @@ pub enum Attribute {
 impl Attribute {
     pub fn location(&self) -> Location {
         match self {
-            Self::Metadata(a) => a.location(),
+            Self::Metadata(m) => m.1.clone(),
             Self::Public(a) => a.clone(),
             Self::Private(a) => a.clone(),
             Self::Protected(a) => a.clone(),
@@ -63,7 +63,18 @@ impl Attribute {
         false
     }
 
-    pub fn find_metadata(list: &Vec<Attribute>) -> Vec<Rc<Expression>> {
+    pub fn remove_metadata(list: &mut Vec<Attribute>, metadata: &Rc<PlainMetadata>) {
+        for i in 0..list.len() {
+            if let Attribute::Metadata((metadata_1, _)) = &list[i] {
+                if Rc::ptr_eq(&metadata_1, metadata) {
+                    list.remove(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    pub fn find_metadata(list: &Vec<Attribute>) -> Vec<(Rc<PlainMetadata>, Location)> {
         let mut r = vec![];
         for a in list {
             match &a {

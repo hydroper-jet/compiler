@@ -9,10 +9,20 @@
     * [ ] Result into `enum` constant wherever possible (if the initializer is constant)
   * Unary expressions
     * [ ] Result into constant every wherever possible
+    * [ ] Negative operator passes `context.preceded_by_negative = true`
+    * [ ] Delete operator verifies base with `context.mode = delete`
   * Binary expressions
     * [ ] Result into constant every wherever possible
+  * Assignment expressions
+    * [ ] Non destructuring assignment verifies left-hand side with `context.mode = write`
   * Member expressions
     * [ ] Fully qualified names shadow any other variables
+  * Expressions with type arguments
+    * [ ] Base's context is passed `followed_by_type_arguments = true`
+
+* Statements
+  * Block
+    * [ ] Parse plain meta-data
 
 ## Duplicate errors
 

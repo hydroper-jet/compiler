@@ -55,6 +55,20 @@ pub enum DiagnosticKind {
     EmbedSourceOrTypeNotSpecified = 1075,
     EmbedUnsupportedType = 1076,
     FailedLoadingEmbeddedFile = 1077,
+    FailedParsingNumericLiteral = 1078,
+    StringLiteralMustBeASingleCharacter = 1079,
+    EnumerationHasNoMember = 1080,
+    UnrecognizedMetadataSyntax = 1081,
+    FailedLoadingMetadataFile = 1082,
+    IllegalThisReference = 1083,
+    CannotUseTypeInRest = 1084,
+    ArrayLiteralMustNotContainElision = 1085,
+    ArrayLiteralMustNotContainRest = 1086,
+    ArrayLiteralExceedingTupleElements = 1087,
+    InitializerUnsupportedType = 1088,
+    UndefinedProperty = 1089,
+    IncompatibleFieldKey = 1090,
+    MissingPropertyInLiteral = 1091,
 }
 
 impl DiagnosticKind {

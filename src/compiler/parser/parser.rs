@@ -10,17 +10,19 @@ pub struct Parser<'input> {
     token: (Token, Location),
     locations: Vec<Location>,
     activations: Vec<ParsingActivation>,
+    host: Rc<SymbolHost>,
 }
 
 impl<'input> Parser<'input> {
     /// Constructs a parser.
-    pub fn new(compilation_unit: &'input Rc<CompilationUnit>) -> Self {
+    pub fn new(compilation_unit: &'input Rc<CompilationUnit>, host: &Rc<SymbolHost>) -> Self {
         Self {
             tokenizer: Tokenizer::new(compilation_unit),
             previous_token: (Token::Eof, Location::with_offset(&compilation_unit, 0)),
             token: (Token::Eof, Location::with_offset(&compilation_unit, 0)),
             locations: vec![],
             activations: vec![],
+            host: host.clone(),
         }
     }
 
@@ -909,16 +911,9 @@ impl<'input> Parser<'input> {
         }
         self.expect(Token::RightBrace)?;
 
-        let type_annotation: Option<Rc<Expression>> = if self.consume(Token::Colon)? {
-            Some(self.parse_type_expression()?)
-        } else {
-            None
-        };
-
         Ok(Rc::new(Expression::ObjectInitializer(ObjectInitializer {
             location: self.pop_location(),
             fields,
-            type_annotation,
         })))
     }
 
@@ -1256,15 +1251,9 @@ impl<'input> Parser<'input> {
             }
         }
         self.expect(Token::RightBracket)?;
-        let type_annotation: Option<Rc<Expression>> = if self.consume(Token::Colon)? {
-            Some(self.parse_type_expression()?)
-        } else {
-            None
-        };
         Ok(Rc::new(Expression::ArrayLiteral(ArrayLiteral {
             location: self.pop_location(),
             elements,
-            type_annotation,
         })))
     }
 
@@ -2647,27 +2636,45 @@ impl<'input> Parser<'input> {
                 allow_in: true, min_precedence: OperatorPrecedence::List, ..default()
             })?;
             if self.peek_annotatable_directive_identifier_name() {
-                if let Some(metadata) = exp.to_metadata() {
-                    let mut context = AnnotatableContext {
-                        start_location: self.pop_location(),
-                        jetdoc,
-                        attributes: metadata,
-                        context: context.clone(),
-                        directive_context_keyword: None,
-                    };
-                    self.parse_attribute_identifier_names(&mut context)?;
-                    return self.parse_annotatable_directive(context);
+                match exp.to_metadata(self) {
+                    Ok(Some(metadata)) => {
+                        let mut context = AnnotatableContext {
+                            start_location: self.pop_location(),
+                            jetdoc,
+                            attributes: metadata,
+                            context: context.clone(),
+                            directive_context_keyword: None,
+                        };
+                        self.parse_attribute_identifier_names(&mut context)?;
+                        return self.parse_annotatable_directive(context);
+                    },
+                    Ok(None) => {},
+                    Err(MetadataRefineError1(MetadataRefineError::Syntax, loc)) => {
+                        self.add_syntax_error(&loc, DiagnosticKind::UnrecognizedMetadataSyntax, diagnostic_arguments![]);
+                    },
+                    Err(MetadataRefineError1(MetadataRefineError::FailedLoadingFile { path }, loc)) => {
+                        self.add_syntax_error(&loc, DiagnosticKind::FailedLoadingMetadataFile, diagnostic_arguments![String(path.clone())]);
+                    },
                 }
             }
             // Block statement with meta-data
             if self.peek(Token::LeftBrace) {
-                if let Some(metadata) = exp.to_metadata() {
-                    let context = context.override_control_context(true, ParsingControlContext {
-                        breakable: true,
-                        iteration: false,
-                    });
-                    let block = self.parse_block_with_metadata(context, Some(metadata))?;
-                    return Ok((Rc::new(Directive::Block(block)), true));
+                match exp.to_metadata(self) {
+                    Ok(Some(metadata)) => {
+                        let context = context.override_control_context(true, ParsingControlContext {
+                            breakable: true,
+                            iteration: false,
+                        });
+                        let block = self.parse_block_with_metadata(context, Some(metadata))?;
+                        return Ok((Rc::new(Directive::Block(block)), true));
+                    },
+                    Ok(None) => {},
+                    Err(MetadataRefineError1(MetadataRefineError::Syntax, loc)) => {
+                        self.add_syntax_error(&loc, DiagnosticKind::UnrecognizedMetadataSyntax, diagnostic_arguments![]);
+                    },
+                    Err(MetadataRefineError1(MetadataRefineError::FailedLoadingFile { path }, loc)) => {
+                        self.add_syntax_error(&loc, DiagnosticKind::FailedLoadingMetadataFile, diagnostic_arguments![String(path.clone())]);
+                    },
                 }
             }
             let semicolon = self.parse_semicolon()?;
@@ -2725,6 +2732,152 @@ impl<'input> Parser<'input> {
         } else {
             self.add_syntax_error(&self.token_location(), DiagnosticKind::ExpectedDirectiveKeyword, diagnostic_arguments![Token(self.token.0.clone())]);
             Err(ParsingFailure)
+        }
+    }
+
+    pub(crate) fn refine_metadata(&self, exp: &Rc<Expression>) -> Result<(Rc<PlainMetadata>, Location), MetadataRefineError> {
+        if let Expression::Call(CallExpression { base, arguments, .. }) = exp.as_ref() {
+            let Ok(name) = self.refine_metadata_name(base) else {
+                return Err(MetadataRefineError::Syntax);
+            };
+            Ok((Rc::new(PlainMetadata {
+                name,
+                entries: self.refine_metadata_entries(arguments)?,
+            }), exp.location()))
+        } else {
+            if let Ok(name) = self.refine_metadata_name(exp) {
+                Ok((Rc::new(PlainMetadata {
+                    name,
+                    entries: vec![],
+                }), exp.location()))
+            } else {
+                Err(MetadataRefineError::Syntax)
+            }
+        }
+    }
+
+    fn refine_metadata_name(&self, exp: &Rc<Expression>) -> Result<String, MetadataRefineError> {
+        if let Expression::QualifiedIdentifier(id) = exp.as_ref() {
+            if id.attribute {
+                return Err(MetadataRefineError::Syntax);
+            }
+            let qual = id.qualifier.as_ref().and_then(|q| q.to_identifier_name().map(|n| n.0));
+            if id.qualifier.is_some() && qual.is_none() {
+                return Err(MetadataRefineError::Syntax);
+            }
+            if let QualifiedIdentifierIdentifier::Id((s, _)) = &id.id {
+                if s == "*" { Err(MetadataRefineError::Syntax) } else { Ok(if let Some(q) = qual { format!("{q}::{s}") } else { s.to_string() }) }
+            } else {
+                Err(MetadataRefineError::Syntax)
+            }
+        } else {
+            Err(MetadataRefineError::Syntax)
+        }
+    }
+
+    fn refine_metadata_entries(&self, list: &Vec<Rc<Expression>>) -> Result<Vec<Rc<PlainMetadataEntry>>, MetadataRefineError> {
+        let mut r = Vec::<Rc<PlainMetadataEntry>>::new();
+        for entry in list {
+            r.push(self.refine_metadata_entry(&entry)?);
+        }
+        Ok(r)
+    }
+
+    fn refine_metadata_entry(&self, exp: &Rc<Expression>) -> Result<Rc<PlainMetadataEntry>, MetadataRefineError> {
+        match exp.as_ref() {
+            Expression::Assignment(AssignmentExpression { compound, left, right, .. }) => {
+                if compound.is_some() {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                let key = self.refine_metadata_name(left)?;
+                if matches!(right.as_ref(), Expression::QualifiedIdentifier(_)) {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                let value = self.refine_metadata_value(right)?;
+                Ok(Rc::new(PlainMetadataEntry {
+                    key: Some(key),
+                    value: Rc::new(value),
+                }))
+            },
+            _ => {
+                let value = self.refine_metadata_value(exp)?;
+                Ok(Rc::new(PlainMetadataEntry {
+                    key: None,
+                    value: Rc::new(value),
+                }))
+            },
+        }
+    }
+
+    fn refine_metadata_value(&self, exp: &Rc<Expression>) -> Result<PlainMetadataValue, MetadataRefineError> {
+        match exp.as_ref() {
+            Expression::StringLiteral(StringLiteral { value, .. }) => Ok(PlainMetadataValue::String(value.clone())),
+            Expression::BooleanLiteral(BooleanLiteral { value, .. }) => Ok(PlainMetadataValue::Boolean(*value)),
+            Expression::NumericLiteral(nl) => Ok(PlainMetadataValue::Number(nl.parse_double(false).map_err(|_| MetadataRefineError::Syntax)?)),
+            Expression::Unary(unary) => {
+                if unary.operator != Operator::Negative {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                let Expression::NumericLiteral(nl) = unary.expression.as_ref() else {
+                    return Err(MetadataRefineError::Syntax);
+                };
+                Ok(PlainMetadataValue::Number(nl.parse_double(true).map_err(|_| MetadataRefineError::Syntax)?))
+            },
+            Expression::Call(CallExpression { base, arguments, .. }) => {
+                let name = base.to_identifier_name();
+                if name.is_none() {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                match name.unwrap().0.as_ref() {
+                    "File" => self.refine_metadata_file_value(arguments),
+                    "List" => {
+                        let entries = self.refine_metadata_entries(arguments)?;
+                        Ok(PlainMetadataValue::List(entries))
+                    },
+                    _ => Err(MetadataRefineError::Syntax),
+                }
+            },
+            _ => Err(MetadataRefineError::Syntax),
+        }
+    }
+
+    fn refine_metadata_file_value(&self, list: &Vec<Rc<Expression>>) -> Result<PlainMetadataValue, MetadataRefineError> {
+        use file_paths::FlexPath;
+        if list.len() != 1 {
+            return Err(MetadataRefineError::Syntax);
+        }
+        let path: String;
+        match list[0].as_ref() {
+            Expression::StringLiteral(StringLiteral { value, .. }) => {
+                path = FlexPath::new_native(&self.compilation_unit().file_path().unwrap_or(String::new())).resolve("..").resolve(value).to_string_with_flex_separator();
+            },
+            Expression::Binary(BinaryExpression { left, operator, right, .. }) => {
+                if *operator != Operator::Add {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                let Some(left_id) = left.to_identifier_name_or_asterisk() else {
+                    return Err(MetadataRefineError::Syntax);
+                };
+                if left_id.0 != "output" {
+                    return Err(MetadataRefineError::Syntax);
+                }
+                let Expression::StringLiteral(StringLiteral { value: right_val, .. }) = right.as_ref() else {
+                    return Err(MetadataRefineError::Syntax);
+                };
+                path = FlexPath::from_n_native([self.host.jetpm_output_directory().as_ref(), right_val.as_ref()]).to_string_with_flex_separator();
+            },
+            _ => {
+                return Err(MetadataRefineError::Syntax);
+            },
+        }
+
+        if let Ok(data) = std::fs::read(&path) {
+            Ok(PlainMetadataValue::File {
+                filename: FlexPath::new_native(&path).base_name(),
+                data,
+            })
+        } else {
+            Err(MetadataRefineError::FailedLoadingFile { path })
         }
     }
 
@@ -3070,7 +3223,7 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_class_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        let AnnotatableContext { start_location, jetdoc, mut attributes, context, .. } = context;
         self.push_location(&start_location);
         let name = self.expect_identifier(true)?;
         let type_parameters = self.parse_type_parameters_opt()?;
@@ -3113,10 +3266,20 @@ impl<'input> Parser<'input> {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
+        let mut allow_literal = false;
+        let metadata = Attribute::find_metadata(&attributes);
+        for (metadata, _) in metadata {
+            if metadata.name == "Literal" {
+                allow_literal = true;
+                Attribute::remove_metadata(&mut attributes, &metadata);
+            }
+        }
+
         let node = Rc::new(Directive::ClassDefinition(ClassDefinition {
             location: self.pop_location(),
             jetdoc,
             attributes,
+            allow_literal,
             name: name.clone(),
             type_parameters,
             extends_clause,
@@ -3128,7 +3291,7 @@ impl<'input> Parser<'input> {
     }
 
     fn parse_enum_definition(&mut self, context: AnnotatableContext) -> Result<(Rc<Directive>, bool), ParsingFailure> {
-        let AnnotatableContext { start_location, jetdoc, attributes, context, .. } = context;
+        let AnnotatableContext { start_location, jetdoc, mut attributes, context, .. } = context;
         self.push_location(&start_location);
         let name = self.expect_identifier(true)?;
         let mut as_clause: Option<Rc<Expression>> = None;
@@ -3160,10 +3323,20 @@ impl<'input> Parser<'input> {
             self.add_syntax_error(&name.1, DiagnosticKind::NestedClassesNotAllowed, diagnostic_arguments![]);
         }
 
+        let mut is_set = false;
+        let metadata = Attribute::find_metadata(&attributes);
+        for (metadata, _) in metadata {
+            if metadata.name == "Set" {
+                is_set = true;
+                Attribute::remove_metadata(&mut attributes, &metadata);
+            }
+        }
+
         let node = Rc::new(Directive::EnumDefinition(EnumDefinition {
             location: self.pop_location(),
             jetdoc,
             attributes,
+            is_set,
             name: name.clone(),
             as_clause,
             block,
@@ -3709,7 +3882,7 @@ impl<'input> Parser<'input> {
                     let (type_or_constant, location) = join_jetdoc_content(building_content);
                     let location = tag_location.combine_with(location);
                     let compilation_unit_2 = CompilationUnit::new(None, type_or_constant, &self.tokenizer.compilation_unit().compiler_options);
-                    if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2) {
+                    if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2, &self.host) {
                         tags.push((JetDocTag::EventType(exp), location));
                     } else {
                         self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
@@ -3814,7 +3987,7 @@ impl<'input> Parser<'input> {
                             Some(description)
                         };
                         let compilation_unit_2 = CompilationUnit::new(None, class_name.into(), &self.tokenizer.compilation_unit().compiler_options);
-                        if let Some(exp) = ParserFacade::parse_type_expression(&compilation_unit_2) {
+                        if let Some(exp) = ParserFacade::parse_type_expression(&compilation_unit_2, &self.host) {
                             tags.push((JetDocTag::Throws { class_reference: exp, description }, location));
                         } else {
                             self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.clone())]);
@@ -3849,7 +4022,7 @@ impl<'input> Parser<'input> {
 
         if !base_text.is_empty() {
             let compilation_unit_2 = CompilationUnit::new(None, base_text, &self.tokenizer.compilation_unit().compiler_options);
-            if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2) {
+            if let Some(exp) = ParserFacade::parse_expression(&compilation_unit_2, &self.host) {
                 base = Some(exp);
             } else {
                 self.add_syntax_error(&tag_location, DiagnosticKind::FailedParsingJetDocTag, diagnostic_arguments![String(tag_name.to_owned())]);
@@ -3916,8 +4089,8 @@ pub struct ParserFacade;
 
 impl ParserFacade {
     /// Parses `Program` until end-of-file.
-    pub fn parse_program(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Program>> {
-        let mut parser = Parser::new(compilation_unit);
+    pub fn parse_program(compilation_unit: &Rc<CompilationUnit>, host: &Rc<SymbolHost>) -> Option<Rc<Program>> {
+        let mut parser = Parser::new(compilation_unit, host);
         if parser.next().is_ok() {
             let program = parser.parse_program().ok();
             if compilation_unit.invalidated() { None } else { program }
@@ -3927,8 +4100,8 @@ impl ParserFacade {
     }
 
     /// Parses `ListExpression^allowIn` and expects end-of-file.
-    pub fn parse_expression(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Expression>> {
-        let mut parser = Parser::new(compilation_unit);
+    pub fn parse_expression(compilation_unit: &Rc<CompilationUnit>, host: &Rc<SymbolHost>) -> Option<Rc<Expression>> {
+        let mut parser = Parser::new(compilation_unit, host);
         if parser.next().is_ok() {
             let exp = parser.parse_expression(ParsingExpressionContext {
                 ..default()
@@ -3943,8 +4116,8 @@ impl ParserFacade {
     }
 
     /// Parses `TypeExpression` and expects end-of-file.
-    pub fn parse_type_expression(compilation_unit: &Rc<CompilationUnit>) -> Option<Rc<Expression>> {
-        let mut parser = Parser::new(compilation_unit);
+    pub fn parse_type_expression(compilation_unit: &Rc<CompilationUnit>, host: &Rc<SymbolHost>) -> Option<Rc<Expression>> {
+        let mut parser = Parser::new(compilation_unit, host);
         if parser.next().is_ok() {
             let exp = parser.parse_type_expression().ok();
             if exp.is_some() {
@@ -3957,8 +4130,8 @@ impl ParserFacade {
     }
 
     /// Parses `Directives` until end-of-file.
-    pub fn parse_directives(compilation_unit: &Rc<CompilationUnit>, context: ParsingDirectiveContext) -> Option<Vec<Rc<Directive>>> {
-        let mut parser = Parser::new(compilation_unit);
+    pub fn parse_directives(compilation_unit: &Rc<CompilationUnit>, host: &Rc<SymbolHost>, context: ParsingDirectiveContext) -> Option<Vec<Rc<Directive>>> {
+        let mut parser = Parser::new(compilation_unit, host);
         if parser.next().is_ok() {
             let directives = parser.parse_directives(context).ok();
             if compilation_unit.invalidated() { None } else { directives }

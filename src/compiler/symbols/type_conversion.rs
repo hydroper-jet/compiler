@@ -34,7 +34,7 @@ pub enum TypeConversionRelationship {
 pub struct TypeConversions<'a>(pub &'a SymbolHost);
 
 impl<'a> TypeConversions<'a> {
-    pub fn implicit_constant_conversion(&mut self, value: &Symbol, target_type: &Symbol) -> Option<Symbol> {
+    pub fn implicit_constant_conversion(&self, value: &Symbol, target_type: &Symbol) -> Option<Symbol> {
         let from_type = value.static_type(self.0);
         if &from_type == target_type {
             return Some(value.clone());
@@ -87,21 +87,6 @@ impl<'a> TypeConversions<'a> {
             let number_type = self.0.number_type();
             let nullable_number_type = self.0.factory().create_nullable_type(&number_type);
 
-            let possibly_from_number_types = [
-                self.0.byte_type(),
-                self.0.short_type(),
-                self.0.int_type(),
-                self.0.unsigned_byte_type(),
-                self.0.unsigned_short_type(),
-                self.0.unsigned_int_type(),
-            ];
-
-            // NI constant to Number or Number?
-            if [number_type, nullable_number_type].contains(target_type) && possibly_from_number_types.contains(&from_type) {
-                let v = value.number_value().convert_type(target_type, self.0);
-                return Some(self.0.factory().create_number_constant(v, target_type));
-            }
-
             // NaN constant to NI or NI?
             if value.number_value().is_nan() && self.0.is_integer_type(&target_type.non_null_type()) {
                 let v = AbstractRangeNumber::zero(&target_type.non_null_type(), self.0);
@@ -125,14 +110,15 @@ impl<'a> TypeConversions<'a> {
 
         // From non nullable T constant to T?
         if target_type.is_nullable_type() && target_type.base() == from_type {
-            value.set_static_type(target_type);
-            return Some(value.clone());
+            let new_k = value.clone_constant_value(self.0);
+            new_k.set_static_type(target_type);
+            return Some(new_k);
         }
 
         None
     }
 
-    pub fn implicit_conversion(&mut self, value: &Symbol, target_type: &Symbol, optional: bool) -> Option<Symbol> {
+    pub fn implicit_conversion(&self, value: &Symbol, target_type: &Symbol, optional: bool) -> Option<Symbol> {
         let from_type = value.static_type(self.0);
         if &from_type == target_type {
             return Some(value.clone());
@@ -202,7 +188,7 @@ impl<'a> TypeConversions<'a> {
         None
     }
 
-    pub fn explicit_conversion(&mut self, value: &Symbol, target_type: &Symbol, optional: bool) -> Option<Symbol> {
+    pub fn explicit_conversion(&self, value: &Symbol, target_type: &Symbol, optional: bool) -> Option<Symbol> {
         let from_type = value.static_type(self.0);
         if &from_type == target_type {
             return Some(value.clone());

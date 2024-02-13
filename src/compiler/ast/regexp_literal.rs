@@ -7,3 +7,9 @@ pub struct RegExpLiteral {
     pub body: String,
     pub flags: String,
 }
+
+impl RegExpLiteral {
+    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier) -> Result<Option<Symbol>, DeferVerificationError> {
+        Ok(Some(verifier.host.factory().create_value(&verifier.host.reg_exp_type())))
+    }
+}

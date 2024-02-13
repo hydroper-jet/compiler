@@ -333,7 +333,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 10. If qual is undefined and key is a String constant
         if qual.is_none() && string_key.is_some() {
-            let p = base.imports().get(&string_key.unwrap());
+            let p = base.imports().get(&string_key.clone().unwrap());
             if let Some(p) = p {
                 // Throw if static type is unresolved
                 p.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;

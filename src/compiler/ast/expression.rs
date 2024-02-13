@@ -88,27 +88,31 @@ impl Expression {
         }
     }
 
-    pub(crate) fn to_metadata(&self) -> Option<Vec<Attribute>> {
+    pub(crate) fn to_metadata(&self, parser: &Parser) -> Result<Option<Vec<Attribute>>, MetadataRefineError1> {
         match self {
-            Self::ArrayLiteral(ArrayLiteral { elements, type_annotation, .. }) => {
-                if elements.len() != 1 || type_annotation.is_some() {
-                    return None;
+            Self::ArrayLiteral(ArrayLiteral { elements, .. }) => {
+                if elements.len() != 1 {
+                    return Ok(None);
                 }
                 if let Element::Expression(ref exp) = elements[0] {
-                    Some(vec![Attribute::Metadata(exp.clone())])
+                    Ok(Some(vec![Attribute::Metadata(parser.refine_metadata(exp).map_err(|e| MetadataRefineError1(e, exp.location()))?)]))
                 } else {
-                    None
+                    Ok(None)
                 }
             },
             Self::ComputedMember(ComputedMemberExpression { base, key, .. }) => {
-                let mut a = base.to_metadata()?;
-                if matches!(key.as_ref(), Self::Sequence(_)) {
-                    return None;
+                let a = base.to_metadata(parser)?;
+                if a.is_none() {
+                    return Ok(None);
                 }
-                a.push(Attribute::Metadata(key.clone()));
-                Some(a)
+                let mut a = a.unwrap();
+                if matches!(key.as_ref(), Self::Sequence(_)) {
+                    return Ok(None);
+                }
+                a.push(Attribute::Metadata(parser.refine_metadata(key).map_err(|e| MetadataRefineError1(e, key.location()))?));
+                Ok(Some(a))
             },
-            _ => None,
+            _ => Ok(None),
         }
     }
 
