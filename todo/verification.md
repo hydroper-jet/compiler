@@ -8,6 +8,7 @@
   * Object initializer
     * [x] Result into `enum` constant wherever possible (if the initializer is constant)
   * Function expression
+    * [ ] Cache activation scope in the function expression node before verifying the signature. This prevents wrong diagnostic reports.
   * Unary expressions
     * [ ] Result into constant every wherever possible
     * [ ] Negative operator passes `context.preceded_by_negative = true`
