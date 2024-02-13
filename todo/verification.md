@@ -8,7 +8,6 @@
   * Object initializer
     * [x] Result into `enum` constant wherever possible (if the initializer is constant)
   * Function expression
-    * [ ] When resolving signature, contribute properties to activation scope only after the signature is fully resolved.
   * Unary expressions
     * [ ] Result into constant every wherever possible
     * [ ] Negative operator passes `context.preceded_by_negative = true`
@@ -21,6 +20,28 @@
     * [ ] Fully qualified names shadow any other variables
   * Expressions with type arguments
     * [ ] Base's context is passed `followed_by_type_arguments = true`
+
+* Destructuring
+  * IdentifierName
+    * [ ] Declarative
+      * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+      * [ ] Variable shadowing in activations
+    * [ ] Assignment
+  * Object
+    * [ ] Declarative
+      * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+      * [ ] Variable shadowing in activations for a declarative field
+    * [ ] Assignment
+  * Array
+    * [ ] Declarative
+      * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+    * [ ] Assignment
+  * Non-null
+    * [ ] Declarative
+      * [ ] Skip if already assigned a symbol or `None` at `ast_to_symbol`.
+    * [ ] Assignment
+* Typed destructuring
+  * [ ] `verify_typed_destructuring(&tdst, read_only, &properties_destination, visibility, Some(context_type)): Result<(), DeferVerificationError>`
 
 * Statements
   * Block
