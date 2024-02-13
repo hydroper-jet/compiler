@@ -4,9 +4,11 @@
 
 * Expressions
   * Array literal
-    * [ ] Result into `enum` constant wherever possible (if the array literal is constant)
+    * [x] Result into `enum` constant wherever possible (if the array literal is constant)
   * Object initializer
-    * [ ] Result into `enum` constant wherever possible (if the initializer is constant)
+    * [x] Result into `enum` constant wherever possible (if the initializer is constant)
+  * Function expression
+    * [ ] When resolving signature, contribute properties to activation scope only after the signature is fully resolved.
   * Unary expressions
     * [ ] Result into constant every wherever possible
     * [ ] Negative operator passes `context.preceded_by_negative = true`
