@@ -15,6 +15,7 @@ struct AstToSymbol1 {
     simple_variable_definitions: HashMap<AstAsKey<Rc<SimpleVariableDefinition>>, Option<Symbol>>,
     blocks: HashMap<AstAsKey<Rc<Block>>, Option<Symbol>>,
     programs: HashMap<AstAsKey<Rc<Program>>, Option<Symbol>>,
+    function_commons: HashMap<AstAsKey<Rc<FunctionCommon>>, Option<Symbol>>,
 }
 
 impl AstToSymbol1 {
@@ -25,6 +26,7 @@ impl AstToSymbol1 {
             simple_variable_definitions: HashMap::new(),
             blocks: HashMap::new(),
             programs: HashMap::new(),
+            function_commons: HashMap::new(),
         }
     }
 }
@@ -221,6 +223,42 @@ impl AstToSymbolAccessor<Program> for AstToSymbol {
         let m1 = compilation_units.get_mut(&ByAddress(compilation_unit));
         if let Some(m1) = m1 {
             m1.programs.remove(&AstAsKey(node.clone())).is_some()
+        } else {
+            false
+        }
+    }
+}
+
+impl AstToSymbolAccessor<FunctionCommon> for AstToSymbol {
+    fn get(&self, node: &Rc<FunctionCommon>) -> Option<Symbol> {
+        let compilation_units = self.compilation_units.borrow();
+        let m1 = compilation_units.get(&ByAddress(node.location.compilation_unit()));
+        if let Some(m1) = m1 {
+            m1.function_commons.get(&AstAsKey(node.clone())).map(|v| v.clone().unwrap())
+        } else {
+            None
+        }
+    }
+
+    fn set(&self, node: &Rc<FunctionCommon>, symbol: Option<Symbol>) {
+        let compilation_unit = node.location.compilation_unit();
+        let mut compilation_units = self.compilation_units.borrow_mut();
+        let m1 = compilation_units.get_mut(&ByAddress(compilation_unit.clone()));
+        if let Some(m1) = m1 {
+            m1.function_commons.insert(AstAsKey(node.clone()), symbol);
+        } else {
+            let mut m1 = AstToSymbol1::new();
+            m1.function_commons.insert(AstAsKey(node.clone()), symbol);
+            compilation_units.insert(ByAddress(compilation_unit), m1);
+        }
+    }
+
+    fn delete(&self, node: &Rc<FunctionCommon>) -> bool {
+        let compilation_unit = node.location.compilation_unit();
+        let mut compilation_units = self.compilation_units.borrow_mut();
+        let m1 = compilation_units.get_mut(&ByAddress(compilation_unit));
+        if let Some(m1) = m1 {
+            m1.function_commons.remove(&AstAsKey(node.clone())).is_some()
         } else {
             false
         }

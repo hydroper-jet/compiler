@@ -51,6 +51,7 @@ impl Verifier {
                 host: host.clone(),
                 ast_to_symbol: AstToSymbol::new(),
                 deferred_directives: vec![],
+                deferred_function_commons: vec![],
                 invalidated: false,
                 deferred_counter: 0,
                 scope: host.root_scope(),
@@ -106,7 +107,10 @@ impl Verifier {
 pub(crate) struct VerifierVerifier {
     pub host: Rc<SymbolHost>,
     pub ast_to_symbol: Rc<AstToSymbol>,
-    pub deferred_directives: Vec<Rc<Directive>>,
+    /// List of (phase, directive).
+    pub deferred_directives: Vec<(usize, Rc<Directive>)>,
+    /// List of (phase, common).
+    pub deferred_function_commons: Vec<(usize, Rc<FunctionCommon>)>,
     invalidated: bool,
     pub deferred_counter: usize,
     pub scope: Symbol,
@@ -126,6 +130,7 @@ impl VerifierVerifier {
     fn reset_state(&mut self) {
         self.deferred_counter = 0;
         self.deferred_directives.clear();
+        self.deferred_function_commons.clear();
     }
 
     pub fn add_syntax_error(&mut self, location: &Location, kind: DiagnosticKind, arguments: Vec<DiagnosticArgument>) {

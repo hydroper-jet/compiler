@@ -55,6 +55,12 @@
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for getters.
 * [ ] Invoke `symbol.set_is_optional_interface_method()` for setters.
 
+## Function common
+
+* Map *FunctionCommon* to respective function symbol
+  * [ ] In function expressions
+  * [ ] In function definitions
+
 ## Captured properties
 
 * [ ] Do the following after successful property resolutions:
