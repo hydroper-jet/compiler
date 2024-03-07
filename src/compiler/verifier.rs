@@ -107,10 +107,10 @@ impl Verifier {
 pub(crate) struct VerifierVerifier {
     pub host: Rc<SymbolHost>,
     pub ast_to_symbol: Rc<AstToSymbol>,
-    /// List of (phase, directive).
-    pub deferred_directives: Vec<(usize, Rc<Directive>)>,
-    /// List of (phase, common).
-    pub deferred_function_commons: Vec<(usize, Rc<FunctionCommon>)>,
+    /// List of (phase, scope, directive).
+    pub deferred_directives: Vec<(usize, Symbol, Rc<Directive>)>,
+    /// List of (phase, scope, common).
+    pub deferred_function_commons: Vec<(usize, Symbol, Rc<FunctionCommon>)>,
     invalidated: bool,
     pub deferred_counter: usize,
     pub scope: Symbol,

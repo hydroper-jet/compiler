@@ -1,6 +1,5 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::rc::Rc;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ObjectInitializer {
@@ -41,7 +40,7 @@ impl ObjectInitializer {
     }
 
     fn verify_any_or_object(&self, verifier: &mut VerifierVerifier, context_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
-        for field in self.fields {
+        for field in &self.fields {
             match field.as_ref() {
                 InitializerField::Rest((exp, _)) => {
                     let map_type_of_any_any = verifier.host.map_type_of_any_any();
@@ -126,7 +125,7 @@ impl ObjectInitializer {
                         }
                     }
                 },
-                InitializerField::Field { name, value, .. } => {
+                InitializerField::Field { .. } => {
                     if let Some(name) = field.shorthand() {
                         let mut short_ref = Self::resolve_shorthand(verifier, &name)?;
                         if let Some(short_ref_1) = short_ref.as_ref() {
@@ -214,7 +213,7 @@ impl ObjectInitializer {
         let c = context_type.non_null_type();
         
         let mut missing = HashSet::<Symbol>::new();
-        for (name, prop) in c.prototype(&verifier.host).borrow().iter() {
+        for (_, prop) in c.prototype(&verifier.host).borrow().iter() {
             if prop.is_variable_property() && !prop.is_optional_variable(&verifier.host)? {
                 missing.insert(prop.clone());
             }
@@ -226,7 +225,7 @@ impl ObjectInitializer {
                     verifier.limit_expression_type(exp, &c)?;
                     missing.clear();
                 },
-                InitializerField::Field { name, value, .. } => {
+                InitializerField::Field { .. } => {
                     if let Some(name) = field.shorthand() {
                         let variable = Self::resolve_instance_variable(verifier, &c, &name)?;
                         if let Some(variable) = variable.clone() {
@@ -239,7 +238,9 @@ impl ObjectInitializer {
                                 variable_data_type.throw_if_unresolved()?;
                                 if TypeConversions(&verifier.host).implicit_conversion(short_ref_1, &variable_data_type, false).is_none() {
                                     verifier.add_verify_error(&name.1, DiagnosticKind::IncompatibleTypes, diagnostic_arguments![Symbol(variable_data_type), Symbol(short_ref_1.static_type(&verifier.host))]);
-                                    short_ref = None;
+                                    #[allow(unused_assignments)] {
+                                        short_ref = None;
+                                    }
                                 }
                             }
                         }
@@ -311,7 +312,7 @@ impl ObjectInitializer {
 
     fn verify_failure(&self, verifier: &mut VerifierVerifier, context_type: &Symbol) -> Result<Option<Symbol>, DeferVerificationError> {
         verifier.add_verify_error(&self.location, DiagnosticKind::InitializerUnsupportedType, diagnostic_arguments![Symbol(context_type.clone())]);
-        for field in self.fields {
+        for field in &self.fields {
             match field.as_ref() {
                 InitializerField::Rest((exp, _)) => {
                     verifier.verify_expression(exp, &default())?;
@@ -379,12 +380,12 @@ impl ObjectInitializer {
     fn resolve_instance_variable(verifier: &mut VerifierVerifier, c: &Symbol, name: &(String, Location)) -> Result<Option<Symbol>, DeferVerificationError> {
         let variable = c.prototype(&verifier.host).get(&name.0).and_then(|v| if v.is_variable_property() { Some(v) } else { None });
         if variable.is_none() {
-            verifier.add_verify_error(&name.1, DiagnosticKind::UndefinedProperty, diagnostic_arguments![String(name.0)]);
+            verifier.add_verify_error(&name.1, DiagnosticKind::UndefinedProperty, diagnostic_arguments![String(name.0.clone())]);
             return Ok(None);
         }
         let variable = variable.unwrap();
         if !variable.property_is_visible(&verifier.scope, &verifier.host) {
-            verifier.add_verify_error(&name.1, DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(name.0)]);
+            verifier.add_verify_error(&name.1, DiagnosticKind::InaccessibleProperty, diagnostic_arguments![String(name.0.clone())]);
         }
         Ok(Some(variable))
     }
@@ -412,7 +413,7 @@ impl InitializerField {
     }
 
     pub fn shorthand(&self) -> Option<(String, Location)> {
-        if let Self::Field { name, value, .. } = self {
+        if let Self::Field { name, .. } = self {
             if let FieldName::Identifier(name_str) = &name.0 {
                 Some((name_str.clone(), name.1.clone()))
             } else {
