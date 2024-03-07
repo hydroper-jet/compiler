@@ -1,5 +1,9 @@
 # Verification
 
+## Structure
+
+* [ ] Attach scope to deferred verification items
+
 ## AST
 
 * Expressions
