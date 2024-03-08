@@ -1398,6 +1398,10 @@ impl Symbol {
         PropertyResolution(host).resolve_property(self, qual, key)
     }
 
+    pub fn resolve_property_with_disambiguation(&self, qual: Option<Symbol>, key: SemanticPropertyKey, host: &SymbolHost, disamb: PropertyDisambiguation) -> Result<Option<Symbol>, PropertyResolutionError> {
+        PropertyResolution(host).resolve_property_with_disambiguation(self, qual, key, disamb)
+    }
+
     pub fn properties(&self, _host: &SymbolHost) -> SharedMap<String, Symbol> {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {

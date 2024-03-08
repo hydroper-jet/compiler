@@ -17,7 +17,7 @@ pub enum QualifiedIdentifierIdentifier {
 }
 
 impl QualifiedIdentifier {
-    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier) -> Result<Option<(Option<Symbol>, SemanticPropertyKey)>, DeferVerificationError> {
+    pub(crate) fn verify(&self, verifier: &mut VerifierVerifier) -> Result<Option<(Option<Symbol>, SemanticPropertyKey, PropertyDisambiguation)>, DeferVerificationError> {
         let QualifiedIdentifier {
             qualifier,
             id,
@@ -25,12 +25,23 @@ impl QualifiedIdentifier {
         } = self;
 
         let mut failed = false;
+        let mut disamb = PropertyDisambiguation::Default;
 
         let mut result_qual: Option<Symbol> = None;
         if let Some(qualifier) = qualifier {
-            result_qual = verifier.limit_expression_type(qualifier, &verifier.host.namespace_type())?;
-            if result_qual.is_none() {
-                failed = true;
+            let q = qualifier.to_identifier_name();
+            if let Some(q) = q {
+                if q.0 == "fixed" {
+                    disamb = PropertyDisambiguation::Fixed;
+                } else if q.0 == "dynamic" {
+                    disamb = PropertyDisambiguation::Dynamic;
+                }
+            }
+            if disamb == PropertyDisambiguation::Default {
+                result_qual = verifier.limit_expression_type(qualifier, &verifier.host.namespace_type())?;
+                if result_qual.is_none() {
+                    failed = true;
+                }
             }
         }
 
@@ -53,7 +64,7 @@ impl QualifiedIdentifier {
         if failed {
             Ok(None)
         } else {
-            Ok(Some((result_qual, result_key.unwrap())))
+            Ok(Some((result_qual, result_key.unwrap(), disamb)))
         }
     }
 
@@ -62,8 +73,8 @@ impl QualifiedIdentifier {
         if qn.is_none() {
             return Ok(None);
         }
-        let (qual, key) = qn.unwrap();
-        let r = verifier.scope.resolve_property(qual, key.clone(), &verifier.host);
+        let (qual, key, disamb) = qn.unwrap();
+        let r = verifier.scope.resolve_property_with_disambiguation(qual, key.clone(), &verifier.host, disamb);
         if r.is_err() {
             match r.unwrap_err() {
                 PropertyResolutionError::AmbiguousReference { name } => {

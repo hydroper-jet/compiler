@@ -64,8 +64,19 @@ impl SemanticPropertyKey {
     }
 }
 
+#[derive(Copy, Clone, PartialEq)]
+pub enum PropertyDisambiguation {
+    Default,
+    Fixed,
+    Dynamic,
+}
+
 impl<'a> PropertyResolution<'a> {
     pub fn resolve_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey) -> Result<Option<Symbol>, PropertyResolutionError> {
+        self.resolve_property_with_disambiguation(base, qual, key, PropertyDisambiguation::Default)
+    }
+
+    pub fn resolve_property_with_disambiguation(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, disamb: PropertyDisambiguation) -> Result<Option<Symbol>, PropertyResolutionError> {
         // 1. If base is a value whose type is one of { XML, XMLList }, return XmlReferenceValue(base, qual, key).
         if base.is_value() && [self.0.xml_type(), self.0.xml_list_type()].contains(&base.static_type(self.0)) {
             let k = key.symbol(self.0);
@@ -74,7 +85,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 2. If base is a scope, return ResolveScopeProperty(base, qual, key).
         if base.is_scope() {
-            return self.resolve_scope_property(base, qual, key);
+            return self.resolve_scope_property(base, qual, key, disamb);
         }
 
         let string_key = key.string_value();
@@ -203,7 +214,7 @@ impl<'a> PropertyResolution<'a> {
                 return Ok(Some(r.resolve_alias().wrap_property_reference(self.0)));
             }
             for p in base.redirect_packages().iter() {
-                let r = self.resolve_property(&p, qual.clone(), SemanticPropertyKey::String(key.clone()))?;
+                let r = self.resolve_property_with_disambiguation(&p, qual.clone(), SemanticPropertyKey::String(key.clone()), disamb)?;
                 if r.is_some() {
                     return Ok(r);
                 }
@@ -219,7 +230,7 @@ impl<'a> PropertyResolution<'a> {
             };
 
             for p in base.packages().iter() {
-                let r = self.resolve_property(&p, qual.clone(), SemanticPropertyKey::String(key.clone()))?;
+                let r = self.resolve_property_with_disambiguation(&p, qual.clone(), SemanticPropertyKey::String(key.clone()), disamb)?;
                 if r.is_some() {
                     return Ok(r);
                 }
@@ -267,7 +278,7 @@ impl<'a> PropertyResolution<'a> {
         return Ok(None);
     }
 
-    pub fn resolve_scope_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey) -> Result<Option<Symbol>, PropertyResolutionError> {
+    pub fn resolve_scope_property(&mut self, base: &Symbol, qual: Option<Symbol>, key: SemanticPropertyKey, disamb: PropertyDisambiguation) -> Result<Option<Symbol>, PropertyResolutionError> {
         // 1. If base is a with scope
         if base.is_with_scope() {
             let obj = base.object();
@@ -276,7 +287,7 @@ impl<'a> PropertyResolution<'a> {
                 let k = key.symbol(self.0);
                 return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k)));
             }
-            let r = self.resolve_property(&obj, qual.clone(), key.clone())?;
+            let r = self.resolve_property_with_disambiguation(&obj, qual.clone(), key.clone(), disamb)?;
             if let Some(r) = r {
                 return Ok(Some(r));
             }
@@ -308,7 +319,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 6. If base is an activation scope and base[[This]] is not undefined
         if base.is_activation_scope() && base.this().is_some() {
-            r = self.resolve_property(&base.this().unwrap(), qual.clone(), key.clone())?;
+            r = self.resolve_property_with_disambiguation(&base.this().unwrap(), qual.clone(), key.clone(), disamb)?;
             if r.is_some() {
                 return Ok(r);
             }
@@ -316,7 +327,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 7. If base is a class scope or enum scope
         if base.is_class_scope() || base.is_enum_scope() {
-            r = self.resolve_property(&base.class(), qual.clone(), key.clone())?;
+            r = self.resolve_property_with_disambiguation(&base.class(), qual.clone(), key.clone(), disamb)?;
         }
 
         // 8. Let amb be undefined.
@@ -324,7 +335,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 9. If base is a package scope
         if base.is_package_scope() {
-            amb = self.resolve_property(&base.package(), qual.clone(), key.clone())?;
+            amb = self.resolve_property_with_disambiguation(&base.package(), qual.clone(), key.clone(), disamb)?;
             if r.is_some() {
                 return Err(PropertyResolutionError::AmbiguousReference { name: string_key.clone().unwrap() });
             }
@@ -348,7 +359,7 @@ impl<'a> PropertyResolution<'a> {
 
         // 11. For each op in base[[OpenPackages]]
         for p in base.packages().iter() {
-            amb = self.resolve_property(&p, qual.clone(), key.clone())?;
+            amb = self.resolve_property_with_disambiguation(&p, qual.clone(), key.clone(), disamb)?;
             if r.is_some() {
                 return Err(PropertyResolutionError::AmbiguousReference { name: string_key.clone().unwrap() });
             }
@@ -358,7 +369,7 @@ impl<'a> PropertyResolution<'a> {
         // 12. If r is undefined and base[[ParentScope]] is not undefined
         let parent_scope = base.parent_scope();
         if r.is_none() && parent_scope.is_some() {
-            return self.resolve_scope_property(&parent_scope.unwrap(), qual, key);
+            return self.resolve_scope_property(&parent_scope.unwrap(), qual, key, disamb);
         }
 
         // 13. Return r
