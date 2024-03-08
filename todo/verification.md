@@ -18,6 +18,7 @@
   * Assignment expressions
     * [ ] Non destructuring assignment verifies left-hand side with `context.mode = write`
   * Member expressions
+    * [ ] Do not forget to pass `disamb` argument to property resolution
     * [ ] Fully qualified names shadow any other variables
   * Expressions with type arguments
     * [ ] Base's context is passed `followed_by_type_arguments = true`
