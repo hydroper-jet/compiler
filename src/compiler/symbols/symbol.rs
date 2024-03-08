@@ -1,9 +1,7 @@
 use crate::ns::*;
-use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
 
 use bitflags::bitflags;
 
@@ -2122,6 +2120,26 @@ impl Symbol {
         }
     }
 
+    pub fn disambiguation(&self) -> PropertyDisambiguation {
+        let symbol = self.0.upgrade().unwrap();
+        match symbol.as_ref() {
+            SymbolKind::Value(_, Some(data)) => {
+                match data.as_ref() {
+                    ValueKind::Reference(data) => {
+                        match data.as_ref() {
+                            ReferenceValueKind::Xml { disambiguation, .. } => *disambiguation,
+                            ReferenceValueKind::Dynamic { disambiguation, .. } => *disambiguation,
+                            ReferenceValueKind::DynamicScope { disambiguation, .. } => *disambiguation,
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                }
+            },
+            _ => panic!(),
+        }
+    }
+
     pub fn proxy(&self) -> Symbol {
         let symbol = self.0.upgrade().unwrap();
         match symbol.as_ref() {
@@ -3020,11 +3038,13 @@ pub(crate) enum ReferenceValueKind {
         base: Symbol,
         qualifier: Option<Symbol>,
         key: Symbol,
+        disambiguation: PropertyDisambiguation,
     },
     Dynamic {
         base: Symbol,
         qualifier: Option<Symbol>,
         key: Symbol,
+        disambiguation: PropertyDisambiguation,
     },
     Static {
         base: Symbol,
@@ -3050,6 +3070,7 @@ pub(crate) enum ReferenceValueKind {
         base: Symbol,
         qualifier: Option<Symbol>,
         key: Symbol,
+        disambiguation: PropertyDisambiguation,
     },
     Package {
         base: Symbol,
@@ -4219,6 +4240,7 @@ impl Deref for TypeAsReferenceValue {
 /// * `base()`
 /// * `qualifier()`
 /// * `key()`
+/// * `disambiguation()`
 pub struct XmlReferenceValue(pub Symbol);
 
 impl Deref for XmlReferenceValue {
@@ -4239,6 +4261,7 @@ impl Deref for XmlReferenceValue {
 /// * `base()`
 /// * `qualifier()`
 /// * `key()`
+/// * `disambiguation()`
 pub struct DynamicReferenceValue(pub Symbol);
 
 impl Deref for DynamicReferenceValue {
@@ -4354,6 +4377,7 @@ impl Deref for ScopeReferenceValue {
 /// * `base()`
 /// * `qualifier()`
 /// * `key()`
+/// * `disambiguation()`
 pub struct DynamicScopeReferenceValue(pub Symbol);
 
 impl Deref for DynamicScopeReferenceValue {

@@ -80,7 +80,7 @@ impl<'a> PropertyResolution<'a> {
         // 1. If base is a value whose type is one of { XML, XMLList }, return XmlReferenceValue(base, qual, key).
         if base.is_value() && [self.0.xml_type(), self.0.xml_list_type()].contains(&base.static_type(self.0)) {
             let k = key.symbol(self.0);
-            return Ok(Some(self.0.factory().create_xml_reference_value(base, qual, &k)));
+            return Ok(Some(self.0.factory().create_xml_reference_value(base, qual, &k, disamb)));
         }
 
         // 2. If base is a scope, return ResolveScopeProperty(base, qual, key).
@@ -95,7 +95,7 @@ impl<'a> PropertyResolution<'a> {
         //     1. Return DynamicReferenceValue(base, qual, key)
         if (base.is_value() && base.static_type(self.0) == self.0.any_type()) || !(string_key.is_some() || number_key.is_some()) {
             let k = key.symbol(self.0);
-            return Ok(Some(self.0.factory().create_dynamic_reference_value(base, qual, &k)));
+            return Ok(Some(self.0.factory().create_dynamic_reference_value(base, qual, &k, disamb)));
         }
 
         // 4. Return undefined if qual is not undefined.
@@ -289,7 +289,7 @@ impl<'a> PropertyResolution<'a> {
             let obj_static_type = obj.static_type(self.0);
             if [self.0.any_type(), self.0.xml_type(), self.0.xml_list_type()].contains(&obj_static_type) {
                 let k = key.symbol(self.0);
-                return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k)));
+                return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k, disamb)));
             }
             let r = self.resolve_property_with_disambiguation(&obj, qual.clone(), key.clone(), disamb)?;
             if let Some(r) = r {
@@ -300,7 +300,7 @@ impl<'a> PropertyResolution<'a> {
         // 2. If base is a filter operator scope
         if base.is_filter_operator_scope() {
             let k = key.symbol(self.0);
-            return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k)));
+            return Ok(Some(self.0.factory().create_dynamic_scope_reference_value(base, qual, &k, disamb)));
         }
 
         let string_key = key.string_value();

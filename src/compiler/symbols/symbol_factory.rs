@@ -660,23 +660,25 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
+    pub fn create_xml_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol, disamb: PropertyDisambiguation) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Xml {
             base: base.clone(),
             qualifier,
             key: key.clone(),
+            disambiguation: disamb,
         })))))))
     }
 
-    pub fn create_dynamic_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
+    pub fn create_dynamic_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol, disamb: PropertyDisambiguation) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::Dynamic {
             base: base.clone(),
             qualifier,
             key: key.clone(),
+            disambiguation: disamb,
         })))))))
     }
 
@@ -730,13 +732,14 @@ impl<'a> SymbolFactory<'a> {
         })))))))
     }
 
-    pub fn create_dynamic_scope_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol) -> Symbol {
+    pub fn create_dynamic_scope_reference_value(&self, base: &Symbol, qualifier: Option<Symbol>, key: &Symbol, disamb: PropertyDisambiguation) -> Symbol {
         Symbol(self.host.arena.allocate(SymbolKind::Value(ValueData {
             static_type: RefCell::new(self.host.any_type()),
         }, Some(Rc::new(ValueKind::Reference(Rc::new(ReferenceValueKind::DynamicScope {
             base: base.clone(),
             qualifier,
             key: key.clone(),
+            disambiguation: disamb,
         })))))))
     }
 
