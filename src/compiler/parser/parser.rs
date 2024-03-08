@@ -1,7 +1,5 @@
 use crate::ns::*;
 use lazy_regex::*;
-use std::cell::Cell;
-use std::rc::Rc;
 use std::str::FromStr;
 
 pub struct Parser<'input> {
@@ -461,7 +459,11 @@ impl<'input> Parser<'input> {
             if arguments.len() == 1 && self.peek(Token::ColonColon) {
                 self.duplicate_location();
                 let ql = self.pop_location();
-                let identifier = self.finish_qualified_identifier(false, ql, arguments[0].clone())?;
+                let q = Rc::new(Expression::Paren(ParenExpression {
+                    location: ql.clone(),
+                    expression: arguments[0].clone(),
+                }));
+                let identifier = self.finish_qualified_identifier(false, ql, q)?;
                 operation = Rc::new(Expression::Member(MemberExpression {
                     location: self.pop_location(),
                     base: operation,
@@ -548,7 +550,11 @@ impl<'input> Parser<'input> {
             let paren_location = self.token_location();
             let paren_exp = self.parse_paren_list_expression()?;
             if !matches!(paren_exp.as_ref(), Expression::Sequence(_)) && self.peek(Token::ColonColon) {
-                let id = self.finish_qualified_identifier(false, paren_location, paren_exp.clone())?;
+                let q = Rc::new(Expression::Paren(ParenExpression {
+                    location: paren_location.clone(),
+                    expression: paren_exp.clone(),
+                }));
+                let id = self.finish_qualified_identifier(false, paren_location, q)?;
                 Ok(Rc::new(Expression::Member(MemberExpression {
                     location: self.pop_location(),
                     base, identifier: id
@@ -1415,6 +1421,10 @@ impl<'input> Parser<'input> {
         if self.peek(Token::ColonColon) && !matches!(left.as_ref(), Expression::Sequence(_)) {
             self.push_location(&start);
             let ql = self.pop_location();
+            let left = Rc::new(Expression::Paren(ParenExpression {
+                location: ql.clone(),
+                expression: left,
+            }));
             let id = self.finish_qualified_identifier(false, ql, left)?;
             return Ok(Rc::new(Expression::QualifiedIdentifier(id)));
         }
@@ -1495,6 +1505,10 @@ impl<'input> Parser<'input> {
         if self.peek(Token::LeftParen) {
             let qual = self.parse_paren_expression()?;
             let ql = self.pop_location();
+            let qual = Rc::new(Expression::Paren(ParenExpression {
+                location: ql.clone(),
+                expression: qual,
+            }));
             return self.finish_qualified_identifier(attribute, ql, qual);
         }
 
