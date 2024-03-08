@@ -1,6 +1,5 @@
 use crate::ns::*;
 use serde::{Serialize, Deserialize};
-use std::rc::Rc;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct QualifiedIdentifier {
@@ -31,9 +30,9 @@ impl QualifiedIdentifier {
         if let Some(qualifier) = qualifier {
             let q = qualifier.to_identifier_name();
             if let Some(q) = q {
-                if q.0 == "fixed" {
+                if q.0 == "fixed" && q.1.character_count() == "fixed".len() {
                     disamb = PropertyDisambiguation::Fixed;
-                } else if q.0 == "dynamic" {
+                } else if q.0 == "dynamic" && q.1.character_count() == "dynamic".len() {
                     disamb = PropertyDisambiguation::Dynamic;
                 }
             }

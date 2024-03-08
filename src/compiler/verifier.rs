@@ -1,5 +1,4 @@
 use crate::ns::*;
-use std::rc::Rc;
 
 /// Jet verifier.
 ///
