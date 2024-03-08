@@ -139,39 +139,43 @@ impl<'a> PropertyResolution<'a> {
                 });
             }
 
-            // 6.2. If key is a String constant
-            if let Some(key) = string_key {
-                if base_type.is_class_type() || base_type.is_enum_type() {
-                    for class in base_type.descending_class_hierarchy(self.0).collect::<Vec<_>>() {
-                        // Throw if unresolved
-                        class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
-
-                        let prop = class.prototype(self.0).get(&key);
-                        if let Some(prop) = prop {
+            // 6.2. If key is a String constant and disambiguation is one of { default, fixed }
+            if [PropertyDisambiguation::Default, PropertyDisambiguation::Fixed].contains(&disamb) {
+                if let Some(key) = string_key {
+                    if base_type.is_class_type() || base_type.is_enum_type() {
+                        for class in base_type.descending_class_hierarchy(self.0).collect::<Vec<_>>() {
                             // Throw if unresolved
-                            prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+                            class.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
-                            return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                            let prop = class.prototype(self.0).get(&key);
+                            if let Some(prop) = prop {
+                                // Throw if unresolved
+                                prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                                return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                            }
                         }
-                    }
-                } else if base_type.is_interface_type() {
-                    for itrfc in base_type.all_ascending_types(self.0).iter().rev() {
-                        // Throw if unresolved
-                        itrfc.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
-
-                        let prop = itrfc.prototype(self.0).get(&key);
-                        if let Some(prop) = prop {
+                    } else if base_type.is_interface_type() {
+                        for itrfc in base_type.all_ascending_types(self.0).iter().rev() {
                             // Throw if unresolved
-                            prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+                            itrfc.throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
 
-                            return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                            let prop = itrfc.prototype(self.0).get(&key);
+                            if let Some(prop) = prop {
+                                // Throw if unresolved
+                                prop.property_static_type(self.0).throw_if_unresolved().map_err(|_| PropertyResolutionError::DeferVerification)?;
+
+                                return Ok(Some(self.0.factory().create_instance_reference_value(&base, &prop)));
+                            }
                         }
                     }
                 }
             }
 
-            // 6.3. For each descending type in the type hierarchy of base
-            if base_type.is_class_type() || base_type.is_enum_type() {
+            // 6.3. If disambiguation is one of { default, dynamic }
+            // 6.3.1 For each descending type in the type hierarchy of base
+            if [PropertyDisambiguation::Default, PropertyDisambiguation::Dynamic].contains(&disamb)
+            && (base_type.is_class_type() || base_type.is_enum_type()) {
                 let proxy = base_type.find_proxy(ProxyKind::GetProperty, self.0).map_err(|_| PropertyResolutionError::DeferVerification)?;
                 if let Some(proxy) = proxy {
                     let key_type = key.static_type(self.0);
