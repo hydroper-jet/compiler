@@ -14,6 +14,7 @@ Open folders:
 
 Open tabs:
 
+* compiler/todo/_WORKSPACE.md
 * compiler/todo/verification.md
 * compiler/src/compiler/diagnostics/diagnostic_kind.rs
 * compiler/src/compiler/diagnostics/diagnostics_english_resources.rs
